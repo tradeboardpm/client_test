@@ -38,7 +38,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className="antialiased ">
         <ToastProvider>
-          <ComingSoonOverlay />
+          {/* <ComingSoonOverlay /> */}
           {children}
           <Toast />
         </ToastProvider>
