@@ -1,5 +1,4 @@
 "use client"
-
 import { useState, useEffect, Suspense } from "react"
 import axios from "axios"
 import Cookies from "js-cookie"
@@ -21,13 +20,10 @@ const JournalDetailsContent = () => {
   const [journalDetails, setJournalDetails] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [currentDate, setCurrentDate] = useState(parseISO(params.date))
-  const [journalDates, setJournalDates] = useState([]) // Array of all journal dates
+  const [journalDates, setJournalDates] = useState([])
   const [sidebarExpanded, setSidebarExpanded] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("sidebarExpanded")
-      return saved !== null ? JSON.parse(saved) : true
-    }
-    return true
+    const saved = localStorage.getItem("sidebarExpanded")
+    return saved !== null ? JSON.parse(saved) : true
   })
   const [isMobile, setIsMobile] = useState(false)
   const [isSideSheetOpen, setIsSideSheetOpen] = useState(false)
@@ -35,7 +31,6 @@ const JournalDetailsContent = () => {
   const [tradesPerDay, setTradesPerDay] = useState(4)
   const [selectedImage, setSelectedImage] = useState(null)
 
-  // Fetch all journal dates
   useEffect(() => {
     const fetchJournalDates = async () => {
       try {
@@ -54,7 +49,6 @@ const JournalDetailsContent = () => {
     fetchJournalDates()
   }, [])
 
-  // Fetch journal details for the current date
   useEffect(() => {
     const fetchJournalDetails = async () => {
       try {
@@ -82,7 +76,6 @@ const JournalDetailsContent = () => {
     setSidebarExpanded(!sidebarExpanded)
   }
 
-  // Navigate to the next or previous journal
   const navigateJournal = (direction) => {
     const currentIndex = journalDates.findIndex((date) => date === format(currentDate, "yyyy-MM-dd"))
     if (currentIndex === -1) return
@@ -95,7 +88,6 @@ const JournalDetailsContent = () => {
     }
   }
 
-  // Check if there is a next or previous journal
   const hasNextJournal = () => {
     const currentIndex = journalDates.findIndex((date) => date === format(currentDate, "yyyy-MM-dd"))
     return currentIndex < journalDates.length - 1
@@ -106,13 +98,24 @@ const JournalDetailsContent = () => {
     return currentIndex > 0
   }
 
-  // Render date navigation with next/previous journal buttons
+  const handleBackClick = () => {
+    const cookieDate = Cookies.get("journalDate");
+    if (cookieDate) {
+      const date = new Date(JSON.parse(cookieDate));
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      router.push(`/my-journal?year=${year}&month=${month}`);
+    } else {
+      router.push('/my-journal');
+    }
+  };
+
   const renderDateNavigation = () => (
     <nav aria-label="Journal Navigation">
       <button
-        onClick={() => router.back()} // Navigate back to the previous page
+        onClick={handleBackClick}
         className="flex items-center text-foreground/70 hover:text-foreground transition-colors mb-4 rounded-full border size-10 justify-center"
-        aria-label="Back to Previous Page"
+        aria-label="Back to Journal Page"
       >
         <ArrowLeft className="h-5 w-5" />
       </button>
@@ -141,6 +144,7 @@ const JournalDetailsContent = () => {
       </div>
     </nav>
   )
+
 
   const renderLoadingState = () => (
     <div className="flex justify-center items-center h-screen">

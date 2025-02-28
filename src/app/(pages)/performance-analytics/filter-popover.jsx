@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -19,10 +19,23 @@ const FilterPopover = ({
   showPercentage = false,
 }) => {
   const [tempValue, setTempValue] = useState(value);
+  const popoverContentRef = useRef(null);
 
-  const handleDone = () => {
+  const handleDone = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     onChange(tempValue);
     onOpenChange(false);
+  };
+
+  // Prevent clicks inside the popover from closing it
+  const handleContentClick = (e) => {
+    e.stopPropagation();
+  };
+
+  // Handle slider value change while preventing propagation
+  const handleSliderChange = (newValue) => {
+    setTempValue(newValue);
   };
 
   return (
@@ -36,17 +49,23 @@ const FilterPopover = ({
           <ChevronDown className="h-4 w-4 text-foreground/65" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-80">
-        <div className="space-y-4">
+      <PopoverContent 
+        className="w-80 p-4" 
+        align="start"
+        onClick={handleContentClick}
+      >
+        <div className="space-y-6" ref={popoverContentRef}>
           <h4 className="font-medium leading-none">{title}</h4>
-          <div className="flex flex-col gap-4">
-            <div className="relative pt-6">
+          <div className="flex flex-col gap-6">
+            <div className="relative pt-8 pb-2">
               <SliderPrimitive.Root
                 min={min}
                 max={max}
                 step={1}
                 value={tempValue}
-                onValueChange={setTempValue}
+                onValueChange={handleSliderChange}
+                onPointerDown={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
                 className="relative flex w-full touch-none select-none items-center"
               >
                 <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
@@ -63,7 +82,7 @@ const FilterPopover = ({
                           left: `${((val - min) / (max - min)) * 100}%`,
                         }}
                       >
-                        <div className="bg-background border border-primary rounded px-2 py-1 text-xs">
+                        <div className="bg-background border border-primary rounded px-2 py-1 text-xs whitespace-nowrap">
                           {val}
                           {showPercentage && "%"}
                         </div>
@@ -78,7 +97,7 @@ const FilterPopover = ({
                 ))}
               </SliderPrimitive.Root>
             </div>
-            <div className="flex justify-between">
+            <div className="flex justify-between text-sm text-muted-foreground">
               <span>
                 {min}
                 {showPercentage && "%"}
@@ -88,7 +107,11 @@ const FilterPopover = ({
                 {showPercentage && "%"}
               </span>
             </div>
-            <Button onClick={handleDone} className="w-full mt-2">
+            <Button
+              onClick={handleDone}
+              className="w-full mt-4 z-10"
+              variant="default"
+            >
               Done
             </Button>
           </div>

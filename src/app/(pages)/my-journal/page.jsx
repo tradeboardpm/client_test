@@ -6,6 +6,7 @@ import { ArrowUpRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast";
 import JournalCard from "@/components/cards/JournalCard"
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
+import { useRouter, useSearchParams } from "next/navigation"
 
 const JournalCardSkeleton = () => {
   return (
@@ -56,21 +57,44 @@ const JournalCardSkeleton = () => {
 
 
 const JournalPage = () => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [currentDate, setCurrentDate] = useState(() => {
+    // Try to get from cookies first, then URL, then default to current date
+    const cookieDate = Cookies.get("journalDate");
+    if (cookieDate) {
+      return new Date(JSON.parse(cookieDate));
+    }
+    const year = searchParams.get("year");
+    const month = searchParams.get("month");
+    if (year && month) {
+      return new Date(parseInt(year), parseInt(month) - 1);
+    }
+    return new Date();
+  });
   const [journalData, setJournalData] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+
+  const updateUrlAndCookies = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    
+    // Update URL
+    router.push(`/my-journal?year=${year}&month=${month}`);
+    
+    // Set cookie with 30-minute expiration
+    Cookies.set("journalDate", JSON.stringify(date.toISOString()), {
+      expires: 1/48 // 30 minutes (1/48 of a day)
+    });
+  };
 
   const fetchJournalData = async () => {
     try {
       setIsLoading(true);
       const token = Cookies.get("token");
       const response = await axios.get(
-        `${
-          process.env.NEXT_PUBLIC_API_URL
-        }/journals/monthly?year=${currentDate.getFullYear()}&month=${
-          currentDate.getMonth() + 1
-        }`,
+        `${process.env.NEXT_PUBLIC_API_URL}/journals/monthly?year=${currentDate.getFullYear()}&month=${currentDate.getMonth() + 1}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -88,6 +112,7 @@ const JournalPage = () => {
 
   useEffect(() => {
     fetchJournalData();
+    updateUrlAndCookies(currentDate);
   }, [currentDate]);
 
   const changeMonth = (direction) => {
@@ -97,9 +122,9 @@ const JournalPage = () => {
       
       const today = new Date();
       if (newDate > today) {
-        return prevDate; // Prevent moving to future months
+        return prevDate;
       }
-  
+      
       return newDate;
     });
   };
@@ -110,8 +135,11 @@ const JournalPage = () => {
       delete newData[id];
       return newData;
     });
-    // Refresh the journal data after deletion
     await fetchJournalData();
+  };
+
+  const handleCardClick = (date) => {
+    router.push(`/my-journal/${date}`);
   };
 
   const renderSkeletons = () => {
@@ -120,8 +148,8 @@ const JournalPage = () => {
       .map((_, index) => <JournalCardSkeleton key={`skeleton-${index}`} />);
   };
 
-  // Check if the currentDate is in the same month as the current date
-  const isCurrentMonth = currentDate.getMonth() === new Date().getMonth() && currentDate.getFullYear() === new Date().getFullYear();
+  const isCurrentMonth = currentDate.getMonth() === new Date().getMonth() && 
+                        currentDate.getFullYear() === new Date().getFullYear();
 
   return (
     <div className="bg-card">
@@ -144,7 +172,7 @@ const JournalPage = () => {
               </h2>
               <button
                 onClick={() => changeMonth(1)}
-                className={` p-2 rounded-full transition-colors flex-shrink-0 ${isCurrentMonth ? " opacity-40" : "text-white hover:bg-white/20"}`}
+                className={`p-2 rounded-full transition-colors flex-shrink-0 ${isCurrentMonth ? "opacity-40" : "text-white hover:bg-white/20"}`}
                 disabled={isLoading || isCurrentMonth}
               >
                 <ChevronsRight className="h-5 w-5" />
@@ -160,21 +188,22 @@ const JournalPage = () => {
           ) : Object.keys(journalData).length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {Object.entries(journalData).map(([date, journal]) => (
-                <JournalCard
-                  key={date}
-                  id={date}
-                  date={date}
-                  note={journal.note}
-                  mistake={journal.mistake}
-                  lesson={journal.lesson}
-                  rulesFollowedPercentage={journal.rulesFollowedPercentage}
-                  winRate={journal.winRate}
-                  profit={journal.profit}
-                  tradesTaken={journal.tradesTaken}
-                  onDelete={handleDeleteJournal}
-                  refreshJournalData={fetchJournalData}
-                  showDeleteButton= {true}
-                />
+                <div key={date} onClick={() => handleCardClick(date)}>
+                  <JournalCard
+                    id={date}
+                    date={date}
+                    note={journal.note}
+                    mistake={journal.mistake}
+                    lesson={journal.lesson}
+                    rulesFollowedPercentage={journal.rulesFollowedPercentage}
+                    winRate={journal.winRate}
+                    profit={journal.profit}
+                    tradesTaken={journal.tradesTaken}
+                    onDelete={handleDeleteJournal}
+                    refreshJournalData={fetchJournalData}
+                    showDeleteButton={true}
+                  />
+                </div>
               ))}
             </div>
           ) : (
