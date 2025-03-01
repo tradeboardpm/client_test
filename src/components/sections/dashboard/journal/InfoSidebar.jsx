@@ -8,18 +8,16 @@ import {
   parseISO,
   format,
 } from "date-fns";
-import {
-  useMonthlyProfitLoss,
-} from "@/hooks/useMonthlyProfitLoss";
-// import { WeeklyCharts } from "../../../charts/weekly-charts";
+import { useMonthlyProfitLoss } from "@/hooks/useMonthlyProfitLoss"; // Adjust path as needed
 import { cn } from "@/lib/utils";
 
-export function TradingCalendar({ selectedDate, onSelect, tradesPerDay }) {
+export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpdate }) {
   const [month, setMonth] = React.useState(startOfMonth(selectedDate));
-  const { profitLossData, isLoading } = useMonthlyProfitLoss(month);
+  const { profitLossData, isLoading } = useMonthlyProfitLoss(month, forceUpdate); // Pass forceUpdate to hook
 
   const today = new Date();
 
+  // Define modifiers for calendar days
   const modifiers = {
     future: (date) => isFuture(date),
     today: (date) => isToday(date),
@@ -49,6 +47,7 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay }) {
     },
   };
 
+  // Define styles for the modifiers
   const modifiersStyles = {
     future: { opacity: 0.5, pointerEvents: "none" },
     today: { border: "2px solid purple" },
@@ -78,13 +77,14 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay }) {
     },
   };
 
+  // Handle month change
   const handleMonthChange = (newMonth) => {
     setMonth(startOfMonth(newMonth));
   };
 
   return (
-    <div className="flex flex-col gap-4 ">
-      <Card className="w-full border border-primary/15 bg-background  shadow-[0px_8px_20px_rgba(0,0,0,0.08)] dark:shadow-[0px_8px_20px_rgba(0,0,0,0.32)]">
+    <div className="flex flex-col gap-4">
+      <Card className="w-full border border-primary/15 bg-background shadow-[0px_8px_20px_rgba(0,0,0,0.08)] dark:shadow-[0px_8px_20px_rgba(0,0,0,0.32)]">
         <CardContent className="p-0">
           <Calendar
             mode="single"
@@ -109,9 +109,10 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay }) {
               ),
               day_selected: cn(
                 "border border-primary shadow hover:text-primary-foreground z-10",
-                isToday(selectedDate) ? "border-purple-500 bg-purple-100 dark:bg-purple-900" : "bg-card"
+                isToday(selectedDate)
+                  ? "border-purple-500 bg-purple-100 dark:bg-purple-900"
+                  : "bg-card"
               ),
-              
             }}
           />
           {/* Legend */}
@@ -123,27 +124,21 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay }) {
             <div className="flex items-center gap-1">
               <div
                 className="w-2.5 h-2.5 rounded-[3px]"
-                style={{
-                  backgroundColor: "#0ED991",
-                }}
+                style={{ backgroundColor: "#0ED991" }}
               />
               <span>Profit</span>
             </div>
             <div className="flex items-center gap-1">
               <div
                 className="w-2.5 h-2.5 rounded-[3px]"
-                style={{
-                  backgroundColor: "#FF8190",
-                }}
+                style={{ backgroundColor: "#FF8190" }}
               />
               <span>Loss</span>
             </div>
             <div className="flex items-center gap-1">
               <div
                 className="w-2.5 h-2.5 rounded-[3px]"
-                style={{
-                  backgroundColor: "#FAC300",
-                }}
+                style={{ backgroundColor: "#FAC300" }}
               />
               <span>Break Even</span>
             </div>

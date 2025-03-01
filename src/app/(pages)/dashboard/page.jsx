@@ -68,6 +68,7 @@ export default function JournalTradePage() {
   const [brokerage, setBrokerage] = useState(0);
   const [tradesPerDay, setTradesPerDay] = useState(4);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [forceCalendarUpdate, setForceCalendarUpdate] = useState(0);
   const [sidebarExpanded, setSidebarExpanded] = useState(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("sidebarExpanded");
@@ -179,6 +180,12 @@ export default function JournalTradePage() {
     setForceChartUpdate((prev) => prev + 1);
   };
 
+  const handleCalendarUpdate = async () => {
+    await Promise.all([fetchCapital(), fetchWeeklyMetrics(), fetchJournalData()]);
+    setForceCalendarUpdate((prev) => prev + 1); // Trigger calendar refresh
+    setForceChartUpdate((prev) => prev + 1); // Existing chart update
+  };
+
   const formattedCapital = new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
@@ -243,25 +250,27 @@ export default function JournalTradePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5  mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
           <JournalSection
             selectedDate={selectedDate}
             journalData={journalData}
+            onJournalChange={handleCalendarUpdate} // Pass callback
+            onUpdate={fetchJournalData}
+
           />
           <RulesSection
             selectedDate={selectedDate}
             onUpdate={fetchJournalData}
-            onRulesChange={handleChartsUpdate}
+            onRulesChange={handleCalendarUpdate} // Update to use the new callback
           />
         </div>
-
         <div>
           <TradesSection
             selectedDate={selectedDate}
             onUpdate={fetchJournalData}
             brokerage={brokerage}
             trades={journalData?.trades || []}
-            onTradeChange={handleChartsUpdate}
+            onTradeChange={handleCalendarUpdate} // Update to use the new callback
           />
         </div>
       </main>
@@ -276,17 +285,16 @@ export default function JournalTradePage() {
             {sidebarExpanded ? (
               <div className="p-4 space-y-6">
                 <TradingCalendar
-                  selectedDate={selectedDate}
-                  onSelect={handleDateChange}
-                />
-
-                <div>
-                  <WeeklyCharts
-                    selectedDate={selectedDate}
-                    tradesPerDay={tradesPerDay}
-                    forceUpdate={forceChartUpdate}
-                  />
-                </div>
+                selectedDate={selectedDate}
+                onSelect={handleDateChange}
+                tradesPerDay={tradesPerDay}
+                forceUpdate={forceCalendarUpdate} // Pass force update prop
+              />
+              <WeeklyCharts
+                selectedDate={selectedDate}
+                tradesPerDay={tradesPerDay}
+                forceUpdate={forceChartUpdate}
+              />
               </div>
             ) : (
               <div className="flex flex-col items-center gap-4 pt-6 bg-card">

@@ -180,6 +180,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
       );
 
       onRulesChange?.();
+      onUpdate?.();
 
       toast({
         title: `Rule ${isFollowed ? "unfollowed" : "followed"}`,

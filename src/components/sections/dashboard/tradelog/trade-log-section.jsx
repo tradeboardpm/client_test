@@ -56,6 +56,7 @@ export function TradesSection({
   const handleTradeUpdate = async () => {
     await fetchTradesData();
     onTradeChange?.();
+    onUpdate?.();
   };
 
   const fetchTradesData = async () => {

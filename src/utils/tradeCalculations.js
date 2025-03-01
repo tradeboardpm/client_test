@@ -4,6 +4,7 @@ export const EQUITY_TYPES = {
   INTRADAY: "INTRADAY",
   FNO_FUTURES: "F&O-FUTURES",
   FNO_OPTIONS: "F&O-OPTIONS",
+  OTHER: "OTHER", // Added "OTHER" equity type
 };
 
 // Constants for transaction types
@@ -20,6 +21,7 @@ const RATES = {
     [EQUITY_TYPES.INTRADAY]: 0.00025, // 0.025% sell side
     [EQUITY_TYPES.FNO_FUTURES]: 0.0002, // 0.02% sell side
     [EQUITY_TYPES.FNO_OPTIONS]: 0.001, // 0.1% sell side on premium
+    [EQUITY_TYPES.OTHER]: 0, // No STT for OTHER
   },
 
   // Exchange Transaction charges (using NSE rates)
@@ -28,6 +30,7 @@ const RATES = {
     [EQUITY_TYPES.INTRADAY]: 0.0000297, // 0.00297%
     [EQUITY_TYPES.FNO_FUTURES]: 0.0000173, // 0.00173%
     [EQUITY_TYPES.FNO_OPTIONS]: 0.0003503, // 0.03503%
+    [EQUITY_TYPES.OTHER]: 0, // 0% for OTHER
   },
 
   // SEBI charges (₹10 per crore = 0.0000001)
@@ -39,6 +42,7 @@ const RATES = {
     [EQUITY_TYPES.INTRADAY]: 0.00003, // 0.003%
     [EQUITY_TYPES.FNO_FUTURES]: 0.00002, // 0.002%
     [EQUITY_TYPES.FNO_OPTIONS]: 0.00003, // 0.003%
+    [EQUITY_TYPES.OTHER]: 0, // No stamp duty for OTHER
   },
 
   // GST rate
@@ -53,7 +57,10 @@ function calculateBrokerage(equityType, turnover) {
   ) {
     return 20; // Flat ₹20 per executed order
   }
-  // 0.03% or ₹20, whichever is lower
+  if (equityType === EQUITY_TYPES.OTHER) {
+    return 0; // No brokerage for OTHER
+  }
+  // 0.03% or ₹20, whichever is lower for DELIVERY and INTRADAY
   return Math.min(turnover * 0.0003, 20);
 }
 
@@ -68,6 +75,10 @@ function calculateSTT(equityType, action, turnover) {
 
 // Calculate Exchange Transaction charges
 function calculateExchangeCharges(equityType, turnover) {
+  // Explicitly set exchange charges to 0 for OTHER
+  if (equityType === EQUITY_TYPES.OTHER) {
+    return 0;
+  }
   return RATES.EXCHANGE[equityType] * turnover;
 }
 
@@ -92,10 +103,10 @@ function calculateGST(equityType, turnover, brokerage) {
 
 // Main function to calculate total charges
 export function calculateCharges(params) {
-  const { equityType, action, price, quantity } = params;
+  const { equityType, action, price, quantity, brokerage: customBrokerage } = params;
 
   const turnover = price * quantity;
-  const brokerage = calculateBrokerage(equityType, turnover);
+  const brokerage = customBrokerage !== undefined ? customBrokerage : calculateBrokerage(equityType, turnover);
 
   // Calculate individual components
   const sttCharges = calculateSTT(equityType, action, turnover);

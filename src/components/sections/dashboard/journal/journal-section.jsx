@@ -118,7 +118,7 @@ const ImageDialog = ({ isOpen, onClose, imageUrl, onDelete, isDeleting }) => {
   );
 };
 
-export function JournalSection({ selectedDate }) {
+export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   const [journal, setJournal] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -160,6 +160,9 @@ export function JournalSection({ selectedDate }) {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
+      onUpdate?.();
+      onJournalChange?.()
       setJournal(response.data);
     } catch (error) {
       console.error("Error fetching journal data:", error);
