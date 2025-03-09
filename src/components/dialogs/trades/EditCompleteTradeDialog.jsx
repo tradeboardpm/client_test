@@ -24,6 +24,7 @@ import {
   TRANSACTION_TYPES,
 } from "@/utils/tradeCalculations";
 import ChargesBreakdown from "./charges-breakdown";
+import TimePicker from "@/components/ui/time-picker";
 
 export function EditCompleteTradeDialog({
   open,
@@ -31,6 +32,11 @@ export function EditCompleteTradeDialog({
   trade,
   onSubmit,
 }) {
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  };
+
   const [editedTrade, setEditedTrade] = useState(trade);
   const [error, setError] = useState("");
   const [calculatedExchangeRate, setCalculatedExchangeRate] = useState(0);
@@ -38,10 +44,25 @@ export function EditCompleteTradeDialog({
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setEditedTrade(trade);
-    setError("");
-    setExchangeRateEdited(false);
+    if (trade) {
+      setEditedTrade({
+        ...trade,
+        time: trade.time || getCurrentTime(), // Use existing time or current time if unset
+      });
+      setError("");
+      setExchangeRateEdited(false);
+    }
   }, [trade]);
+
+  // Reset time to current time if unset when dialog opens
+  useEffect(() => {
+    if (open && editedTrade && !editedTrade.time) {
+      setEditedTrade((prev) => ({
+        ...prev,
+        time: getCurrentTime(),
+      }));
+    }
+  }, [open]);
 
   useEffect(() => {
     if (editedTrade) {
@@ -242,13 +263,12 @@ export function EditCompleteTradeDialog({
               </div>
               <div className="col-span-2">
                 <Label>Time</Label>
-                <Input
-                  type="time"
+                <TimePicker
                   value={editedTrade.time}
-                  onChange={(e) =>
+                  onChange={(time) =>
                     setEditedTrade({
                       ...editedTrade,
-                      time: e.target.value,
+                      time: time,
                     })
                   }
                 />
@@ -302,11 +322,11 @@ export function EditCompleteTradeDialog({
               </div>
             </div>
             <ChargesBreakdown 
-                trade={{
-                  ...editedTrade,
-                  manualExchangeCharge: exchangeRateEdited || editedTrade.equityType === EQUITY_TYPES.OTHER
-                }}
-              />
+              trade={{
+                ...editedTrade,
+                manualExchangeCharge: exchangeRateEdited || editedTrade.equityType === EQUITY_TYPES.OTHER
+              }}
+            />
           </div>
         )}
         <DialogFooter>

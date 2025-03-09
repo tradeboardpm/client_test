@@ -81,11 +81,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-md space-y-8 p-8">
+    <div className="flex min-h-screen w-full items-center justify-center px-4">
+      <div className="w-[500px] max-w-lg  space-y-8 p-8">
         <Button
           variant="outline"
-          className="absolute left-4 top-4 rounded-full p-2 lg:left-8 lg:top-8"
+          className="absolute left-4 top-20 rounded-full p-2 lg:left-8 "
           onClick={() => router.back()}
         >
           <ArrowLeft className="h-4 w-4" />

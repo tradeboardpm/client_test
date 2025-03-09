@@ -44,11 +44,11 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     followRule: false,
     followAllRules: false,
     loadSampleRules: false,
+    bulkAddRules: false,
   });
 
   useEffect(() => {
-    // Check subscription status from cookies
-    const subscriptionStatus = Cookies.get('subscription') === 'true';
+    const subscriptionStatus = Cookies.get("subscription") === "true";
     setHasSubscription(subscriptionStatus);
     fetchRules();
   }, [selectedDate]);
@@ -84,16 +84,69 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     setRules((prevRules) => [...prevRules, ...newRules]);
   };
 
+  const handleBulkAddRules = async (ruleDescriptions) => {
+    if (!hasSubscription || !ruleDescriptions || ruleDescriptions.length === 0) return;
+
+    // Filter out invalid rules before sending
+    const validRules = ruleDescriptions
+      .map((desc) => (desc && typeof desc === "string" ? desc.trim() : ""))
+      .filter((desc) => desc.length > 0);
+
+    if (validRules.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please provide at least one valid non-empty rule description.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoadingAction((prev) => ({ ...prev, bulkAddRules: true }));
+    try {
+      const token = Cookies.get("token");
+      const response = await axios.post(
+        `${API_URL}/rules/bulk`,
+        {
+          rules: validRules,
+          date: selectedDate.toISOString(),
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setRules((prevRules) => [...prevRules, ...response.data]);
+      setNewRulesDialog(false);
+
+      toast({
+        title: "Rules added",
+        description: `${response.data.length} rules have been added successfully.`,
+      });
+    } catch (error) {
+      console.error("Error adding bulk rules:", error);
+      toast({
+        title: "Error",
+        description:
+          error.response?.data?.error ||
+          "Failed to add rules. Please ensure all descriptions are valid.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingAction((prev) => ({ ...prev, bulkAddRules: false }));
+    }
+  };
+
   const handleEditRule = async () => {
     if (!editingRule || !hasSubscription) return;
 
     setIsLoadingAction((prev) => ({ ...prev, editRule: true }));
     try {
       const token = Cookies.get("token");
-      await axios.patch(
+      const response = await axios.patch(
         `${API_URL}/rules/${editingRule._id}`,
         {
           description: editingRule.description,
+          date: selectedDate.toISOString(),
         },
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -102,9 +155,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
 
       setRules((prevRules) =>
         prevRules.map((rule) =>
-          rule._id === editingRule._id
-            ? { ...rule, description: editingRule.description }
-            : rule
+          rule._id === editingRule._id ? { ...response.data } : rule
         )
       );
 
@@ -133,6 +184,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
       const token = Cookies.get("token");
       await axios.delete(`${API_URL}/rules/${ruleId}`, {
         headers: { Authorization: `Bearer ${token}` },
+        data: { date: selectedDate.toISOString() },
       });
 
       setRules((prevRules) => prevRules.filter((rule) => rule._id !== ruleId));
@@ -141,7 +193,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
       setRuleToDelete(null);
       toast({
         title: "Rule deleted",
-        description: "Your rule has been deleted successfully.",
+        description: "Your rule has been deleted successfully for this date.",
       });
     } catch (error) {
       console.error("Error deleting rule:", error);
@@ -161,7 +213,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     setIsLoadingAction((prev) => ({ ...prev, followRule: true }));
     try {
       const token = Cookies.get("token");
-      await axios.post(
+      const response = await axios.post(
         `${API_URL}/rules/follow-unfollow`,
         {
           ruleId,
@@ -175,7 +227,9 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
 
       setRules((prevRules) =>
         prevRules.map((rule) =>
-          rule._id === ruleId ? { ...rule, isFollowed: !isFollowed } : rule
+          rule._id === ruleId
+            ? { ...rule, isFollowed: response.data.ruleState.isFollowed }
+            : rule
         )
       );
 
@@ -206,21 +260,27 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     setIsLoadingAction((prev) => ({ ...prev, followAllRules: true }));
     try {
       const token = Cookies.get("token");
-      await axios.post(
-        `${API_URL}/rules/follow-unfollow-all`,
-        {
-          date: selectedDate.toISOString(),
-          isFollowed,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      await Promise.all(
+        rules.map((rule) =>
+          axios.post(
+            `${API_URL}/rules/follow-unfollow`,
+            {
+              ruleId: rule._id,
+              date: selectedDate.toISOString(),
+              isFollowed,
+            },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          )
+        )
       );
 
       setRules((prevRules) =>
         prevRules.map((rule) => ({ ...rule, isFollowed }))
       );
       onRulesChange?.();
+      onUpdate?.();
 
       toast({
         title: `All rules ${isFollowed ? "followed" : "unfollowed"}`,
@@ -256,7 +316,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
         }
       );
 
-      setRules(response.data);
+      setRules((prevRules) => [...prevRules, ...response.data]);
 
       toast({
         title: "Sample rules loaded",
@@ -303,7 +363,8 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
           onOpenChange={setNewRulesDialog}
           selectedDate={selectedDate}
           onRulesAdded={handleAddRules}
-          isLoading={isLoadingAction.addRule}
+          onBulkAddRules={handleBulkAddRules}
+          isLoading={isLoadingAction.addRule || isLoadingAction.bulkAddRules}
         />
       </>
     );
@@ -346,9 +407,13 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
             <Button
               className="bg-primary h-fit text-white text-xs px-3 hover:bg-purple-600"
               onClick={() => setNewRulesDialog(true)}
-              disabled={isLoadingAction.addRule || !hasSubscription}
+              disabled={
+                isLoadingAction.addRule ||
+                isLoadingAction.bulkAddRules ||
+                !hasSubscription
+              }
             >
-              {isLoadingAction.addRule ? (
+              {isLoadingAction.addRule || isLoadingAction.bulkAddRules ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
                 <Plus className="mr-2 h-4 w-4" />
@@ -361,7 +426,8 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
               onOpenChange={setNewRulesDialog}
               selectedDate={selectedDate}
               onRulesAdded={handleAddRules}
-              isLoading={isLoadingAction.addRule}
+              onBulkAddRules={handleBulkAddRules}
+              isLoading={isLoadingAction.addRule || isLoadingAction.bulkAddRules}
             />
           </div>
         </div>
@@ -443,7 +509,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
           <DialogHeader className={"border-b pb-2 mb-2"}>
             <DialogTitle className="text-xl mb-1">Edit Rule</DialogTitle>
             <DialogDescription className="text-xs">
-              Here you can edit your rules.
+              Here you can edit your rule for this date.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col space-y-1 mb-4 text-sm">
@@ -500,7 +566,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
           <DialogHeader className={"border-b pb-2 mb-2"}>
             <DialogTitle className="text-xl mb-1">Delete Rule</DialogTitle>
             <DialogDescription className="text-xs">
-              Are you sure you want to delete this rule permanently?
+              Are you sure you want to delete this rule for this date? It will remain active for previous dates if applicable.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col space-y-1 mb-4 text-sm">

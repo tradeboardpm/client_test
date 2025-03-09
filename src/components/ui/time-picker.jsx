@@ -18,14 +18,26 @@ const TimePicker = ({ value, onChange, className = '' }) => {
     i.toString().padStart(2, '0')
   );
 
+  // Initialize or update time based on value prop or current time
   useEffect(() => {
     if (value) {
       const [hour, minute] = value.split(':');
       setSelectedHour(hour);
       setSelectedMinute(minute);
+    } else {
+      // Set to current time when no value is provided (on mount or reset)
+      const now = new Date();
+      const currentHour = now.getHours().toString().padStart(2, '0');
+      const currentMinute = now.getMinutes().toString().padStart(2, '0');
+      setSelectedHour(currentHour);
+      setSelectedMinute(currentMinute);
+      if (!value) {
+        onChange(`${currentHour}:${currentMinute}`); // Only set default if no value
+      }
     }
-  }, [value]);
+  }, [value, onChange]); // Depend on value to reset when it changes
 
+  // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -39,7 +51,10 @@ const TimePicker = ({ value, onChange, className = '' }) => {
 
   const handleTimeSelect = (hour, minute) => {
     const newTime = `${hour}:${minute}`;
+    setSelectedHour(hour);
+    setSelectedMinute(minute);
     onChange(newTime);
+    setIsOpen(false); // Close dropdown after selection
   };
 
   return (
@@ -47,11 +62,11 @@ const TimePicker = ({ value, onChange, className = '' }) => {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`flex items-center w-full px-3 py-2 text-left border rounded-md hover:bg-accent ${
-          !value ? 'text-gray-500' : 'text-foreground'
+          !value && !selectedHour ? 'text-gray-500' : 'text-foreground'
         } ${className}`}
       >
         <Clock className="w-4 h-4 mr-2" />
-        {value || 'Select time'}
+        {value || (selectedHour && selectedMinute ? `${selectedHour}:${selectedMinute}` : 'Select time')}
       </button>
 
       {isOpen && (
@@ -72,10 +87,7 @@ const TimePicker = ({ value, onChange, className = '' }) => {
                           ? 'bg-primary hover:bg-accent'
                           : 'hover:bg-secondary'
                       }`}
-                      onClick={() => {
-                        setSelectedHour(hour);
-                        handleTimeSelect(hour, selectedMinute || '00');
-                      }}
+                      onClick={() => handleTimeSelect(hour, selectedMinute || '00')}
                     >
                       {hour}
                     </button>
@@ -99,10 +111,7 @@ const TimePicker = ({ value, onChange, className = '' }) => {
                           ? 'bg-primary hover:bg-accent'
                           : 'hover:bg-secondary'
                       }`}
-                      onClick={() => {
-                        setSelectedMinute(minute);
-                        handleTimeSelect(selectedHour || '00', minute);
-                      }}
+                      onClick={() => handleTimeSelect(selectedHour || '00', minute)}
                     >
                       {minute}
                     </button>

@@ -147,6 +147,24 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     );
   };
 
+  // Function to format date for title
+  const getJournalTitle = () => {
+    const today = new Date();
+    const isToday = 
+      today.getDate() === selectedDate.getDate() &&
+      today.getMonth() === selectedDate.getMonth() &&
+      today.getFullYear() === selectedDate.getFullYear();
+    
+    if (isToday) {
+      return "Today's Journal";
+    } else {
+      // Format: "12 Feb's Journal"
+      const day = selectedDate.getDate();
+      const month = selectedDate.toLocaleString('default', { month: 'short' });
+      return `${day} ${month}'s Journal`;
+    }
+  };
+
   // Fetch journal data
   const fetchJournalData = async () => {
     setIsLoading(true);
@@ -333,7 +351,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
       <Card className="flex-1 w-full h-full flex justify-between flex-col pb-4 shadow-[0px_8px_20px_rgba(0,0,0,0.08)] dark:shadow-[0px_8px_20px_rgba(0,0,0,0.32)]">
         <CardHeader className="p-4">
           <CardTitle className="flex font-medium text-xl items-center gap-2">
-            Today's Journal
+            {getJournalTitle()}
             {isSaving && hasSubscription && (
               <span className="text-sm font-normal text-muted-foreground">
                 (Saving...)

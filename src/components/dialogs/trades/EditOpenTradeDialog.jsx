@@ -1,28 +1,65 @@
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import axios from "axios"
-import Cookies from "js-cookie"
-import { calculateCharges, EQUITY_TYPES, TRANSACTION_TYPES } from "@/utils/tradeCalculations"
-import { cn } from "@/lib/utils"
-import ChargesBreakdown from "./charges-breakdown"
+import { useState, useEffect } from "react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import axios from "axios";
+import Cookies from "js-cookie";
+import { 
+  calculateCharges, 
+  EQUITY_TYPES, 
+  TRANSACTION_TYPES 
+} from "@/utils/tradeCalculations";
+import { cn } from "@/lib/utils";
+import ChargesBreakdown from "./charges-breakdown";
+import TimePicker from "@/components/ui/time-picker";
 
 export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
-  const [editedTrade, setEditedTrade] = useState(trade)
-  const [error, setError] = useState("")
-  const [calculatedExchangeRate, setCalculatedExchangeRate] = useState(0)
-  const [exchangeRateEdited, setExchangeRateEdited] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  };
+
+  const [editedTrade, setEditedTrade] = useState(trade);
+  const [error, setError] = useState("");
+  const [calculatedExchangeRate, setCalculatedExchangeRate] = useState(0);
+  const [exchangeRateEdited, setExchangeRateEdited] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setEditedTrade(trade)
-    setError("")
-    setExchangeRateEdited(false)
-  }, [trade])
+    if (trade) {
+      setEditedTrade({
+        ...trade,
+        time: trade.time || getCurrentTime(), // Use existing time or current time if unset
+      });
+      setError("");
+      setExchangeRateEdited(false);
+    }
+  }, [trade]);
+
+  // Reset time to current time if unset when dialog opens
+  useEffect(() => {
+    if (open && editedTrade && !editedTrade.time) {
+      setEditedTrade((prev) => ({
+        ...prev,
+        time: getCurrentTime(),
+      }));
+    }
+  }, [open]);
 
   useEffect(() => {
     if (editedTrade) {
@@ -32,28 +69,28 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
         price: editedTrade.action === TRANSACTION_TYPES.BUY ? editedTrade.buyingPrice : editedTrade.sellingPrice,
         quantity: editedTrade.quantity,
         brokerage: editedTrade.brokerage,
-      })
-      setCalculatedExchangeRate(charges.totalCharges - charges.brokerage)
+      });
+      setCalculatedExchangeRate(charges.totalCharges - charges.brokerage);
     }
-  }, [editedTrade])
+  }, [editedTrade]);
 
   const validateTrade = () => {
     if (!editedTrade.quantity || editedTrade.quantity <= 0) {
-      setError("Quantity must be greater than zero")
-      return false
+      setError("Quantity must be greater than zero");
+      return false;
     }
 
     if (editedTrade.action === TRANSACTION_TYPES.BUY && !editedTrade.buyingPrice) {
-      setError("Please enter a buying price")
-      return false
+      setError("Please enter a buying price");
+      return false;
     }
     if (editedTrade.action === TRANSACTION_TYPES.SELL && !editedTrade.sellingPrice) {
-      setError("Please enter a selling price")
-      return false
+      setError("Please enter a selling price");
+      return false;
     }
-    setError("")
-    return true
-  }
+    setError("");
+    return true;
+  };
 
   const handleTradeTypeChange = (value) => {
     setEditedTrade((prev) => ({
@@ -61,25 +98,25 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
       action: value,
       buyingPrice: null,
       sellingPrice: null,
-    }))
-    setError("")
-  }
+    }));
+    setError("");
+  };
 
   const handleQuantityChange = (e) => {
-    const value = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)))
-    setError("")
+    const value = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)));
+    setError("");
     setEditedTrade({
       ...editedTrade,
       quantity: value,
-    })
-  }
+    });
+  };
 
   const handleOpenTradeEdit = async () => {
-    if (!editedTrade) return
-    if (!validateTrade()) return
-    setIsLoading(true)
+    if (!editedTrade) return;
+    if (!validateTrade()) return;
+    setIsLoading(true);
     try {
-      const token = Cookies.get("token")
+      const token = Cookies.get("token");
       await axios.patch(
         `${process.env.NEXT_PUBLIC_API_URL}/trades/open/${editedTrade._id}`,
         {
@@ -89,25 +126,25 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        },
-      )
-      onSubmit()
-      onOpenChange(false)
-      setError("")
+        }
+      );
+      onSubmit();
+      onOpenChange(false);
+      setError("");
     } catch (error) {
-      console.error("Error editing open trade:", error)
+      console.error("Error editing open trade:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const resetExchangeRate = () => {
     setEditedTrade((prev) => ({
       ...prev,
       exchangeRate: calculatedExchangeRate,
-    }))
-    setExchangeRateEdited(false)
-  }
+    }));
+    setExchangeRateEdited(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -132,14 +169,23 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
               </div>
               <div className="col-span-2">
                 <Label>Quantity</Label>
-                <Input type="number" min="1" value={editedTrade.quantity} onChange={handleQuantityChange} />
+                <Input 
+                  type="number" 
+                  min="1" 
+                  value={editedTrade.quantity} 
+                  onChange={handleQuantityChange} 
+                />
                 {error && error.includes("Quantity") && <p className="text-sm text-red-500 mt-1">{error}</p>}
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <div className="col-span-2">
                 <Label>Transaction Type</Label>
-                <RadioGroup className="flex space-x-4" value={editedTrade.action} onValueChange={handleTradeTypeChange}>
+                <RadioGroup 
+                  className="flex space-x-4" 
+                  value={editedTrade.action} 
+                  onValueChange={handleTradeTypeChange}
+                >
                   <div
                     className={cn(
                       "flex items-center space-x-2 border border-border/25 shadow rounded-lg w-36 p-2",
@@ -174,12 +220,12 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
                       : (editedTrade.sellingPrice ?? "")
                   }
                   onChange={(e) => {
-                    const price = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)))
-                    setError("")
+                    const price = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)));
+                    setError("");
                     setEditedTrade({
                       ...editedTrade,
                       [editedTrade.action === TRANSACTION_TYPES.BUY ? "buyingPrice" : "sellingPrice"]: price,
-                    })
+                    });
                   }}
                 />
                 {error && !error.includes("Quantity") && <p className="text-sm text-red-500 mt-1">{error}</p>}
@@ -206,13 +252,12 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
               </div>
               <div className="col-span-2">
                 <Label>Time</Label>
-                <Input
-                  type="time"
+                <TimePicker
                   value={editedTrade.time}
-                  onChange={(e) =>
+                  onChange={(time) =>
                     setEditedTrade({
                       ...editedTrade,
-                      time: e.target.value,
+                      time: time,
                     })
                   }
                 />
@@ -226,12 +271,12 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
                     type="number"
                     value={editedTrade.exchangeRate.toFixed(2)}
                     onChange={(e) => {
-                      const value = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)))
+                      const value = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)));
                       setEditedTrade({
                         ...editedTrade,
                         exchangeRate: value,
-                      })
-                      setExchangeRateEdited(true)
+                      });
+                      setExchangeRateEdited(true);
                     }}
                   />
                   {exchangeRateEdited && (
@@ -256,11 +301,11 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
               </div>
             </div>
             <ChargesBreakdown
-                trade={{
-                  ...editedTrade,
-                  manualExchangeCharge: exchangeRateEdited || editedTrade.equityType === EQUITY_TYPES.OTHER,
-                }}
-              />
+              trade={{
+                ...editedTrade,
+                manualExchangeCharge: exchangeRateEdited || editedTrade.equityType === EQUITY_TYPES.OTHER,
+              }}
+            />
           </div>
         )}
         <DialogFooter>
@@ -273,6 +318,5 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

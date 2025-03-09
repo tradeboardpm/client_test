@@ -533,7 +533,7 @@ export default function AccountPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Capital</Label>
-                <Input value={settings?.capital} readOnly />
+                <Input value={settings?.capital.toFixed(2)} readOnly />
               </div>
               <div>
                 <Label>Brokerage</Label>
@@ -769,7 +769,7 @@ export default function AccountPage() {
                 <Input
                   id="capital"
                   type="number"
-                  value={settingsForm.capital}
+                  value={settingsForm.capital.toFixed(2)}
                   onChange={(e) =>
                     setSettingsForm({
                       ...settingsForm,

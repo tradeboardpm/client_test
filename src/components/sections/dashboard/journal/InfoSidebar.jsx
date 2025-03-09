@@ -50,7 +50,13 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpd
   // Define styles for the modifiers
   const modifiersStyles = {
     future: { opacity: 0.5, pointerEvents: "none" },
-    today: { border: "2px solid purple" },
+    today: { 
+      border: "2px solid purple",
+      color: "white", // Ensure text is visible in dark mode
+      dark: {
+        color: "white", // Ensuring visibility in dark mode
+      } 
+    },
     profit: {
       backgroundColor: "#C0F9E5",
       color: "#0ED991",
@@ -110,9 +116,10 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpd
               day_selected: cn(
                 "border border-primary shadow hover:text-primary-foreground z-10",
                 isToday(selectedDate)
-                  ? "border-purple-500 bg-purple-100 dark:bg-purple-900"
+                  ? "border-purple-500 bg-purple-100 text-foreground dark:bg-purple-900 dark:text-white"
                   : "bg-card"
               ),
+              day_today: "bg-purple-100 text-foreground dark:bg-purple-900 dark:text-white",
             }}
           />
           {/* Legend */}

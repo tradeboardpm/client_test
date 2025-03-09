@@ -228,7 +228,13 @@ export function WeeklyCharts({
               <LineChart data={processedData} margin={chartConfig.margin}>
                 <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
                 <XAxis className="text-xs" dataKey="day" tickLine={false} axisLine={false} tickMargin={8} />
-                <YAxis className="text-xs" tickLine={false} axisLine={false} tickMargin={8} />
+                <YAxis 
+                  className="text-xs" 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickMargin={8}
+                  allowDecimals={false} 
+                />
                 <ChartTooltip content={<CustomTooltipContent />} />
                 <Line
                   type="linear"
@@ -244,7 +250,6 @@ export function WeeklyCharts({
         </CardContent>
       </Card>
 
-      {/* Update the tooltips in other charts similarly */}
       <Card className={chartConfig.className}>
         <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
           <CardTitle className="text-sm font-medium">Win Rate</CardTitle>
@@ -267,7 +272,12 @@ export function WeeklyCharts({
               <BarChart data={processedData} margin={chartConfig.margin}>
                 <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
                 <XAxis className="text-xs" dataKey="day" tickLine={false} axisLine={false}/>
-                <YAxis className="text-xs" tickLine={false} axisLine={false}/>
+                <YAxis 
+                  className="text-xs" 
+                  tickLine={false} 
+                  axisLine={false}
+                  allowDecimals={false}
+                />
                 <ChartTooltip content={<CustomTooltipContent />} />
                 <Bar dataKey="win" stackId="winLoss" fill="#0ED991" barSize={20} radius={4} />
                 <Bar dataKey="loss" stackId="winLoss" fill="#F44C60" barSize={20} radius={4} />
@@ -297,8 +307,9 @@ export function WeeklyCharts({
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
+                  allowDecimals={false}
                   tickFormatter={(value) =>
-                    value >= 0 ? `+${(value / 1000).toFixed(0)}K` : `${(value / 1000).toFixed(0)}K`
+                    value >= 0 ? `+${Math.round(value / 1000)}K` : `${Math.round(value / 1000)}K`
                   }
                 />
                 <ChartTooltip content={<CustomTooltipContent />} />
@@ -338,7 +349,13 @@ export function WeeklyCharts({
               <BarChart data={processedData} margin={chartConfig.margin}>
                 <CartesianGrid vertical={false} stroke="var(--border)" strokeDasharray="3 3" />
                 <XAxis className="text-xs" dataKey="day" tickLine={false} axisLine={false} tickMargin={8} />
-                <YAxis className="text-xs" tickLine={false} axisLine={false} tickMargin={8} />
+                <YAxis 
+                  className="text-xs" 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickMargin={8}
+                  allowDecimals={false}
+                />
                 <ChartTooltip content={<CustomTooltipContent />} />
                 <Bar dataKey="followed" stackId="ruleStatus" fill="#0ED991" barSize={20} radius={4} />
                 <Bar dataKey="broken" stackId="ruleStatus" fill="#F44C60" barSize={20} radius={4} />
@@ -350,4 +367,3 @@ export function WeeklyCharts({
     </div>
   )
 }
-

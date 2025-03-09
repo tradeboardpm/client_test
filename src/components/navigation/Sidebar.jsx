@@ -277,7 +277,7 @@ export default function Sidebar({ isOpen }) {
                           className="absolute top-1.5"
                         />
                         <p className="mt-24 font-semibold">
-                          Upgrade to <span className="text-primary">PRO</span> for more features.
+                          Upgrade to <span className="text-primary">PRO</span> to stay disciplined.
                         </p>
                         <Button
                           className="text-background w-full mt-2"

@@ -1,14 +1,20 @@
-import { useState, useEffect } from "react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { format } from "date-fns"
-import axios from "axios"
-import Cookies from "js-cookie"
-import { calculateCharges, TRANSACTION_TYPES } from "@/utils/tradeCalculations"
-import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import axios from "axios";
+import Cookies from "js-cookie";
+import { calculateCharges, TRANSACTION_TYPES } from "@/utils/tradeCalculations";
+import { cn } from "@/lib/utils";
+import TimePicker from "@/components/ui/time-picker";
 
 export function CompleteTradeDialog({
   open,
@@ -18,6 +24,11 @@ export function CompleteTradeDialog({
   brokerage: initialBrokerage,
   selectedDate,
 }) {
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  };
+
   const [completeTrade, setCompleteTrade] = useState({
     instrumentName: "",
     quantity: null,
@@ -26,14 +37,14 @@ export function CompleteTradeDialog({
     sellingPrice: null,
     brokerage: initialBrokerage,
     exchangeRate: 0,
-    time: format(selectedDate, "HH:mm"),
+    time: getCurrentTime(), // Initialize with current time
     equityType: "",
-  })
+  });
 
-  const [error, setError] = useState("")
-  const [calculatedExchangeRate, setCalculatedExchangeRate] = useState(0)
-  const [exchangeRateEdited, setExchangeRateEdited] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("");
+  const [calculatedExchangeRate, setCalculatedExchangeRate] = useState(0);
+  const [exchangeRateEdited, setExchangeRateEdited] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (trade) {
@@ -45,11 +56,21 @@ export function CompleteTradeDialog({
         sellingPrice: null,
         brokerage: initialBrokerage,
         exchangeRate: 0,
-        time: format(selectedDate, "HH:mm"),
+        time: getCurrentTime(), // Set to current time instead of selectedDate
         equityType: trade.equityType,
-      })
+      });
     }
-  }, [trade, selectedDate, initialBrokerage])
+  }, [trade, initialBrokerage]);
+
+  // Reset time to current time when dialog opens
+  useEffect(() => {
+    if (open) {
+      setCompleteTrade((prev) => ({
+        ...prev,
+        time: getCurrentTime(), // Reset to current time on open
+      }));
+    }
+  }, [open]);
 
   useEffect(() => {
     if (
@@ -59,19 +80,19 @@ export function CompleteTradeDialog({
       (completeTrade.buyingPrice || completeTrade.sellingPrice)
     ) {
       const price =
-        completeTrade.action === TRANSACTION_TYPES.BUY ? completeTrade.buyingPrice : completeTrade.sellingPrice
+        completeTrade.action === TRANSACTION_TYPES.BUY ? completeTrade.buyingPrice : completeTrade.sellingPrice;
       const charges = calculateCharges({
         equityType: completeTrade.equityType,
         action: completeTrade.action,
         price,
         quantity: completeTrade.quantity,
         brokerage: completeTrade.brokerage,
-      })
-      setCalculatedExchangeRate(charges.totalCharges - charges.brokerage)
+      });
+      setCalculatedExchangeRate(charges.totalCharges - charges.brokerage);
       setCompleteTrade((prev) => ({
         ...prev,
         exchangeRate: charges.totalCharges - charges.brokerage,
-      }))
+      }));
     }
   }, [
     completeTrade.buyingPrice,
@@ -80,38 +101,38 @@ export function CompleteTradeDialog({
     completeTrade.action,
     completeTrade.equityType,
     completeTrade.brokerage,
-  ])
+  ]);
 
   const validateTrade = () => {
     if (!completeTrade.quantity || completeTrade.quantity <= 0) {
-      setError("Quantity must be greater than zero")
-      return false
+      setError("Quantity must be greater than zero");
+      return false;
     }
 
     if (completeTrade.action === TRANSACTION_TYPES.BUY && !completeTrade.buyingPrice) {
-      setError("Please enter a buying price")
-      return false
+      setError("Please enter a buying price");
+      return false;
     }
     if (completeTrade.action === TRANSACTION_TYPES.SELL && !completeTrade.sellingPrice) {
-      setError("Please enter a selling price")
-      return false
+      setError("Please enter a selling price");
+      return false;
     }
-    setError("")
-    return true
-  }
+    setError("");
+    return true;
+  };
 
   const handleTradeSubmit = async (e) => {
-    console.log("handleTradeSubmit called")
-    e.preventDefault()
+    console.log("handleTradeSubmit called");
+    e.preventDefault();
 
     if (!validateTrade()) {
-      return
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      const token = Cookies.get("token")
-      const utcDate = new Date(Date.UTC(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()))
+      const token = Cookies.get("token");
+      const utcDate = new Date(Date.UTC(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate()));
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/trades`,
@@ -129,39 +150,39 @@ export function CompleteTradeDialog({
         },
         {
           headers: { Authorization: `Bearer ${token}` },
-        },
-      )
+        }
+      );
 
-      console.log("Trade completed successfully:", response.data)
-      onSubmit()
-      onOpenChange(false)
+      console.log("Trade completed successfully:", response.data);
+      onSubmit();
+      onOpenChange(false);
     } catch (error) {
-      console.error("Error completing trade:", error)
-      setError("Failed to complete trade. Please try again.")
+      console.error("Error completing trade:", error);
+      setError("Failed to complete trade. Please try again.");
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const calculateTotalOrder = (trade) => {
-    const price = trade.action === TRANSACTION_TYPES.BUY ? trade.buyingPrice : trade.sellingPrice
+    const price = trade.action === TRANSACTION_TYPES.BUY ? trade.buyingPrice : trade.sellingPrice;
     const charges = calculateCharges({
       equityType: trade.equityType,
       action: trade.action,
       price,
       quantity: trade.quantity,
       brokerage: trade.brokerage,
-    })
-    return charges.turnover + charges.totalCharges
-  }
+    });
+    return charges.turnover + charges.totalCharges;
+  };
 
   const resetExchangeRate = () => {
     setCompleteTrade((prev) => ({
       ...prev,
       exchangeRate: calculatedExchangeRate,
-    }))
-    setExchangeRateEdited(false)
-  }
+    }));
+    setExchangeRateEdited(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -181,12 +202,12 @@ export function CompleteTradeDialog({
                 type="number"
                 value={completeTrade.quantity ?? ""}
                 onChange={(e) => {
-                  const value = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)))
-                  setError("")
+                  const value = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)));
+                  setError("");
                   setCompleteTrade({
                     ...completeTrade,
                     quantity: value,
-                  })
+                  });
                 }}
               />
               {error && error.includes("Quantity") && <p className="text-sm text-red-500 mt-1">{error}</p>}
@@ -230,12 +251,12 @@ export function CompleteTradeDialog({
                     : (completeTrade.sellingPrice ?? "")
                 }
                 onChange={(e) => {
-                  const price = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)))
-                  setError("")
+                  const price = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)));
+                  setError("");
                   setCompleteTrade({
                     ...completeTrade,
                     [completeTrade.action === TRANSACTION_TYPES.BUY ? "buyingPrice" : "sellingPrice"]: price,
-                  })
+                  });
                 }}
               />
               {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
@@ -248,10 +269,9 @@ export function CompleteTradeDialog({
             </div>
             <div className="col-span-2">
               <Label>Time</Label>
-              <Input
-                type="time"
+              <TimePicker
                 value={completeTrade.time}
-                onChange={(e) => setCompleteTrade({ ...completeTrade, time: e.target.value })}
+                onChange={(time) => setCompleteTrade({ ...completeTrade, time: time })}
               />
             </div>
           </div>
@@ -263,12 +283,12 @@ export function CompleteTradeDialog({
                   type="number"
                   value={completeTrade.exchangeRate.toFixed(2)}
                   onChange={(e) => {
-                    const value = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)))
+                    const value = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)));
                     setCompleteTrade({
                       ...completeTrade,
                       exchangeRate: value,
-                    })
-                    setExchangeRateEdited(true)
+                    });
+                    setExchangeRateEdited(true);
                   }}
                 />
                 {exchangeRateEdited && (
@@ -311,6 +331,5 @@ export function CompleteTradeDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
-

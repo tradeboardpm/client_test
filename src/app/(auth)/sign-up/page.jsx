@@ -22,14 +22,8 @@ import {
 } from "@/components/ui/drawer";
 import PrivacyPolicy from "@/app/(misc)/privacy/page";
 import TermsOfService from "@/app/(misc)/terms/page";
-
-const countryCodes = [
-  { value: "91", label: "India (+91)" },
-  { value: "1", label: "United States (+1)" },
-  { value: "44", label: "United Kingdom (+44)" },
-  { value: "81", label: "Japan (+81)" },
-  { value: "86", label: "China (+86)" },
-];
+import ReactCountryFlag from "react-country-flag";
+import countries from "country-telephone-data";
 
 const LegalDrawer = ({ isOpen, onClose, content }) => (
   <Drawer open={isOpen} onOpenChange={onClose}>
@@ -58,6 +52,13 @@ const privacyContent = {
   title: "Privacy Policy",
   content: <PrivacyPolicy />,
 };
+
+// Transform country data into our desired format
+const countryCodes = countries.allCountries.map(country => ({
+  value: country.dialCode,
+  label: `${country.name} (+${country.dialCode})`,
+  code: country.iso2.toUpperCase()
+}));
 
 export default function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
@@ -260,10 +261,20 @@ export default function SignUp() {
                     <SelectTrigger>
                       <SelectValue placeholder="+91" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-96">
                       {countryCodes.map((code) => (
                         <SelectItem key={code.value} value={code.value}>
-                          {code.label}
+                          <div className="flex items-center gap-2">
+                            <ReactCountryFlag
+                              countryCode={code.code}
+                              svg
+                              style={{
+                                width: "1.5em",
+                                height: "1.5em",
+                              }}
+                            />
+                            <span>{code.label}</span>
+                          </div>
                         </SelectItem>
                       ))}
                     </SelectContent>

@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MoreVertical, Package, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import {
   MultiSelector,
   MultiSelectorContent,
@@ -55,6 +55,9 @@ export default function AccountabilityPartner() {
 
   const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
 
   api.interceptors.request.use(
@@ -65,9 +68,7 @@ export default function AccountabilityPartner() {
       }
       return config;
     },
-    (error) => {
-      return Promise.reject(error);
-    }
+    (error) => Promise.reject(error)
   );
 
   useEffect(() => {
@@ -77,13 +78,19 @@ export default function AccountabilityPartner() {
   const fetchPartners = async () => {
     try {
       const response = await api.get("/accountability-partner");
-      setPartners(response.data);
+      if (response.data.success) {
+        setPartners(response.data.data || []);
+      } else {
+        throw new Error(response.data.error || "Failed to fetch partners");
+      }
     } catch (error) {
+      console.error("Fetch partners error:", error);
       toast({
         title: "Error",
         description: "Failed to fetch partners",
         variant: "destructive",
       });
+      setPartners([]);
     }
   };
 
@@ -93,6 +100,15 @@ export default function AccountabilityPartner() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (selectedDetails.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please select at least one detail to share",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const submitData = {
@@ -110,21 +126,27 @@ export default function AccountabilityPartner() {
         },
       };
 
-      await api.post("/accountability-partner", submitData);
-
-      toast({
-        title: "Success",
-        description: "Accountability partner added successfully",
-      });
-
-      fetchPartners();
-      resetForm();
+      const response = await api.post("/accountability-partner", submitData);
+      
+      if (response.data.success) {
+        toast({
+          title: "Success",
+          description: "Accountability partner added successfully",
+        });
+        setPartners((prev) => [...prev, response.data.data]);
+        resetForm();
+      } else {
+        throw new Error(response.data.error || "Failed to add partner");
+      }
     } catch (error) {
+      console.error("Add partner error:", error.message);
       toast({
-        title: "Error",
-        description: error.response?.data?.error || "Failed to add partner",
+        title: "Warning",
+        description: "Partner added but email notification failed. " + 
+                    (error.response?.data?.error || error.message),
         variant: "destructive",
       });
+      await fetchPartners();
     } finally {
       setIsLoading(false);
     }
@@ -132,18 +154,30 @@ export default function AccountabilityPartner() {
 
   const handleRemovePartner = async (partnerId) => {
     try {
-      await api.delete(`/accountability-partner/${partnerId}`);
-      toast({
-        title: "Success",
-        description: "Accountability partner removed successfully",
-      });
-      fetchPartners();
+      const response = await api.delete(`/accountability-partner/${partnerId}`);
+      
+      // Log the full response for debugging
+      console.log("Delete response:", response);
+
+      // Check status code and success flag
+      if (response.status === 200 && response.data.success) {
+        toast({
+          title: "Success",
+          description: "Accountability partner removed successfully",
+        });
+        setPartners((prev) => prev.filter((partner) => partner._id !== partnerId));
+      } else {
+        throw new Error(response.data.error || "Unexpected response from server");
+      }
     } catch (error) {
+      console.error("Remove partner error:", error.message, error.response?.data);
       toast({
         title: "Error",
-        description: "Failed to remove partner",
+        description: error.response?.data?.error || "Failed to remove partner",
         variant: "destructive",
       });
+      // Fetch partners to ensure UI is in sync, only on actual failure
+      await fetchPartners();
     }
   };
 
@@ -349,8 +383,7 @@ export default function AccountabilityPartner() {
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
-                <div className="text-center  flex flex-col items-center justify-center ">
-                  {/* <Package className="mx-auto h-12 w-12 text-gray-400" /> */}
+                <div className="text-center flex flex-col items-center justify-center">
                   <img
                     src="/images/no_box.png"
                     alt="no data"

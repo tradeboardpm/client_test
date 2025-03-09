@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format } from "date-fns";
 import axios from "axios";
 import Cookies from "js-cookie";
 import {
@@ -36,6 +35,11 @@ export function AddTradeDialog({
   brokerage: initialBrokerage,
   selectedDate,
 }) {
+  const getCurrentTime = () => {
+    const now = new Date();
+    return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+  };
+
   const [newTrade, setNewTrade] = useState({
     instrumentName: "",
     quantity: null,
@@ -44,7 +48,7 @@ export function AddTradeDialog({
     sellingPrice: null,
     brokerage: initialBrokerage,
     exchangeRate: 0,
-    time: format(selectedDate, "HH:mm"),
+    time: getCurrentTime(), // Initialize with current time
     equityType: EQUITY_TYPES.INTRADAY,
   });
 
@@ -53,6 +57,16 @@ export function AddTradeDialog({
   const [exchangeRateEdited, setExchangeRateEdited] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [manualExchangeCharge, setManualExchangeCharge] = useState(false);
+
+  // Reset time to current time when dialog opens
+  useEffect(() => {
+    if (open) {
+      setNewTrade((prev) => ({
+        ...prev,
+        time: getCurrentTime(), // Reset to current time on open
+      }));
+    }
+  }, [open]);
 
   // Memoize charges calculation to avoid redundant computation
   const charges = useMemo(() => {
@@ -187,7 +201,7 @@ export function AddTradeDialog({
       sellingPrice: null,
       brokerage: initialBrokerage,
       exchangeRate: 0,
-      time: format(selectedDate, "HH:mm"),
+      time: getCurrentTime(), // Reset to current time
       equityType: EQUITY_TYPES.INTRADAY,
     });
     setError("");
