@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -19,7 +18,7 @@ import { Check, Loader2, Tag, X, ArrowRight, Sparkles, ArrowLeft } from "lucide-
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const SubscriptionPlan = ({ selectedPlan }) => {
+const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -75,13 +74,13 @@ const SubscriptionPlan = ({ selectedPlan }) => {
 
       const result = await axios.post(
         `${API_URL}/payment/payment-success`,
-        { 
-          razorpay_order_id, 
-          razorpay_payment_id, 
-          razorpay_signature, 
-          plan, 
+        {
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
+          plan,
           couponCode,
-          gstin
+          gstin,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -100,8 +99,8 @@ const SubscriptionPlan = ({ selectedPlan }) => {
   };
 
   const applyCoupon = async () => {
-    if (!couponCode) {
-      setCouponError("Please enter a coupon code");
+    if (!couponCode.trim()) {
+      setCouponError("Please enter a valid coupon code");
       return;
     }
 
@@ -115,7 +114,7 @@ const SubscriptionPlan = ({ selectedPlan }) => {
           amount: selectedPlanForCheckout.plan_total_price,
           plan: selectedPlanForCheckout.plan_name,
           couponCode,
-          gstin
+          gstin,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -125,7 +124,7 @@ const SubscriptionPlan = ({ selectedPlan }) => {
           originalPrice: selectedPlanForCheckout.plan_total_price,
           discountApplied: data.discountApplied,
           finalAmount: data.finalAmount,
-          percentOff: Math.round((data.discountApplied / selectedPlanForCheckout.plan_total_price) * 100)
+          percentOff: Math.round((data.discountApplied / selectedPlanForCheckout.plan_total_price) * 100),
         });
         toast({ title: "Success", description: "Coupon applied successfully!" });
       } else {
@@ -133,7 +132,8 @@ const SubscriptionPlan = ({ selectedPlan }) => {
       }
     } catch (error) {
       setDiscountDetails(null);
-      setCouponError(error.message || "Invalid coupon code");
+      const errorMessage = error.response?.data?.message || error.message || "Invalid coupon code";
+      setCouponError(errorMessage === "Request failed with status code 400" ? "This coupon code is not valid" : errorMessage);
     } finally {
       setCouponLoading(false);
     }
@@ -141,7 +141,6 @@ const SubscriptionPlan = ({ selectedPlan }) => {
 
   const clearCoupon = () => {
     setCouponCode("");
-    setGstin("");
     setDiscountDetails(null);
     setCouponError("");
   };
@@ -174,7 +173,7 @@ const SubscriptionPlan = ({ selectedPlan }) => {
           amount: selectedPlanForCheckout.plan_total_price,
           plan: selectedPlanForCheckout.plan_name,
           couponCode: discountDetails ? couponCode : "",
-          gstin
+          gstin,
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -193,6 +192,9 @@ const SubscriptionPlan = ({ selectedPlan }) => {
           email: userProfile?.email || "",
           contact: userProfile?.phone?.replace("+91", "") || "",
         },
+        notes: {
+          gstin: gstin || "Not Provided",
+        },
         theme: { color: "#a073f0" },
       };
 
@@ -201,9 +203,18 @@ const SubscriptionPlan = ({ selectedPlan }) => {
         toast({ title: "Payment Failed", description: response.error.description, variant: "destructive" });
         setLoading(false);
       });
+      // Close the dialog before opening Razorpay
+      if (onCloseDialog) onCloseDialog();
       paymentObject.open();
     } catch (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      const errorMessage = error.response?.data?.message || error.message || "Something went wrong";
+      toast({
+        title: "Payment Error",
+        description: errorMessage === "Request failed with status code 400"
+          ? "Unable to process payment. Please try again."
+          : errorMessage,
+        variant: "destructive",
+      });
       setLoading(false);
     }
   };
@@ -211,180 +222,183 @@ const SubscriptionPlan = ({ selectedPlan }) => {
   const goBackToPlans = () => {
     setShowCheckout(false);
     clearCoupon();
+    setGstin("");
   };
 
   if (!isLoggedIn) return null;
 
   if (showCheckout) {
     return (
-      <div className="px-4">
-        <Button 
-          variant="ghost" 
-          onClick={goBackToPlans} 
-          className="mb-6 -ml-2 text-gray-600"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Plans
-        </Button>
+      <div className="flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="w-full max-w-md">
+          <Button
+            variant="ghost"
+            onClick={goBackToPlans}
+            className="mb-6 text-gray-600 flex items-center"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Plans
+          </Button>
 
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold mb-2">Checkout: {selectedPlanForCheckout?.name}</h2>
-          <p className="text-gray-600">Complete your purchase or apply a coupon code for additional savings.</p>
-        </div>
-        
-        <Card className="border shadow-md">
-          <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-lg">Order Summary</CardTitle>
-              <Tag className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          
-          <CardContent className="space-y-6">
-            <div className="space-y-4">
+          <div className="mb-6">
+            <h2 className="text-2xl font-semibold mb-2">Checkout: {selectedPlanForCheckout?.name}</h2>
+            <p className="text-gray-600 text-sm">Complete your purchase or apply a coupon code for savings.</p>
+          </div>
+
+          <Card className="border shadow-md">
+            <CardHeader>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Plan Price</span>
-                <span className="font-semibold">₹ {selectedPlanForCheckout?.plan_total_price}</span>
+                <CardTitle className="text-lg">Order Summary</CardTitle>
+                <Tag className="h-5 w-5 text-primary" />
               </div>
-              
-              {discountDetails && (
-                <div className="flex justify-between items-center text-green-600">
-                  <span className="text-sm font-medium flex items-center">
-                    <Sparkles className="mr-1 h-4 w-4" />
-                    Coupon Discount ({discountDetails.percentOff}% off)
-                  </span>
-                  <span className="font-semibold">-₹ {discountDetails.discountApplied}</span>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="font-medium">Plan Price</span>
+                  <span className="font-semibold">₹ {selectedPlanForCheckout?.plan_total_price}</span>
                 </div>
-              )}
-              
-              {discountDetails && (
-                <div className="h-px bg-gray-200 my-1"></div>
-              )}
-              
-              <div className="flex justify-between items-center font-bold">
-                <span>Total</span>
-                <span className="text-lg">
-                  ₹ {discountDetails ? discountDetails.finalAmount : selectedPlanForCheckout?.plan_total_price}
-                </span>
-              </div>
-            </div>
-            
-            <div className="h-px bg-gray-200"></div>
-            
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="coupon" className="text-sm font-medium block mb-1">Have a coupon code?</label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Input
-                      id="coupon"
-                      placeholder="Enter promo code"
-                      value={couponCode}
-                      onChange={(e) => {
-                        setCouponCode(e.target.value);
-                        if (couponError) setCouponError("");
-                      }}
-                      className={`pr-8 ${couponError ? "border-red-500 focus-visible:ring-red-500" : ""} ${discountDetails ? "border-green-500 focus-visible:ring-green-500" : ""}`}
-                      disabled={discountDetails !== null || couponLoading}
-                    />
-                    {couponCode && !discountDetails && (
-                      <button 
-                        onClick={clearCoupon}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        type="button"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                    {discountDetails && (
-                      <Check className="absolute right-2 top-1/2 transform -translate-y-1/2 text-green-500 h-4 w-4" />
-                    )}
-                  </div>
-                  <Button 
-                    onClick={applyCoupon} 
-                    disabled={!couponCode || couponLoading || discountDetails !== null}
-                    variant={discountDetails ? "outline" : "default"}
-                    className={discountDetails ? "border-green-500 text-green-500" : ""}
-                  >
-                    {couponLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : discountDetails ? (
-                      "Applied"
-                    ) : (
-                      "Apply"
-                    )}
-                  </Button>
-                </div>
-                {couponError && (
-                  <p className="text-sm text-red-500 mt-1">{couponError}</p>
-                )}
+
                 {discountDetails && (
-                  <p className="text-sm text-green-600 mt-1">
-                    You're saving ₹{discountDetails.discountApplied} with this coupon!
-                  </p>
+                  <div className="flex justify-between items-center text-green-600 text-sm">
+                    <span className="font-medium flex items-center">
+                      <Sparkles className="mr-1 h-4 w-4" />
+                      Coupon Discount ({discountDetails.percentOff}% off)
+                    </span>
+                    <span className="font-semibold">-₹ {discountDetails.discountApplied}</span>
+                  </div>
                 )}
+
+                {discountDetails && <div className="h-px bg-gray-200 my-1" />}
+
+                <div className="flex justify-between items-center font-bold text-base">
+                  <span>Total</span>
+                  <span>₹ {discountDetails ? discountDetails.finalAmount : selectedPlanForCheckout?.plan_total_price}</span>
+                </div>
               </div>
 
-              <div>
-                <label htmlFor="gstin" className="text-sm font-medium block mb-1">GSTIN (Optional)</label>
-                <Input
-                  id="gstin"
-                  placeholder="Enter GSTIN number"
-                  value={gstin}
-                  onChange={(e) => setGstin(e.target.value)}
-                  className="w-full"
-                />
+              <div className="h-px bg-gray-200" />
+
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="coupon" className="text-sm font-medium block mb-1">Coupon Code</label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        id="coupon"
+                        placeholder="Enter promo code"
+                        value={couponCode}
+                        onChange={(e) => {
+                          setCouponCode(e.target.value);
+                          if (couponError) setCouponError("");
+                        }}
+                        className={`pr-8 text-sm ${couponError ? "border-red-500 focus-visible:ring-red-500" : ""} ${discountDetails ? "border-green-500 focus-visible:ring-green-500" : ""}`}
+                        disabled={discountDetails !== null || couponLoading}
+                      />
+                      {couponCode && !discountDetails && (
+                        <button
+                          onClick={clearCoupon}
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          type="button"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                      {discountDetails && (
+                        <Check className="absolute right-2 top-1/2 transform -translate-y-1/2 text-green-500 h-4 w-4" />
+                      )}
+                    </div>
+                    <Button
+                      onClick={applyCoupon}
+                      disabled={!couponCode || couponLoading || discountDetails !== null}
+                      variant={discountDetails ? "outline" : "default"}
+                      className={`text-sm ${discountDetails ? "border-green-500 text-green-500" : ""}`}
+                    >
+                      {couponLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : discountDetails ? (
+                        "Applied"
+                      ) : (
+                        "Apply"
+                      )}
+                    </Button>
+                  </div>
+                  {couponError && <p className="text-xs text-red-500 mt-1">{couponError}</p>}
+                  {discountDetails && (
+                    <p className="text-xs text-green-600 mt-1">
+                      You saved ₹{discountDetails.discountApplied}!
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="gstin" className="text-sm font-medium block mb-1">GSTIN (Optional)</label>
+                  <Input
+                    id="gstin"
+                    placeholder="Enter GSTIN number"
+                    value={gstin}
+                    onChange={(e) => setGstin(e.target.value)}
+                    className="w-full text-sm"
+                  />
+                </div>
               </div>
-            </div>
-          </CardContent>
-          
-          <CardFooter>
-            <Button 
-              onClick={proceedToPayment} 
-              disabled={loading}
-              className="w-full gap-1"
-            >
-              {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  Pay Now <ArrowRight className="h-4 w-4" />
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+            </CardContent>
+
+            <CardFooter>
+              <Button
+                onClick={proceedToPayment}
+                disabled={loading}
+                className="w-full gap-1 text-sm"
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    Pay Now <ArrowRight className="h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-center">
-      <div className="container mx-auto px-4 flex flex-col items-center justify-center relative">
-        <h2 className="text-[1.65rem] text-center mb-4">Simple Pricing, Great Value</h2>
-        <p className="text-3xl font-semibold text-center mb-14">
+    <div className="flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-5xl">
+        <h2 className="text-xl sm:text-2xl md:text-[1.65rem] text-center mb-4 font-semibold">Simple Pricing, Great Value</h2>
+        <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-center mb-10 md:mb-14">
           Every plan offers complete <span className="text-foreground">features access</span>
         </p>
 
-        <div className="flex flex-col md:flex-row gap-10 justify-center items-center container relative">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 justify-items-center">
           {plans.map((plan) => (
             <Card
               key={plan._id}
-              className={`${plan.highlight || selectedPlan === plan.plan_name ? "border-primary" : ""} bg-card text-foreground w-[20rem] rounded-3xl p-2 ${plan.discount || selectedPlan === plan.plan_name ? "border-2 shadow-[0_8px_24px_rgba(119,_50,_187,_0.18)]" : "shadow-[0_8px_24px_rgba(0,_0,_0,_0.08)]"}`}
+              className={`${
+                plan.highlight || selectedPlan === plan.plan_name ? "border-primary" : ""
+              } bg-card text-foreground w-full max-w-[20rem] rounded-3xl p-2 ${
+                plan.discount || selectedPlan === plan.plan_name
+                  ? "border-2 shadow-[0_8px_24px_rgba(119,_50,_187,_0.18)]"
+                  : "shadow-[0_8px_24px_rgba(0,_0,_0,_0.08)]"
+              }`}
             >
               <CardHeader>
-                <CardTitle className="text-xl mb-2 font-medium">{plan.name}</CardTitle>
-                <div className="text-2xl font-semibold">
+                <CardTitle className="text-lg sm:text-xl mb-2 font-medium">{plan.name}</CardTitle>
+                <div className="text-xl sm:text-2xl font-semibold">
                   ₹ {plan.price}
-                  {plan.period && <span className="text-sm font-normal">/{plan.period}</span>}
+                  {plan.period && <span className="text-xs sm:text-sm font-normal">/{plan.period}</span>}
                 </div>
-                <div className="text-sm font-normal mt-1 text-gray-600">{plan.subtitle}</div>
+                <div className="text-xs sm:text-sm font-normal mt-1 text-gray-600">{plan.subtitle}</div>
                 {selectedPlan === plan.plan_name && (
-                  <div className="text-sm font-medium text-green-600 mt-2">You selected this plan</div>
+                  <div className="text-xs sm:text-sm font-medium text-green-600 mt-2">You selected this plan</div>
                 )}
               </CardHeader>
               <CardContent>
-                <ul className="space-y-3 mb-6">
+                <ul className="space-y-2 sm:space-y-3 mb-4 sm:mb-6 text-sm">
                   {plan.features.map((feature, index) => (
                     <li key={index} className="flex items-center">
                       <Check className="mr-2 h-3 w-3 outline-double outline-[#0ED991] text-background rounded bg-[#0ED991]" />
@@ -395,7 +409,7 @@ const SubscriptionPlan = ({ selectedPlan }) => {
               </CardContent>
               <CardFooter>
                 <Button
-                  className="w-full h-10 transition-all duration-300 hover:scale-105 active:scale-95"
+                  className="w-full h-10 text-sm transition-all duration-300 hover:scale-105 active:scale-95"
                   variant={plan.buttonVariant}
                   disabled={loading || (plan.plan_name === "one-week" && activePlan === "one-week")}
                   onClick={() => handleCheckout(plan)}

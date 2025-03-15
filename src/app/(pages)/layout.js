@@ -10,7 +10,7 @@ import Cookies from "js-cookie";
 import AnnouncementManager from "@/components/AnnouncementManager";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog"; // Import Dialog components from shadcn/ui
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import SubscriptionPlan from "@/components/cards/subsciption";
 
 export default function MainLayout({ children }) {
@@ -18,8 +18,8 @@ export default function MainLayout({ children }) {
   const [announcements, setAnnouncements] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [subscriptionData, setSubscriptionData] = useState(null);
-  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false); // State to control Dialog
-  const [selectedPlan, setSelectedPlan] = useState(null); // State to store selectedPlan
+  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
   const router = useRouter();
 
   const clearCookiesAndRedirect = useCallback(() => {
@@ -87,9 +87,8 @@ export default function MainLayout({ children }) {
       }
 
       const data = await response.json();
-      setSubscriptionData(data); // Store the complete subscription data
+      setSubscriptionData(data);
 
-      // Check if the subscription is expired
       const currentDate = new Date();
       const expiresAt = new Date(data.expiresAt);
 
@@ -153,13 +152,12 @@ export default function MainLayout({ children }) {
     return () => clearInterval(intervalId);
   }, []);
 
-  // Check for selectedPlan in localStorage on component mount
   useEffect(() => {
     const selectedPlanFromStorage = localStorage.getItem("selectedPlan");
     if (selectedPlanFromStorage) {
-      setSelectedPlan(selectedPlanFromStorage); // Set the selectedPlan state
-      setIsSubscriptionDialogOpen(true); // Open the Dialog
-      localStorage.removeItem("selectedPlan"); // Clear selectedPlan from localStorage
+      setSelectedPlan(selectedPlanFromStorage);
+      setIsSubscriptionDialogOpen(true);
+      localStorage.removeItem("selectedPlan");
     }
   }, []);
 
@@ -189,6 +187,11 @@ export default function MainLayout({ children }) {
     );
   }, []);
 
+  // Callback to close the dialog
+  const handleCloseDialog = () => {
+    setIsSubscriptionDialogOpen(false);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background">
       <AnnouncementManager
@@ -216,12 +219,12 @@ export default function MainLayout({ children }) {
         open={isSubscriptionDialogOpen}
         onOpenChange={(isOpen) => {
           if (!isOpen) {
-            setIsSubscriptionDialogOpen(false); // Close the Dialog
+            setIsSubscriptionDialogOpen(false);
           }
         }}
       >
         <DialogContent className="max-w-7xl">
-          <SubscriptionPlan selectedPlan={selectedPlan} />
+          <SubscriptionPlan selectedPlan={selectedPlan} onCloseDialog={handleCloseDialog} />
         </DialogContent>
       </Dialog>
     </div>

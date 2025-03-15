@@ -1,10 +1,10 @@
 import React, { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 
@@ -19,7 +19,7 @@ const FilterPopover = ({
   showPercentage = false,
 }) => {
   const [tempValue, setTempValue] = useState(value);
-  const popoverContentRef = useRef(null);
+  const dropdownContentRef = useRef(null);
 
   const handleDone = (e) => {
     e.preventDefault();
@@ -28,7 +28,7 @@ const FilterPopover = ({
     onOpenChange(false);
   };
 
-  // Prevent clicks inside the popover from closing it
+  // Prevent clicks inside the dropdown from closing it
   const handleContentClick = (e) => {
     e.stopPropagation();
   };
@@ -39,22 +39,22 @@ const FilterPopover = ({
   };
 
   return (
-    <Popover open={open} onOpenChange={onOpenChange}>
-      <PopoverTrigger asChild className="border-border bg-card">
+    <DropdownMenu open={open} onOpenChange={onOpenChange}>
+      <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="w-fit flex items-center gap-2 justify-between text-foreground h-8"
+          className="w-fit flex items-center gap-2 justify-between text-foreground h-8 border-border bg-card"
         >
           {title}
           <ChevronDown className="h-4 w-4 text-foreground/65" />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent 
-        className="w-80 p-4" 
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="w-80 p-4 z-50 bg-card border rounded-md shadow-lg"
         align="start"
         onClick={handleContentClick}
       >
-        <div className="space-y-6" ref={popoverContentRef}>
+        <div className="space-y-6" ref={dropdownContentRef}>
           <h4 className="font-medium leading-none">{title}</h4>
           <div className="flex flex-col gap-6">
             <div className="relative pt-8 pb-2">
@@ -109,15 +109,15 @@ const FilterPopover = ({
             </div>
             <Button
               onClick={handleDone}
-              className="w-full mt-4 z-10"
+              className="w-full mt-4"
               variant="default"
             >
               Done
             </Button>
           </div>
         </div>
-      </PopoverContent>
-    </Popover>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

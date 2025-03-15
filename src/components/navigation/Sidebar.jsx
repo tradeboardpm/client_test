@@ -10,7 +10,7 @@ import Image from "next/image";
 import { usePointsStore } from "@/stores/points-store";
 import SubscriptionPlan from "@/components/cards/subsciption";
 import Cookies from "js-cookie";
-import { toast } from "sonner"; // Assuming you’re using sonner for toasts
+import { toast } from "sonner";
 
 export default function Sidebar({ isOpen }) {
   const pathname = usePathname();
@@ -60,7 +60,7 @@ export default function Sidebar({ isOpen }) {
     return () => window.removeEventListener("resize", checkOverflow);
   }, []);
 
-  // Function to clear cookies and redirect (example implementation)
+  // Function to clear cookies and redirect
   const clearCookiesAndRedirect = useCallback(() => {
     Cookies.remove("token");
     Cookies.remove("subscription");
@@ -95,19 +95,13 @@ export default function Sidebar({ isOpen }) {
       }
 
       const data = await response.json();
-      console.log("Subscription data:", data); // Debug API response
-
       const currentDate = new Date();
       const expiresAt = new Date(data.expiresAt);
 
-      // Logic to determine if upgrade card should be shown
       const isWeeklyPlan = data.plan === "one-week";
       const isExpired = expiresAt < currentDate;
 
-      // Show card if plan is weekly or subscription is expired
       setNeedsUpgrade(isWeeklyPlan || isExpired);
-
-      // Optional: Update cookies for other uses
       Cookies.set("subscription", String(!isExpired), { expires: 7 });
       Cookies.set("plan", data.plan, { expires: 7 });
 
@@ -117,7 +111,7 @@ export default function Sidebar({ isOpen }) {
     } catch (error) {
       console.error("Subscription check error:", error);
       toast.error("Failed to check subscription status. Please try again.");
-      setNeedsUpgrade(true); // Show card on error as a fallback
+      setNeedsUpgrade(true);
     }
   }, [clearCookiesAndRedirect]);
 
@@ -172,10 +166,8 @@ export default function Sidebar({ isOpen }) {
     },
   ];
 
-  // Determine if the screen is small
   const isSmallScreen = windowWidth < 768;
 
-  // Get sidebar classes based on state
   const getSidebarClasses = () => {
     if (isSmallScreen) {
       return `fixed inset-y-0 left-0 transform ${
@@ -186,6 +178,11 @@ export default function Sidebar({ isOpen }) {
     return `relative transform translate-x-0 ${
       isCollapsed ? "lg:w-16 md:w-16" : "lg:w-[14.5rem] md:w-[14.5rem]"
     } transition-all duration-200 ease-in-out z-0`;
+  };
+
+  // Callback to close the dialog
+  const handleCloseDialog = () => {
+    setShowUpgradeDialog(false);
   };
 
   return (
@@ -314,7 +311,7 @@ export default function Sidebar({ isOpen }) {
 
       <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
         <DialogContent className="sm:max-w-7xl">
-          <SubscriptionPlan />
+          <SubscriptionPlan onCloseDialog={handleCloseDialog} />
         </DialogContent>
       </Dialog>
     </>

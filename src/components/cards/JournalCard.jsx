@@ -137,7 +137,7 @@ const JournalCard = ({
             size="icon"
             variant="destructive"
             onClick={handleDeleteClick}
-            className="absolute top-0 left-0 z-10 hover:scale-110 rounded-none rounded-tl-lg opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-br-3xl border-t-0 border-l-0 delete-button"
+            className="absolute top-0 left-0  hover:scale-110 rounded-none rounded-tl-lg opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-br-3xl border-t-0 border-l-0 delete-button"
           >
             <Trash2 className="w-4 h-4 text-white" />
           </Button>

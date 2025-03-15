@@ -356,6 +356,11 @@ export default function AccountPage() {
   };
 
 
+    // Callback to close the dialog
+  const handleCloseDialog = () => {
+    setShowUpgradeDialog(false);
+  };
+
 
   const formatPlanName = (plan) => {
     switch (plan) {
@@ -967,7 +972,7 @@ export default function AccountPage() {
 
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
         <DialogContent className="sm:max-w-7xl">
-          <SubscriptionPlan />
+          <SubscriptionPlan onCloseDialog={handleCloseDialog} />
         </DialogContent>
       </Dialog>
       </div>

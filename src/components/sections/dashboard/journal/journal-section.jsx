@@ -31,12 +31,11 @@ const DeleteConfirmationDialog = ({
 }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent >
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Image</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this image? This action cannot be
-            undone.
+            Are you sure you want to delete this image? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -62,8 +61,7 @@ const DeleteConfirmationDialog = ({
 };
 
 const ImageDialog = ({ isOpen, onClose, imageUrl, onDelete, isDeleting }) => {
-  const [showDeleteConfirmation, setShowDeleteConfirmation] =
-    React.useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = React.useState(false);
 
   const handleDelete = () => {
     setShowDeleteConfirmation(true);
@@ -134,38 +132,33 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   const [files, setFiles] = useState([]);
   const [deletingFileKey, setDeletingFileKey] = useState(null);
 
-  // Check subscription status from cookies
   useEffect(() => {
-    const subscriptionStatus = Cookies.get('subscription') === 'true';
+    const subscriptionStatus = Cookies.get("subscription") === "true";
     setHasSubscription(subscriptionStatus);
   }, []);
 
-  // Utility function to get UTC date
   const getUTCDate = (date) => {
     return new Date(
       Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
     );
   };
 
-  // Function to format date for title
   const getJournalTitle = () => {
     const today = new Date();
-    const isToday = 
+    const isToday =
       today.getDate() === selectedDate.getDate() &&
       today.getMonth() === selectedDate.getMonth() &&
       today.getFullYear() === selectedDate.getFullYear();
-    
+
     if (isToday) {
       return "Today's Journal";
     } else {
-      // Format: "12 Feb's Journal"
       const day = selectedDate.getDate();
-      const month = selectedDate.toLocaleString('default', { month: 'short' });
+      const month = selectedDate.toLocaleString("default", { month: "short" });
       return `${day} ${month}'s Journal`;
     }
   };
 
-  // Fetch journal data
   const fetchJournalData = async () => {
     setIsLoading(true);
     try {
@@ -180,7 +173,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
       );
 
       onUpdate?.();
-      onJournalChange?.()
+      onJournalChange?.();
       setJournal(response.data);
     } catch (error) {
       console.error("Error fetching journal data:", error);
@@ -190,7 +183,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     }
   };
 
-  // Save journal function
   const saveJournal = async (journalData) => {
     if (!journalData || !hasSubscription) return;
 
@@ -216,15 +208,13 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     }
   };
 
-  // Debounced save function
   const debouncedSaveJournal = useCallback(debounce(saveJournal, 5000), [
     selectedDate,
   ]);
 
-  // Update journal entries
   const handleChange = (e) => {
     if (!hasSubscription) return;
-    
+
     const { name, value } = e.target;
     const updatedJournal = {
       ...localJournal,
@@ -235,15 +225,14 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     debouncedSaveJournal(updatedJournal);
   };
 
-  // Handle blur event
   const handleBlur = () => {
     if (!hasSubscription) return;
-    
+
     debouncedSaveJournal.cancel();
     saveJournal(localJournal);
   };
 
-  // File upload handler
+  // Modified file upload handler to include localJournal data
   const handleFileUpload = async (e) => {
     if (!hasSubscription) return;
 
@@ -272,6 +261,10 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     formData.append("attachedFiles", file);
     const utcDate = getUTCDate(selectedDate);
     formData.append("date", utcDate.toISOString());
+    // Include current journal data
+    formData.append("note", localJournal.note);
+    formData.append("mistake", localJournal.mistake);
+    formData.append("lesson", localJournal.lesson);
 
     try {
       const token = Cookies.get("token");
@@ -294,7 +287,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     }
   };
 
-  // File deletion handler
   const handleFileDelete = async (fileKey) => {
     if (!hasSubscription) return;
 

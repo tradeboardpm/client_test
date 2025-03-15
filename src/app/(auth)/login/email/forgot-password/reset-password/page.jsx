@@ -14,6 +14,7 @@ function SetNewPasswordContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [passwordsMatch, setPasswordsMatch] = useState(true);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -27,6 +28,15 @@ function SetNewPasswordContent() {
       router.push("/login/email/forgot-password");
     }
   }, [resetToken, email, router]);
+
+  // Add useEffect to check password matching in real-time
+  useEffect(() => {
+    if (newPassword && confirmPassword) {
+      setPasswordsMatch(newPassword === confirmPassword);
+    } else {
+      setPasswordsMatch(true); // Reset when either field is empty
+    }
+  }, [newPassword, confirmPassword]);
 
   const validatePassword = (password) => {
     return password.length >= 8;
@@ -101,7 +111,9 @@ function SetNewPasswordContent() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               required
-              className="pr-10"
+              className={`pr-10 ${
+                !passwordsMatch && confirmPassword && "border-red-500"
+              }`}
             />
             <Button
               type="button"
@@ -127,7 +139,9 @@ function SetNewPasswordContent() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              className="pr-10"
+              className={`pr-10 ${
+                !passwordsMatch && confirmPassword && "border-red-500"
+              }`}
             />
             <Button
               type="button"
@@ -143,11 +157,20 @@ function SetNewPasswordContent() {
               )}
             </Button>
           </div>
+          {!passwordsMatch && confirmPassword && (
+            <p className="text-red-500 text-sm">Passwords do not match</p>
+          )}
         </div>
         <Button
           type="submit"
           className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-          disabled={isLoading}
+          disabled={
+            isLoading ||
+            !newPassword ||
+            !confirmPassword ||
+            !passwordsMatch ||
+            !validatePassword(newPassword)
+          }
         >
           {isLoading ? "Updating Password..." : "Update Password"}
         </Button>
