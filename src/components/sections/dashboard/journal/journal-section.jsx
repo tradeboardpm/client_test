@@ -11,7 +11,14 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { X, ImagePlus, Info, Loader2, ChevronDown, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -131,6 +138,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   });
   const [files, setFiles] = useState([]);
   const [deletingFileKey, setDeletingFileKey] = useState(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     const subscriptionStatus = Cookies.get("subscription") === "true";
@@ -172,12 +180,27 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         }
       );
 
+      setJournal(response.data);
+      if (isInitialLoad) {
+        setLocalJournal({
+          note: response.data?.note || "",
+          mistake: response.data?.mistake || "",
+          lesson: response.data?.lesson || "",
+        });
+        setFiles(response.data?.attachedFiles || []);
+        setIsInitialLoad(false);
+      }
+
       onUpdate?.();
       onJournalChange?.();
-      setJournal(response.data);
     } catch (error) {
       console.error("Error fetching journal data:", error);
       setJournal(null);
+      if (isInitialLoad) {
+        setLocalJournal({ note: "", mistake: "", lesson: "" });
+        setFiles([]);
+        setIsInitialLoad(false);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -200,7 +223,23 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      setJournal(response.data);
+
+      // Handle response properly
+      if (response.data.message === "Empty journal entry deleted") {
+        setJournal(null);
+        setLocalJournal({ note: "", mistake: "", lesson: "" });
+        setFiles([]);
+      } else if (response.data.message === "No journal entry created") {
+        setJournal(null);
+      } else {
+        setJournal(response.data.journal);
+        setLocalJournal({
+          note: response.data.journal.note || "",
+          mistake: response.data.journal.mistake || "",
+          lesson: response.data.journal.lesson || "",
+        });
+        setFiles(response.data.journal.attachedFiles || []);
+      }
     } catch (error) {
       console.error("Error saving journal:", error);
     } finally {
@@ -210,6 +249,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
 
   const debouncedSaveJournal = useCallback(debounce(saveJournal, 5000), [
     selectedDate,
+    hasSubscription,
   ]);
 
   const handleChange = (e) => {
@@ -218,7 +258,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     const { name, value } = e.target;
     const updatedJournal = {
       ...localJournal,
-      [name]: value || " ",
+      [name]: value,
     };
 
     setLocalJournal(updatedJournal);
@@ -232,7 +272,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     saveJournal(localJournal);
   };
 
-  // Modified file upload handler to include localJournal data
   const handleFileUpload = async (e) => {
     if (!hasSubscription) return;
 
@@ -261,7 +300,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     formData.append("attachedFiles", file);
     const utcDate = getUTCDate(selectedDate);
     formData.append("date", utcDate.toISOString());
-    // Include current journal data
     formData.append("note", localJournal.note);
     formData.append("mistake", localJournal.mistake);
     formData.append("lesson", localJournal.lesson);
@@ -279,7 +317,13 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         }
       );
 
-      setJournal(response.data);
+      setJournal(response.data.journal);
+      setLocalJournal({
+        note: response.data.journal.note || "",
+        mistake: response.data.journal.mistake || "",
+        lesson: response.data.journal.lesson || "",
+      });
+      setFiles(response.data.journal.attachedFiles || []);
     } catch (error) {
       console.error("Error uploading file:", error);
     } finally {
@@ -314,19 +358,9 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   };
 
   useEffect(() => {
+    setIsInitialLoad(true);
     fetchJournalData();
   }, [selectedDate]);
-
-  useEffect(() => {
-    if (journal) {
-      setLocalJournal({
-        note: journal.note || "",
-        mistake: journal.mistake || "",
-        lesson: journal.lesson || "",
-      });
-      setFiles(journal.attachedFiles || []);
-    }
-  }, [journal]);
 
   useEffect(() => {
     return () => {
