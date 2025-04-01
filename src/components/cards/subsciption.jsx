@@ -1,6 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import PropTypes from "prop-types";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,7 +19,7 @@ import { Check, Loader2, Tag, X, ArrowRight, Sparkles, ArrowLeft } from "lucide-
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
+const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -27,32 +28,39 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
   const [plans, setPlans] = useState([]);
   const [couponCode, setCouponCode] = useState("");
   const [gstin, setGstin] = useState("");
-  const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(null);
   const [discountDetails, setDiscountDetails] = useState(null);
   const [couponError, setCouponError] = useState("");
   const [showCheckout, setShowCheckout] = useState(false);
+
   const router = useRouter();
   const { toast } = useToast();
   const isRazorpayLoaded = useRazorpay();
+
+  // Memoize derived values
+  const finalAmount = useMemo(() => 
+    discountDetails ? discountDetails.finalAmount : selectedPlan?.plan_total_price, 
+    [discountDetails, selectedPlan]
+  );
 
   useEffect(() => {
     const token = Cookies.get("token");
     if (!token) {
       router.push("/login");
-    } else {
-      setIsLoggedIn(true);
-      setActivePlan(Cookies.get("plan"));
-      fetchUserProfile(token);
-      fetchPlans();
+      return;
     }
+    setIsLoggedIn(true);
+    setActivePlan(Cookies.get("plan"));
+    fetchUserProfile(token);
+    fetchPlans();
   }, [router]);
 
   const fetchUserProfile = async (token) => {
     try {
-      const response = await axios.get(`${API_URL}/user/profile`, {
+      const { data } = await axios.get(`${API_URL}/user/profile`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUserProfile(response.data);
+      setUserProfile(data);
     } catch (error) {
       toast({ title: "Error", description: "Failed to fetch user profile.", variant: "destructive" });
     }
@@ -60,38 +68,31 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
 
   const fetchPlans = async () => {
     try {
-      const response = await axios.get(`${API_URL}/plans`);
-      setPlans(response.data.plans);
+      const { data } = await axios.get(`${API_URL}/plans`);
+      setPlans(data.plans);
     } catch (error) {
       toast({ title: "Error", description: "Failed to fetch plans.", variant: "destructive" });
     }
   };
 
-  const handlePaymentSuccess = async (response, plan) => {
+  const handlePaymentSuccess = async (response, planName) => {
+    setLoading(true);
     try {
       const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = response;
       const token = Cookies.get("token");
-
-      const result = await axios.post(
+      const { data } = await axios.post(
         `${API_URL}/payment/payment-success`,
-        {
-          razorpay_order_id,
-          razorpay_payment_id,
-          razorpay_signature,
-          plan,
-          couponCode,
-          gstin,
-        },
+        { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan: planName, couponCode, gstin },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      if (result.data.success) {
-        router.push(`/payment-success?reference=${result.data.reference}&plan=${result.data.plan}`);
+      if (data.success) {
+        router.push(`/payment-success?reference=${data.reference}&plan=${data.plan}`);
       } else {
-        throw new Error("Payment verification failed on server.");
+        throw new Error(data.error || "Payment verification failed.");
       }
     } catch (error) {
-      toast({ title: "Error", description: "Payment verification failed.", variant: "destructive" });
+      toast({ title: "Error", description: error.message || "Payment verification failed.", variant: "destructive" });
     } finally {
       setLoading(false);
       setShowCheckout(false);
@@ -104,27 +105,22 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
       return;
     }
 
+    setCouponLoading(true);
+    setCouponError("");
     try {
-      setCouponLoading(true);
-      setCouponError("");
       const token = Cookies.get("token");
       const { data } = await axios.post(
         `${API_URL}/payment/checkout`,
-        {
-          amount: selectedPlanForCheckout.plan_total_price,
-          plan: selectedPlanForCheckout.plan_name,
-          couponCode,
-          gstin,
-        },
+        { amount: selectedPlan.plan_total_price, plan: selectedPlan.plan_name, couponCode, gstin },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (data.success) {
         setDiscountDetails({
-          originalPrice: selectedPlanForCheckout.plan_total_price,
+          originalPrice: selectedPlan.plan_total_price,
           discountApplied: data.discountApplied,
           finalAmount: data.finalAmount,
-          percentOff: Math.round((data.discountApplied / selectedPlanForCheckout.plan_total_price) * 100),
+          percentOff: Math.round((data.discountApplied / selectedPlan.plan_total_price) * 100),
         });
         toast({ title: "Success", description: "Coupon applied successfully!" });
       } else {
@@ -132,8 +128,7 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
       }
     } catch (error) {
       setDiscountDetails(null);
-      const errorMessage = error.response?.data?.message || error.message || "Invalid coupon code";
-      setCouponError(errorMessage === "Request failed with status code 400" ? "This coupon code is not valid" : errorMessage);
+      setCouponError(error.response?.data?.error || error.message || "Invalid coupon code");
     } finally {
       setCouponLoading(false);
     }
@@ -150,31 +145,24 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
       router.push("/dashboard");
       return;
     }
-
-    setSelectedPlanForCheckout(plan);
+    setSelectedPlan(plan);
     clearCoupon();
     setShowCheckout(true);
   };
 
   const proceedToPayment = async () => {
     if (!isRazorpayLoaded || !window.Razorpay) {
-      toast({ title: "Error", description: "Payment system not ready.", variant: "destructive" });
+      toast({ title: "Error", description: "Payment system is not ready. Please try again later.", variant: "destructive" });
       return;
     }
 
     setLoading(true);
-
     try {
       const token = Cookies.get("token");
       const { data: { key } } = await axios.get(`${API_URL}/get-key`);
-      const { data: { order, finalAmount } } = await axios.post(
+      const { data: { order } } = await axios.post(
         `${API_URL}/payment/checkout`,
-        {
-          amount: selectedPlanForCheckout.plan_total_price,
-          plan: selectedPlanForCheckout.plan_name,
-          couponCode: discountDetails ? couponCode : "",
-          gstin,
-        },
+        { amount: selectedPlan.plan_total_price, plan: selectedPlan.plan_name, couponCode: discountDetails ? couponCode : "", gstin },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
@@ -184,37 +172,27 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
         currency: "INR",
         image: "/tb_logo.svg",
         name: "Tradeboard",
-        description: `${selectedPlanForCheckout.plan_name} Subscription`,
+        description: `${selectedPlan.plan_name} Subscription`,
         order_id: order.id,
-        handler: (response) => handlePaymentSuccess(response, selectedPlanForCheckout.plan_name),
-        prefill: {
-          name: userProfile?.name || "",
-          email: userProfile?.email || "",
-          contact: userProfile?.phone?.replace("+91", "") || "",
-        },
-        notes: {
-          gstin: gstin || "Not Provided",
-        },
+        handler: (response) => handlePaymentSuccess(response, selectedPlan.plan_name),
+        prefill: { name: userProfile?.name || "", email: userProfile?.email || "", contact: userProfile?.phone?.replace("+91", "") || "" },
+        notes: { gstin: gstin || "Not Provided" },
         theme: { color: "#a073f0" },
       };
 
       const paymentObject = new window.Razorpay(options);
-      paymentObject.on("payment.failed", (response) => {
-        toast({ title: "Payment Failed", description: response.error.description, variant: "destructive" });
-        setLoading(false);
-      });
-      // Close the dialog before opening Razorpay
+      paymentObject.on("payment.failed", (response) =>
+        toast({ title: "Payment Failed", description: response.error.description, variant: "destructive" })
+      );
       if (onCloseDialog) onCloseDialog();
       paymentObject.open();
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || "Something went wrong";
       toast({
         title: "Payment Error",
-        description: errorMessage === "Request failed with status code 400"
-          ? "Unable to process payment. Please try again."
-          : errorMessage,
+        description: error.responseasionallydata?.error || error.message || "Unable to process payment. Please try again.",
         variant: "destructive",
       });
+    } finally {
       setLoading(false);
     }
   };
@@ -229,23 +207,23 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
 
   if (showCheckout) {
     return (
-      <div className="flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fade-in">
         <div className="w-full max-w-md">
           <Button
             variant="ghost"
             onClick={goBackToPlans}
-            className="mb-6 text-gray-600 flex items-center"
+            className="mb-6 text-gray-600 flex items-center hover:text-gray-800 transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Plans
           </Button>
 
           <div className="mb-6">
-            <h2 className="text-2xl font-semibold mb-2">Checkout: {selectedPlanForCheckout?.name}</h2>
-            <p className="text-gray-600 text-sm">Complete your purchase or apply a coupon code for savings.</p>
+            <h2 className="text-2xl font-semibold mb-2">Checkout: {selectedPlan?.name}</h2>
+            <p className="text-gray-600 text-sm">Complete your purchase or apply a coupon for discounts.</p>
           </div>
 
-          <Card className="border shadow-md">
+          <Card className="border shadow-md rounded-xl">
             <CardHeader>
               <div className="flex justify-between items-center">
                 <CardTitle className="text-lg">Order Summary</CardTitle>
@@ -257,7 +235,7 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-sm">
                   <span className="font-medium">Plan Price</span>
-                  <span className="font-semibold">₹ {selectedPlanForCheckout?.plan_total_price}</span>
+                  <span className="font-semibold">₹ {selectedPlan?.plan_total_price}</span>
                 </div>
 
                 {discountDetails && (
@@ -266,7 +244,7 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
                       <Sparkles className="mr-1 h-4 w-4" />
                       Coupon Discount ({discountDetails.percentOff}% off)
                     </span>
-                    <span className="font-semibold">-₹ {discountDetails.discountApplied}</span>
+                    <span className="font-semibold">-₹ {discountDetails.discountApplied.toFixed(2)}</span>
                   </div>
                 )}
 
@@ -274,8 +252,14 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
 
                 <div className="flex justify-between items-center font-bold text-base">
                   <span>Total</span>
-                  <span>₹ {discountDetails ? discountDetails.finalAmount : selectedPlanForCheckout?.plan_total_price}</span>
+                  <span>₹ {finalAmount.toFixed(2)}</span>
                 </div>
+
+                {finalAmount < 1 && (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    Note: Minimum payable amount is ₹1 as per payment gateway rules.
+                  </p>
+                )}
               </div>
 
               <div className="h-px bg-gray-200" />
@@ -315,20 +299,12 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
                       variant={discountDetails ? "outline" : "default"}
                       className={`text-sm ${discountDetails ? "border-green-500 text-green-500" : ""}`}
                     >
-                      {couponLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : discountDetails ? (
-                        "Applied"
-                      ) : (
-                        "Apply"
-                      )}
+                      {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : discountDetails ? "Applied" : "Apply"}
                     </Button>
                   </div>
                   {couponError && <p className="text-xs text-red-500 mt-1">{couponError}</p>}
                   {discountDetails && (
-                    <p className="text-xs text-green-600 mt-1">
-                      You saved ₹{discountDetails.discountApplied}!
-                    </p>
+                    <p className="text-xs text-green-600 mt-1">You saved ₹{discountDetails.discountApplied.toFixed(2)}!</p>
                   )}
                 </div>
 
@@ -349,15 +325,9 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
               <Button
                 onClick={proceedToPayment}
                 disabled={loading}
-                className="w-full gap-1 text-sm"
+                className="w-full gap-1 text-sm transition-all hover:scale-105 active:scale-95"
               >
-                {loading ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    Pay Now <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <>Pay Now <ArrowRight className="h-4 w-4" /></>}
               </Button>
             </CardFooter>
           </Card>
@@ -367,22 +337,20 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
   }
 
   return (
-    <div className="flex items-center justify-center p-4 sm:p-6 lg:p-8">
+    <div className="flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fade-in">
       <div className="w-full max-w-5xl">
         <h2 className="text-xl sm:text-2xl md:text-[1.65rem] text-center mb-4 font-semibold">Simple Pricing, Great Value</h2>
         <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-center mb-10 md:mb-14">
-          Every plan offers complete <span className="text-foreground">features access</span>
+          Every plan offers complete <span className="text-foreground">feature access</span>
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 justify-items-center">
           {plans.map((plan) => (
             <Card
               key={plan._id}
-              className={`${
-                plan.highlight || selectedPlan === plan.plan_name ? "border-primary" : ""
-              } bg-card text-foreground w-full max-w-[20rem] rounded-3xl p-2 ${
-                plan.discount || selectedPlan === plan.plan_name
-                  ? "border-2 shadow-[0_8px_24px_rgba(119,_50,_187,_0.18)]"
+              className={`w-full max-w-[20rem] rounded-3xl p-2 transition-all duration-300 hover:shadow-lg ${
+                plan.highlight || initialSelectedPlan === plan.plan_name
+                  ? "border-primary border-2 shadow-[0_8px_24px_rgba(119,_50,_187,_0.18)]"
                   : "shadow-[0_8px_24px_rgba(0,_0,_0,_0.08)]"
               }`}
             >
@@ -393,7 +361,7 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
                   {plan.period && <span className="text-xs sm:text-sm font-normal">/{plan.period}</span>}
                 </div>
                 <div className="text-xs sm:text-sm font-normal mt-1 text-gray-600">{plan.subtitle}</div>
-                {selectedPlan === plan.plan_name && (
+                {initialSelectedPlan === plan.plan_name && (
                   <div className="text-xs sm:text-sm font-medium text-green-600 mt-2">You selected this plan</div>
                 )}
               </CardHeader>
@@ -414,11 +382,7 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
                   disabled={loading || (plan.plan_name === "one-week" && activePlan === "one-week")}
                   onClick={() => handleCheckout(plan)}
                 >
-                  {loading && plan.plan_name === activePlan ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    plan.buttonText
-                  )}
+                  {loading && plan.plan_name === activePlan ? <Loader2 className="h-4 w-4 animate-spin" /> : plan.buttonText}
                 </Button>
               </CardFooter>
             </Card>
@@ -427,6 +391,12 @@ const SubscriptionPlan = ({ selectedPlan, onCloseDialog }) => {
       </div>
     </div>
   );
+};
+
+// Optional: Add PropTypes for better type checking
+SubscriptionPlan.propTypes = {
+  selectedPlan: PropTypes.string,
+  onCloseDialog: PropTypes.func,
 };
 
 export default SubscriptionPlan;

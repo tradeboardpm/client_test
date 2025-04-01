@@ -87,7 +87,6 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
   const handleBulkAddRules = async (ruleDescriptions) => {
     if (!hasSubscription || !ruleDescriptions || ruleDescriptions.length === 0) return;
 
-    // Filter out invalid rules before sending
     const validRules = ruleDescriptions
       .map((desc) => (desc && typeof desc === "string" ? desc.trim() : ""))
       .filter((desc) => desc.length > 0);
@@ -260,24 +259,22 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     setIsLoadingAction((prev) => ({ ...prev, followAllRules: true }));
     try {
       const token = Cookies.get("token");
-      await Promise.all(
-        rules.map((rule) =>
-          axios.post(
-            `${API_URL}/rules/follow-unfollow`,
-            {
-              ruleId: rule._id,
-              date: selectedDate.toISOString(),
-              isFollowed,
-            },
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          )
-        )
+      const response = await axios.post(
+        `${API_URL}/rules/follow-unfollow-all`,
+        {
+          date: selectedDate.toISOString(),
+          isFollowed,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       setRules((prevRules) =>
-        prevRules.map((rule) => ({ ...rule, isFollowed }))
+        prevRules.map((rule) => ({
+          ...rule,
+          isFollowed: response.data.rules.find(r => r._id === rule._id)?.isFollowed || isFollowed,
+        }))
       );
       onRulesChange?.();
       onUpdate?.();
