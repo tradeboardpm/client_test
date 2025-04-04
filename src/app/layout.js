@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
       <head>
         <script src="https://accounts.google.com/gsi/client" async defer />
       </head>
-      <body className="antialiased ">
+      <body className=" subpixel-antialiased">
         <ToastProvider>
           {/* <ComingSoonOverlay /> */}
           {children}

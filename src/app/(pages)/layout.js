@@ -23,13 +23,20 @@ export default function MainLayout({ children }) {
   const router = useRouter();
 
   const clearCookiesAndRedirect = useCallback(() => {
-    Cookies.remove("userName");
-    Cookies.remove("token");
-    Cookies.remove("expiry");
-    Cookies.remove("userEmail");
-    Cookies.remove("userId");
-    Cookies.remove("subscription");
-    Cookies.remove("plan");
+    // Set theme to light mode before clearing storage
+    document.documentElement.classList.remove('dark');
+    localStorage.setItem('theme', 'light');
+    
+    // Clear all cookies
+    Object.keys(Cookies.get()).forEach(cookieName => {
+      Cookies.remove(cookieName);
+    });
+    
+    // Clear localStorage except for theme
+    const theme = localStorage.getItem('theme');
+    localStorage.clear();
+    localStorage.setItem('theme', theme || 'light');
+    
     router.push("/");
   }, [router]);
 
@@ -170,14 +177,30 @@ export default function MainLayout({ children }) {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      clearCookiesAndRedirect();
+      
+      // Set theme to light mode before clearing storage
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      
+      // Clear all cookies
+      Object.keys(Cookies.get()).forEach(cookieName => {
+        Cookies.remove(cookieName);
+      });
+      
+      // Clear localStorage except for theme
+      const theme = localStorage.getItem('theme');
+      localStorage.clear();
+      localStorage.setItem('theme', theme || 'light');
+      
+      router.push("/");
       toast.success("Logged out successfully");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Failed to logout. Please try again.");
     }
   };
+  
+
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 

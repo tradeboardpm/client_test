@@ -322,11 +322,21 @@ export default function AccountPage() {
   const handleLogout = async () => {
     try {
       await api.post("/auth/logout");
-      Cookies.remove("token");
-      Cookies.remove("expiry");
-      Cookies.remove("userName");
-      Cookies.remove("userEmail");
-      Cookies.remove("userId");
+      
+      // Set theme to light mode before clearing storage
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      
+      // Clear all cookies
+      Object.keys(Cookies.get()).forEach(cookieName => {
+        Cookies.remove(cookieName);
+      });
+      
+      // Clear localStorage except for theme
+      const theme = localStorage.getItem('theme');
+      localStorage.clear();
+      localStorage.setItem('theme', theme || 'light');
+      
       router.push("/login");
     } catch (error) {
       toast({
@@ -336,15 +346,25 @@ export default function AccountPage() {
       });
     }
   };
-
+  
   const handleLogoutAll = async () => {
     try {
       await api.post("/auth/logout-all");
-      Cookies.remove("token");
-      Cookies.remove("expiry");
-      Cookies.remove("userName");
-      Cookies.remove("userEmail");
-      Cookies.remove("userId");
+      
+      // Set theme to light mode before clearing storage
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+      
+      // Clear all cookies
+      Object.keys(Cookies.get()).forEach(cookieName => {
+        Cookies.remove(cookieName);
+      });
+      
+      // Clear localStorage except for theme
+      const theme = localStorage.getItem('theme');
+      localStorage.clear();
+      localStorage.setItem('theme', theme || 'light');
+      
       router.push("/login");
     } catch (error) {
       toast({
@@ -354,7 +374,6 @@ export default function AccountPage() {
       });
     }
   };
-
 
     // Callback to close the dialog
   const handleCloseDialog = () => {

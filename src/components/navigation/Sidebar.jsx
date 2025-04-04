@@ -101,7 +101,8 @@ export default function Sidebar({ isOpen }) {
       const isWeeklyPlan = data.plan === "one-week";
       const isExpired = expiresAt < currentDate;
 
-      setNeedsUpgrade(isWeeklyPlan || isExpired);
+      setNeedsUpgrade(isExpired);
+      // setNeedsUpgrade(isWeeklyPlan || isExpired);
       Cookies.set("subscription", String(!isExpired), { expires: 7 });
       Cookies.set("plan", data.plan, { expires: 7 });
 

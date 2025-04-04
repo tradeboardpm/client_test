@@ -189,7 +189,7 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
     } catch (error) {
       toast({
         title: "Payment Error",
-        description: error.responseasionallydata?.error || error.message || "Unable to process payment. Please try again.",
+        description: error.response?.data?.error || error.message || "Unable to process payment. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -345,7 +345,7 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 justify-items-center">
-          {plans.map((plan) => (
+          {plans.map((plan, index) => (
             <Card
               key={plan._id}
               className={`w-full max-w-[20rem] rounded-3xl p-2 transition-all duration-300 hover:shadow-lg ${
@@ -355,9 +355,11 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
               }`}
             >
               <CardHeader>
-                <CardTitle className="text-lg sm:text-xl mb-2 font-medium">{plan.name}</CardTitle>
+                <CardTitle className="text-lg sm:text-xl mb-2 font-medium">
+                  {plan.name} {index === 0 && <span className="text-green-600 text-xs font-normal">(Free)</span>}
+                </CardTitle>
                 <div className="text-xl sm:text-2xl font-semibold">
-                  ₹ {plan.price}
+                  {index === 0 ? "₹ 0" : `₹ ${plan.price}`}
                   {plan.period && <span className="text-xs sm:text-sm font-normal">/{plan.period}</span>}
                 </div>
                 <div className="text-xs sm:text-sm font-normal mt-1 text-gray-600">{plan.subtitle}</div>
@@ -378,11 +380,11 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
               <CardFooter>
                 <Button
                   className="w-full h-10 text-sm transition-all duration-300 hover:scale-105 active:scale-95"
-                  variant={plan.buttonVariant}
-                  disabled={loading || (plan.plan_name === "one-week" && activePlan === "one-week")}
+                  variant={index === 0 ? "outline" : plan.buttonVariant}
+                  disabled={index === 0 || loading || (plan.plan_name === "one-week" && activePlan === "one-week")}
                   onClick={() => handleCheckout(plan)}
                 >
-                  {loading && plan.plan_name === activePlan ? <Loader2 className="h-4 w-4 animate-spin" /> : plan.buttonText}
+                  {index === 0 ? "Free Plan" : loading && plan.plan_name === activePlan ? <Loader2 className="h-4 w-4 animate-spin" /> : plan.buttonText}
                 </Button>
               </CardFooter>
             </Card>
