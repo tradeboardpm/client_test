@@ -10,10 +10,12 @@ import Cookies from "js-cookie";
 import { Mail, Phone } from "lucide-react";
 import Image from "next/image";
 import { GoogleOAuthProvider, GoogleLogin } from "@react-oauth/google";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function LoginOptionsPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [showGoogleDialog, setShowGoogleDialog] = useState(false);
 
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
@@ -21,7 +23,7 @@ export default function LoginOptionsPage() {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/google-login`,
         {
-          token: credentialResponse.credential, // Send the ID token
+          token: credentialResponse.credential,
         },
         {
           headers: {
@@ -69,12 +71,14 @@ export default function LoginOptionsPage() {
       toast.error("Login failed. Please try again.");
     } finally {
       setIsLoading(false);
+      setShowGoogleDialog(false);
     }
   };
 
   const handleGoogleError = () => {
     toast.error("Google login failed");
     setIsLoading(false);
+    setShowGoogleDialog(false);
   };
 
   const CustomGoogleButton = ({ onClick }) => (
@@ -82,6 +86,24 @@ export default function LoginOptionsPage() {
       variant="ghost"
       className="w-full bg-[#F3F6F8] dark:bg-[#434445] justify-center border dark:border-[#303031] border-[#E7E7EA] font-medium text-[0.875rem] shadow-[0px_6px_16px_rgba(0,0,0,0.04)] py-[20px] hover:bg-[#E9EEF0] dark:hover:bg-[#4d4e4f]"
       onClick={onClick}
+      disabled={isLoading}
+    >
+      <Image
+        src="/images/google.svg"
+        alt="Google"
+        width={20}
+        height={20}
+        className="mr-2"
+      />
+      Log in with Google
+    </Button>
+  );
+
+  const DummyGoogleButton = () => (
+    <Button
+      variant="ghost"
+      className="w-full bg-[#F3F6F8] dark:bg-[#434445] justify-center border dark:border-[#303031] border-[#E7E7EA] font-medium text-[0.875rem] shadow-[0px_6px_16px_rgba(0,0,0,0.04)] py-[20px] hover:bg-[#E9EEF0] dark:hover:bg-[#4d4e4f]"
+      onClick={() => setShowGoogleDialog(true)}
       disabled={isLoading}
     >
       <Image
@@ -106,13 +128,7 @@ export default function LoginOptionsPage() {
             </p>
           </div>
           <div className="space-y-4">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap={false}
-              disabled={isLoading}
-              render={({ onClick }) => <CustomGoogleButton onClick={onClick} />}
-            />
+            <DummyGoogleButton />
 
             <Button
               variant="ghost"
@@ -148,6 +164,36 @@ export default function LoginOptionsPage() {
             <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-t-4 border-b-4 border-primary"></div>
           </div>
         )}
+
+        <Dialog open={showGoogleDialog} onOpenChange={setShowGoogleDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Continue with Google</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground">
+                By continuing with Google, you agree to our{" "}
+                <Link href="/terms" className="text-primary hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-primary hover:underline">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
+            </div>
+            <div className="pb-4">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap={false}
+                disabled={isLoading}
+                render={({ onClick }) => <CustomGoogleButton onClick={onClick} />}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </GoogleOAuthProvider>
   );

@@ -129,11 +129,16 @@ export default function AccountPage() {
       setUser(response.data);
       setPersonalForm(response.data);
       setIsGoogleUser(!!response.data.googleId);
+      
+      // Save user data to cookies
+      Cookies.set("userName", response.data.name || "", { expires: 7 });
+      Cookies.set("userEmail", response.data.email || "", { expires: 7 });
+      Cookies.set("userPhone", response.data.phone || "", { expires: 7 });
+      
     } catch (error) {
       toast({
         title: "Error",
-        description:
-          error.response?.data?.message || "Failed to fetch user data",
+        description: error.response?.data?.message || "Failed to fetch user data",
         variant: "destructive",
       });
     }

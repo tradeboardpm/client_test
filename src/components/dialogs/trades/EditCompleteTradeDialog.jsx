@@ -280,7 +280,7 @@ export function EditCompleteTradeDialog({
                 <div className="flex items-center space-x-2">
                   <Input
                     type="number"
-                    value={editedTrade.exchangeRate}
+                    value={editedTrade.exchangeRate.toFixed(2)}
                     onChange={(e) => {
                       const value = Math.max(
                         0,

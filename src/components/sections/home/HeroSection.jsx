@@ -82,9 +82,7 @@ const HeroSection = ({ heroSectionRef }) => {
             Trade Better With Discipline
           </h1>
           <span className="text-[1.4rem] max-w-7xl mx-auto">
-            We offer traders the tools to analyse their daily trading patterns
-            and learn from <br />
-            it to establish themselves as successful traders.
+          Tradeboard assists you to maintain discipline, track performance and achieve <br />consistent results through data-driven decisions.
           </span>
           <div className="bg-gradient-to-b from-transparent from-50% to-card to-50% p-3">
             <div className="relative w-full max-w-[58rem] mx-auto aspect-video">

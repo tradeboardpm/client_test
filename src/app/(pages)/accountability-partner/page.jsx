@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2 } from "lucide-react";
+import { Info, Trash2 } from "lucide-react";
 import {
   MultiSelector,
   MultiSelectorContent,
@@ -43,6 +43,8 @@ export default function AccountabilityPartner() {
     relation: "",
     shareFrequency: "weekly",
   });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [partnerToDelete, setPartnerToDelete] = useState(null);
 
   const detailOptions = [
     { value: "tradesTaken", label: "No. of Trades taken" },
@@ -156,10 +158,6 @@ export default function AccountabilityPartner() {
     try {
       const response = await api.delete(`/accountability-partner/${partnerId}`);
       
-      // Log the full response for debugging
-      console.log("Delete response:", response);
-
-      // Check status code and success flag
       if (response.status === 200 && response.data.success) {
         toast({
           title: "Success",
@@ -176,9 +174,21 @@ export default function AccountabilityPartner() {
         description: error.response?.data?.error || "Failed to remove partner",
         variant: "destructive",
       });
-      // Fetch partners to ensure UI is in sync, only on actual failure
       await fetchPartners();
     }
+  };
+
+  const confirmDeletePartner = (partner) => {
+    setPartnerToDelete(partner);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (partnerToDelete) {
+      await handleRemovePartner(partnerToDelete._id);
+    }
+    setDeleteDialogOpen(false);
+    setPartnerToDelete(null);
   };
 
   const resetForm = () => {
@@ -198,8 +208,8 @@ export default function AccountabilityPartner() {
       <div className="flex flex-col lg:flex-row h-full bg-background rounded-t-xl">
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent className="max-w-3xl">
-            <DialogHeader>
-              <DialogTitle>Accountability Partner</DialogTitle>
+            <DialogHeader className='mb-3'>
+              <DialogTitle className="text-xl">Accountability Partner</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <p>
@@ -213,11 +223,13 @@ export default function AccountabilityPartner() {
                 with them. You can also choose what details the accountability
                 partner can view.
               </p>
-              <p className="text-sm text-gray-500">
-                Accountability Partners cannot make any changes to your data or
-                your account.
-              </p>
-              <div className="w-full flex justify-end items-end">
+
+              <div className="w-full flex justify-between pt-8">
+                <p className="text-sm flex gap-2 items-center p-1 rounded font-bold w-fit px-2">
+                  <Info size={16}/>
+                  Accountability Partners cannot make any changes to your data or
+                  your account.
+                </p>
                 <Button
                   variant="outline"
                   className="text-primary"
@@ -334,7 +346,7 @@ export default function AccountabilityPartner() {
                   </div>
                 </RadioGroup>
               </div>
-              <div className="text-sm text-gray-500">
+              <div className="text-sm">
                 Your accountability partner will receive progress analysis
                 starting from today.
               </div>
@@ -372,7 +384,7 @@ export default function AccountabilityPartner() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleRemovePartner(partner._id)}
+                        onClick={() => confirmDeletePartner(partner)}
                         disabled={!isSubscriptionActive}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -401,6 +413,38 @@ export default function AccountabilityPartner() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Deletion</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p>
+              Do you really want to delete this accountability partner{" "}
+              <span className="font-semibold">
+                {partnerToDelete?.name}
+              </span>
+              ?
+            </p>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              No
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+            >
+              Yes
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

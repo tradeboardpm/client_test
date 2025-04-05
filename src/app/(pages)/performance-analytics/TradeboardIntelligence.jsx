@@ -70,7 +70,7 @@ const RuleCard = ({ title, rules, period, isTopFollowedRules = false }) => {
         </CardContent>
       </Card>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="text-base sm:text-lg">List of {title}</DialogTitle>
             <DialogDescription className="text-xs sm:text-sm">Detailed breakdown of rules</DialogDescription>

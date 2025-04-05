@@ -47,6 +47,8 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     bulkAddRules: false,
   });
 
+  const MAX_RULES = 50;
+
   useEffect(() => {
     const subscriptionStatus = Cookies.get("subscription") === "true";
     setHasSubscription(subscriptionStatus);
@@ -159,6 +161,8 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
       );
 
       setEditingRule(null);
+      onRulesChange?.(); // Trigger chart update
+      onUpdate?.(); // Trigger journal update
       toast({
         title: "Rule updated",
         description: "Your rule has been updated successfully.",
@@ -190,6 +194,8 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
 
       setIsDeleteDialogOpen(false);
       setRuleToDelete(null);
+      onRulesChange?.(); // Trigger chart update
+      onUpdate?.(); // Trigger journal update
       toast({
         title: "Rule deleted",
         description: "Your rule has been deleted successfully for this date.",
@@ -402,21 +408,22 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
             </div>
 
             <Button
-              className="bg-primary h-fit text-white text-xs px-3 hover:bg-purple-600"
-              onClick={() => setNewRulesDialog(true)}
-              disabled={
-                isLoadingAction.addRule ||
-                isLoadingAction.bulkAddRules ||
-                !hasSubscription
-              }
-            >
-              {isLoadingAction.addRule || isLoadingAction.bulkAddRules ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Plus className="mr-2 h-4 w-4" />
-              )}
-              Add Rules
-            </Button>
+  className="bg-primary h-fit text-white text-xs px-3 hover:bg-purple-600"
+  onClick={() => setNewRulesDialog(true)}
+  disabled={
+    isLoadingAction.addRule ||
+    isLoadingAction.bulkAddRules ||
+    !hasSubscription ||
+    rules.length >= MAX_RULES
+  }
+>
+  {isLoadingAction.addRule || isLoadingAction.bulkAddRules ? (
+    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+  ) : (
+    <Plus className="mr-2 h-4 w-4" />
+  )}
+  Add Rules
+</Button>
 
             <AddRulesDialog
               open={newRulesDialog}

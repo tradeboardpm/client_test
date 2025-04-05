@@ -1,25 +1,46 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Link from "next/link";
 import axios from "axios";
-import PhoneNumberInput from "@/components/ui/phone-input";
+import ReactCountryFlag from "react-country-flag";
+import countries from "country-telephone-data";
+
+const countryCodes = countries.allCountries.map((country) => ({
+  value: country.dialCode,
+  label: `${country.name} (+${country.dialCode})`,
+  code: country.iso2.toUpperCase(),
+}));
 
 export default function LoginPage() {
-  const [phoneNumber, setPhoneNumber] = useState("+91");
+  const [countryCode, setCountryCode] = useState("91");
+  const [mobile, setMobile] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
+  const handleCountryCodeChange = (value) => {
+    setCountryCode(value);
+  };
+
+  const handleMobileChange = (e) => {
+    setMobile(e.target.value);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const phoneNumber = `+${countryCode}${mobile}`;
     setIsLoading(true);
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/login-phone`,
         {
-          phone: phoneNumber, // This will now send the full phone number
+          phone: phoneNumber,
         }
       );
       if (response.status === 200) {
@@ -52,12 +73,46 @@ export default function LoginPage() {
         </p>
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <PhoneNumberInput
-          label="Mobile Number"
-          value={phoneNumber}
-          onChange={setPhoneNumber}
-          required
-        />
+        <div className="grid grid-cols-3 gap-2">
+          <div>
+            <Label htmlFor="countryCode">Code</Label>
+            <Select
+              value={countryCode}
+              onValueChange={handleCountryCodeChange}
+              disabled={isLoading}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="+91" />
+              </SelectTrigger>
+              <SelectContent className="max-h-96">
+                {countryCodes.map((code) => (
+                  <SelectItem key={code.value} value={code.value}>
+                    <div className="flex items-center gap-2">
+                      <ReactCountryFlag
+                        countryCode={code.code}
+                        svg
+                        style={{ width: "1.5em", height: "1.5em" }}
+                      />
+                      <span>{code.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="col-span-2">
+            <Label htmlFor="mobile">Mobile Number</Label>
+            <Input
+              id="mobile"
+              type="tel"
+              placeholder="Enter your mobile number"
+              value={mobile}
+              onChange={handleMobileChange}
+              required
+              disabled={isLoading}
+            />
+          </div>
+        </div>
         <Button
           type="submit"
           className="w-full text-background"

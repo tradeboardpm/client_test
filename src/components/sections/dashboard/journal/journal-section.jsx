@@ -140,10 +140,40 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   const [deletingFileKey, setDeletingFileKey] = useState(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  useEffect(() => {
+  // Check subscription status with each render and whenever component is focused
+  const checkSubscriptionStatus = useCallback(() => {
     const subscriptionStatus = Cookies.get("subscription") === "true";
     setHasSubscription(subscriptionStatus);
   }, []);
+
+  useEffect(() => {
+    // Check on initial mount
+    checkSubscriptionStatus();
+    
+    // Add event listeners to check when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        checkSubscriptionStatus();
+      }
+    };
+    
+    // Add event listener for tab focus/blur
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    
+    // Add event listener for window focus
+    window.addEventListener("focus", checkSubscriptionStatus);
+    
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", checkSubscriptionStatus);
+    };
+  }, [checkSubscriptionStatus]);
+
+  // Re-check subscription status whenever the component re-renders
+  // This helps when switching tabs within your application
+  useEffect(() => {
+    checkSubscriptionStatus();
+  }, [selectedDate, checkSubscriptionStatus]);
 
   const getUTCDate = (date) => {
     return new Date(
@@ -171,6 +201,9 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
+      // Re-check subscription status before fetching data
+      checkSubscriptionStatus();
+      
       const utcDate = getUTCDate(selectedDate);
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/journals`,
@@ -207,6 +240,9 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   };
 
   const saveJournal = async (journalData) => {
+    // Re-check subscription status before saving
+    checkSubscriptionStatus();
+    
     if (!journalData || !hasSubscription) return;
 
     setIsSaving(true);
@@ -253,6 +289,9 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   ]);
 
   const handleChange = (e) => {
+    // Re-check subscription before handling changes
+    checkSubscriptionStatus();
+    
     if (!hasSubscription) return;
 
     const { name, value } = e.target;
@@ -266,6 +305,9 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   };
 
   const handleBlur = () => {
+    // Re-check subscription before handling blur
+    checkSubscriptionStatus();
+    
     if (!hasSubscription) return;
 
     debouncedSaveJournal.cancel();
@@ -273,6 +315,9 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   };
 
   const handleFileUpload = async (e) => {
+    // Re-check subscription before uploading
+    checkSubscriptionStatus();
+    
     if (!hasSubscription) return;
 
     const originalFile = e.target.files?.[0];
@@ -332,21 +377,29 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   };
 
   const handleFileDelete = async (fileKey) => {
+    // Re-check subscription before deleting
+    checkSubscriptionStatus();
+    
     if (!hasSubscription) return;
-
+  
     setDeletingFileKey(fileKey);
     setIsDeletingFile(true);
-
+  
     try {
       const token = Cookies.get("token");
       const filename = fileKey.split("/").pop();
-
+  
       await axios.delete(
         `${process.env.NEXT_PUBLIC_API_URL}/journals/${journal?._id}/file/${filename}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      
+      // Update local files state immediately to reflect the change in UI
+      setFiles(files.filter(file => file !== fileKey));
+      
+      // Then fetch the latest data from the server
       fetchJournalData();
       setSelectedImage(null);
     } catch (error) {

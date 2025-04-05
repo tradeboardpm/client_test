@@ -15,6 +15,7 @@ function SetNewPasswordContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [passwordsMatch, setPasswordsMatch] = useState(true);
+  const [passwordErrors, setPasswordErrors] = useState([]);
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -29,8 +30,11 @@ function SetNewPasswordContent() {
     }
   }, [resetToken, email, router]);
 
-  // Add useEffect to check password matching in real-time
+  // Validate password and update errors in real-time
   useEffect(() => {
+    const errors = validatePassword(newPassword);
+    setPasswordErrors(errors);
+
     if (newPassword && confirmPassword) {
       setPasswordsMatch(newPassword === confirmPassword);
     } else {
@@ -39,15 +43,21 @@ function SetNewPasswordContent() {
   }, [newPassword, confirmPassword]);
 
   const validatePassword = (password) => {
-    return password.length >= 8;
+    const errors = [];
+    if (password.length < 8) errors.push("at least 8 characters");
+    if (!/[A-Z]/.test(password)) errors.push("an uppercase letter");
+    if (!/[a-z]/.test(password)) errors.push("a lowercase letter");
+    if (!/\d/.test(password)) errors.push("a number");
+    if (!/[!@#$%^&*]/.test(password)) errors.push("a special character (!@#$%^&*)");
+    return errors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!validatePassword(newPassword)) {
-      toast.error("Password must be at least 8 characters long");
+    if (passwordErrors.length > 0) {
+      toast.error("Please fix password requirements");
       setIsLoading(false);
       return;
     }
@@ -86,6 +96,15 @@ function SetNewPasswordContent() {
     }
   };
 
+  const isFormValid = () => {
+    return (
+      newPassword &&
+      confirmPassword &&
+      passwordsMatch &&
+      passwordErrors.length === 0
+    );
+  };
+
   return (
     <div className="w-full max-w-lg p-8 space-y-8">
       <Button
@@ -112,7 +131,7 @@ function SetNewPasswordContent() {
               onChange={(e) => setNewPassword(e.target.value)}
               required
               className={`pr-10 ${
-                !passwordsMatch && confirmPassword && "border-red-500"
+                (passwordErrors.length > 0 || (!passwordsMatch && confirmPassword)) && "border-red-500"
               }`}
             />
             <Button
@@ -129,6 +148,11 @@ function SetNewPasswordContent() {
               )}
             </Button>
           </div>
+          {passwordErrors.length > 0 && (
+            <p className="text-red-500 text-sm">
+              Password must include: {passwordErrors.join(", ")}
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="confirm-password">Confirm Password</Label>
@@ -164,13 +188,7 @@ function SetNewPasswordContent() {
         <Button
           type="submit"
           className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-          disabled={
-            isLoading ||
-            !newPassword ||
-            !confirmPassword ||
-            !passwordsMatch ||
-            !validatePassword(newPassword)
-          }
+          disabled={isLoading || !isFormValid()}
         >
           {isLoading ? "Updating Password..." : "Update Password"}
         </Button>

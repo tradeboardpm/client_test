@@ -245,7 +245,7 @@ export function AddTradeDialog({
                 onChange={(e) =>
                   setNewTrade({
                     ...newTrade,
-                    instrumentName: e.target.value.toUpperCase(),
+                    instrumentName: e.target.value.toUpperCase().trim(" "),
                   })
                 }
               />

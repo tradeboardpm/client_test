@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 const JournalDetailsPage = () => {
   const router = useRouter()
@@ -37,12 +38,19 @@ const JournalDetailsPage = () => {
   const [selectedSection, setSelectedSection] = useState("calendar")
   const [tradesPerDay, setTradesPerDay] = useState(4)
   const [selectedImage, setSelectedImage] = useState(null)
+  const [openImageDialog, setOpenImageDialog] = useState(false);
+const [currentImageUrl, setCurrentImageUrl] = useState("");
 
   const updateCookies = (date) => {
     Cookies.set("journalDetailsDate", JSON.stringify(date.toISOString()), {
       expires: 1/48 // 30 minutes
     })
   }
+
+  const handleImageClick = (fileUrl) => {
+    setCurrentImageUrl(fileUrl);
+    setOpenImageDialog(true);
+  };
 
   useEffect(() => {
     const fetchJournalDates = async () => {
@@ -280,25 +288,27 @@ const JournalDetailsPage = () => {
                   />
                 </div>
               </CardContent>
-              <CardFooter className="h-fit p-0 px-6">
-                {journalData.attachedFiles?.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {journalData.attachedFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="relative group rounded-lg overflow-hidden w-20 h-9 shadow border cursor-pointer"
-                        onClick={() => setSelectedImage(file)}
-                      >
-                        <img
-                          src={file || "/placeholder.svg"}
-                          alt={`Uploaded file ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardFooter>
+              <CardFooter className="h-fit p-0 px-6 mt-4">
+  {journalData.attachedFiles && journalData.attachedFiles.length > 0 ? (
+    <div className="flex flex-wrap gap-2 w-full">
+      {journalData.attachedFiles.map((file, index) => (
+        <div 
+          key={index}
+          className="relative group rounded-lg overflow-hidden w-20 h-12 shadow border cursor-pointer"
+          onClick={() => handleImageClick(file)}
+        >
+          <img
+            src={file || "/placeholder.svg"}
+            alt={`Uploaded file ${index + 1}`}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="text-muted-foreground text-sm">No attachments</div>
+  )}
+</CardFooter>
             </Card>
             <Card className="w-full max-w-4xl h-full mx-auto p-4 flex-1 shadow-[0px_8px_20px_rgba(0,0,0,0.08)] dark:shadow-[0px_8px_20px_rgba(0,0,0,0.32)]">
               <CardHeader className="p-0">
@@ -467,6 +477,16 @@ const JournalDetailsPage = () => {
           </div>
         </div>
       )}
+
+<Dialog open={openImageDialog} onOpenChange={setOpenImageDialog}>
+  <DialogContent className="sm:max-w-4xl w-fit max-h-[90vh] p-0 ">
+    <img
+      src={currentImageUrl || "/placeholder.svg"}
+      alt="Image preview"
+      className="max-w-full max-h-[75vh] object-contain rounded-lg"
+    />
+  </DialogContent>
+</Dialog>
     </>
   )
 }

@@ -22,6 +22,9 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpd
     future: (date) => isFuture(date),
     today: (date) => isToday(date),
     profit: (date) => {
+      // Only apply profit styling if not today
+      if (isToday(date)) return false;
+      
       const dateKey = format(date, "yyyy-MM-dd");
       return Object.keys(profitLossData).some(
         (key) =>
@@ -30,6 +33,9 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpd
       );
     },
     loss: (date) => {
+      // Only apply loss styling if not today
+      if (isToday(date)) return false;
+      
       const dateKey = format(date, "yyyy-MM-dd");
       return Object.keys(profitLossData).some(
         (key) =>
@@ -38,6 +44,9 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpd
       );
     },
     breakeven: (date) => {
+      // Only apply breakeven styling if not today
+      if (isToday(date)) return false;
+      
       const dateKey = format(date, "yyyy-MM-dd");
       return Object.keys(profitLossData).some(
         (key) =>
@@ -45,17 +54,19 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpd
           profitLossData[key] === "breakeven"
       );
     },
+    selected: (date) => {
+      // Custom handling for selected date that's not today
+      return !isToday(date) && format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
+    }
   };
 
   // Define styles for the modifiers
   const modifiersStyles = {
     future: { opacity: 0.5, pointerEvents: "none" },
     today: { 
-      border: "2px solid purple",
-      color: "white", // Ensure text is visible in dark mode
-      dark: {
-        color: "white", // Ensuring visibility in dark mode
-      } 
+      backgroundColor: "#6200EA", // Full purple background for today
+      color: "white", 
+      borderRadius: "4px",
     },
     profit: {
       backgroundColor: "#C0F9E5",
@@ -81,6 +92,10 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpd
         color: "#FAC300",
       },
     },
+    selected: {
+      border: "3px solid #6200EA", // Thicker purple border for selected dates
+      borderRadius: "4px"
+    }
   };
 
   // Handle month change
@@ -114,18 +129,18 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpd
                 "hover:bg-secondary focus:bg-transparent"
               ),
               day_selected: cn(
-                "border border-primary shadow hover:text-primary-foreground z-10",
+                "z-10",
                 isToday(selectedDate)
-                  ? "border-purple-500 bg-purple-100 text-foreground dark:bg-purple-900 dark:text-white"
-                  : "bg-card"
+                  ? "bg-[#6200EA] text-white" // Today selected - purple bg, white text
+                  : "" // Non-today selection styling handled by modifiersStyles.selected
               ),
-              day_today: "bg-purple-100 text-foreground dark:bg-purple-900 dark:text-white",
+              day_today: "bg-[#6200EA] text-white", // Today - always purple bg with white text
             }}
           />
           {/* Legend */}
           <div className="p-3 border-t border-primary/15 flex items-center justify-between gap-1 text-[0.65rem]">
             <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-[3px] bg-purple-500" />
+              <div className="w-2.5 h-2.5 rounded-[3px] bg-[#6200EA]" />
               <span>Today</span>
             </div>
             <div className="flex items-center gap-1">

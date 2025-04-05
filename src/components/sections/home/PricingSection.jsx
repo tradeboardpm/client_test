@@ -11,7 +11,7 @@ import {
 
 const pricingPlans = [
   {
-    name: "One Week on Us",
+    name: "Two Weeks on Us",
     subtitle: "(₹ 0)",
     price: "Free",
     period: "",

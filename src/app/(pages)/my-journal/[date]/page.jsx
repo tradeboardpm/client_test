@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 
 const JournalDetailsContent = () => {
   const router = useRouter();
@@ -30,6 +31,8 @@ const JournalDetailsContent = () => {
   const [selectedSection, setSelectedSection] = useState("calendar");
   const [tradesPerDay, setTradesPerDay] = useState(4);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [openImageDialog, setOpenImageDialog] = useState(false);
+const [currentImageUrl, setCurrentImageUrl] = useState("");
 
   useEffect(() => {
     const fetchJournalDates = async () => {
@@ -78,6 +81,10 @@ const JournalDetailsContent = () => {
   const toggleSidebar = () => {
     setSidebarExpanded(!sidebarExpanded);
   };
+  const handleImageClick = (fileUrl) => {
+    setCurrentImageUrl(fileUrl);
+    setOpenImageDialog(true);
+  };
 
   const navigateJournal = (direction) => {
     const currentIndex = journalDates.findIndex(
@@ -119,10 +126,6 @@ const JournalDetailsContent = () => {
     }
   };
 
-  // Add this function to handle image preview click
-  const handleImageClick = (fileUrl) => {
-    setSelectedImage(fileUrl);
-  };
 
   const renderDateNavigation = () => (
     <nav aria-label="Journal Navigation">
@@ -282,25 +285,27 @@ const JournalDetailsContent = () => {
                   />
                 </div>
               </CardContent>
-              <CardFooter className="h-fit p-0 px-6">
-                {journalData.attachedFiles?.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {journalData.attachedFiles.map((file, index) => (
-                      <div
-                        key={index}
-                        className="relative group rounded-lg overflow-hidden w-20 h-10 shadow border cursor-pointer"
-                        onClick={() => handleImageClick(file)} // Updated to handle click
-                      >
-                        <img
-                          src={file || "/placeholder.svg"}
-                          alt={`Uploaded file ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardFooter>
+              <CardFooter className="h-fit p-0 px-6 mt-4">
+  {journalData.attachedFiles && journalData.attachedFiles.length > 0 ? (
+    <div className="flex flex-wrap gap-2 w-full">
+      {journalData.attachedFiles.map((file, index) => (
+        <div 
+          key={index}
+          className="relative group rounded-lg overflow-hidden w-20 h-12 shadow border cursor-pointer"
+          onClick={() => handleImageClick(file)}
+        >
+          <img
+            src={file || "/placeholder.svg"}
+            alt={`Uploaded file ${index + 1}`}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ))}
+    </div>
+  ) : (
+    <div className="text-muted-foreground text-sm">No attachments</div>
+  )}
+</CardFooter>
             </Card>
 
             {/* Rules Card */}
@@ -330,7 +335,7 @@ const JournalDetailsContent = () => {
                           <div>
                             <Checkbox checked={rule.isFollowed} />
                           </div>
-                          <span className="text-gray-700 text-[0.8rem]">{rule.description}</span>
+                          <span className="text-[0.8rem]">{rule.description}</span>
                         </div>
                       ))}
                       {(!journalData.rules || journalData.rules.length === 0) && (
@@ -406,14 +411,14 @@ const JournalDetailsContent = () => {
                   >
                     <div
                       className={`text-sm font-medium ${
-                        journalDetails.summary?.totalPnL >= 0 ? "text-green-800" : "text-red-800"
+                        journalDetails.summary?.totalPnL >= 0 ? "text-green-500" : "text-red-500"
                       }`}
                     >
                       Today's Profit:
                     </div>
                     <div
                       className={`text-lg font-medium ${
-                        journalDetails.summary?.totalPnL >= 0 ? "text-green-900" : "text-red-900"
+                        journalDetails.summary?.totalPnL >= 0 ? "text-green-500" : "text-red-500"
                       }`}
                     >
                       ₹ {(journalDetails.summary?.totalPnL ?? 0).toFixed(2)}
@@ -434,14 +439,14 @@ const JournalDetailsContent = () => {
                   >
                     <div
                       className={`text-sm font-medium ${
-                        journalDetails.summary?.netPnL >= 0 ? "text-green-800" : "text-red-800"
+                        journalDetails.summary?.netPnL >= 0 ? "text-green-500" : "text-red-500"
                       }`}
                     >
                       Net Realised P&L:
                     </div>
                     <div
                       className={`text-lg font-medium ${
-                        journalDetails.summary?.netPnL >= 0 ? "text-green-900" : "text-red-900"
+                        journalDetails.summary?.netPnL >= 0 ? "text-green-500" : "text-red-500"
                       }`}
                     >
                       ₹ {(journalDetails.summary?.netPnL ?? 0).toFixed(2)}
@@ -482,9 +487,21 @@ const JournalDetailsContent = () => {
           </div>
         </div>
       )}
+
+<Dialog open={openImageDialog} onOpenChange={setOpenImageDialog}>
+  <DialogContent className="sm:max-w-4xl w-fit max-h-[90vh] p-0 ">
+    <img
+      src={currentImageUrl || "/placeholder.svg"}
+      alt="Image preview"
+      className="max-w-full max-h-[75vh] object-contain rounded-lg"
+    />
+  </DialogContent>
+</Dialog>
     </>
   );
 };
+
+
 
 // Fallback component to show while the suspense resolves
 function LoadingComponent() {

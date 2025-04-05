@@ -53,6 +53,7 @@ export default function ForgotPasswordPage() {
   return (
     <div className="w-full max-w-lg p-8 space-y-8">
       <Button
+      size="icon"
         variant="outline"
         className="mb-8 rounded-full size-10 p-0 absolute left-10 lg:left-32 top-20"
         onClick={() => router.back()}

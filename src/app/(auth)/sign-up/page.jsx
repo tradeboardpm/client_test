@@ -19,6 +19,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import PrivacyPolicy from "@/app/(misc)/privacy/page";
 import TermsOfService from "@/app/(misc)/terms/page";
 import ReactCountryFlag from "react-country-flag";
@@ -30,7 +31,7 @@ const LegalDrawer = ({ isOpen, onClose, content }) => (
   <Drawer open={isOpen} onOpenChange={onClose}>
     <DrawerContent>
       <DrawerHeader>
-        <DrawerTitle>{content.title}</DrawerTitle>
+        {/* <DrawerTitle>{content.title}</DrawerTitle> */}
       </DrawerHeader>
       <div className="p-4 max-h-[70vh] overflow-y-auto">
         {content.content}
@@ -75,6 +76,7 @@ export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [openDrawer, setOpenDrawer] = useState(null);
+  const [showGoogleDialog, setShowGoogleDialog] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -161,7 +163,7 @@ export default function SignUp() {
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/google-signup`,
-        { token: credentialResponse.credential }, // Send the ID token
+        { token: credentialResponse.credential },
         { headers: { "Content-Type": "application/json" } }
       );
 
@@ -188,6 +190,7 @@ export default function SignUp() {
       });
     } finally {
       setIsLoading(false);
+      setShowGoogleDialog(false);
     }
   };
 
@@ -198,6 +201,7 @@ export default function SignUp() {
       description: "Google signup failed",
     });
     setIsLoading(false);
+    setShowGoogleDialog(false);
   };
 
   const CustomGoogleButton = ({ onClick }) => (
@@ -218,6 +222,24 @@ export default function SignUp() {
     </Button>
   );
 
+  const DummyGoogleButton = () => (
+    <Button
+      variant="ghost"
+      className="w-full bg-[#F3F6F8] dark:bg-[#434445] justify-center border dark:border-[#303031] border-[#E7E7EA] font-medium text-[0.875rem] shadow-[0px_6px_16px_rgba(0,0,0,0.04)] py-[20px] hover:bg-[#E9EEF0] dark:hover:bg-[#4d4e4f]"
+      onClick={() => setShowGoogleDialog(true)}
+      disabled={isLoading}
+    >
+      <Image
+        src="/images/google.svg"
+        alt="Google"
+        width={20}
+        height={20}
+        className="mr-2"
+      />
+      Sign up with Google
+    </Button>
+  );
+
   const handleLegalClick = (e, type) => {
     e.preventDefault();
     setOpenDrawer(type);
@@ -225,21 +247,15 @@ export default function SignUp() {
 
   return (
     <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
-      <div className="relative min-h-screen flex items-center justify-center px-6 py-16">
+      <div className="relative min-h-screen flex items-center justify-center px-6 py-16 bg-background">
         <div className={`flex-1 flex items-center justify-center ${isLoading ? "blur-sm" : ""}`}>
           <Card className="w-full max-w-md bg-transparent shadow-none">
             <CardContent className="px-2 py-3">
-              <h1 className="text-3xl font-semibold mb-3">Sign Up</h1>
-              <p className="text-[#A6A8B1] mb-6">Create your account</p>
+              <h1 className="text-2xl sm:text-3xl font-semibold mb-3">Sign Up</h1>
+              <p className="text-muted-foreground/65 mb-6">Create your account</p>
 
               <div className="mb-4 flex justify-center">
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  useOneTap={false}
-                  disabled={isLoading}
-                  render={({ onClick }) => <CustomGoogleButton onClick={onClick} />}
-                />
+                <DummyGoogleButton />
               </div>
 
               <div className="relative mb-6">
@@ -369,7 +385,7 @@ export default function SignUp() {
                   {errors.confirmPassword?.length > 0 && (
                     <p className="text-xs text-red-500 mt-1">{errors.confirmPassword[0]}</p>
                   )}
-                </div>
+                  </div>
 
                 <div className="flex items-center space-x-2">
                   <input
@@ -421,7 +437,7 @@ export default function SignUp() {
 
         {isLoading && (
           <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-50 z-50">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary"></div>
+            <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-t-4 border-b-4 border-primary"></div>
           </div>
         )}
 
@@ -435,6 +451,36 @@ export default function SignUp() {
           onClose={() => setOpenDrawer(null)}
           content={privacyContent}
         />
+
+        <Dialog open={showGoogleDialog} onOpenChange={setShowGoogleDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Continue with Google</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-muted-foreground">
+                By continuing with Google, you agree to our{" "}
+                <Link href="/terms" className="text-primary hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-primary hover:underline">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
+            </div>
+            <div className="pb-4">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap={false}
+                disabled={isLoading}
+                render={({ onClick }) => <CustomGoogleButton onClick={onClick} />}
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </GoogleOAuthProvider>
   );

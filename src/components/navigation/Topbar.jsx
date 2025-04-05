@@ -47,7 +47,7 @@ export default function Topbar({
 }) {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [username, setUsername] = useState("");
-  const [theme, setTheme] = useState("system");
+  const [theme, setTheme] = useState("light");
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const router = useRouter();
 
@@ -57,7 +57,7 @@ export default function Topbar({
       setUsername(name);
     }
 
-    const savedTheme = localStorage.getItem("theme") || "system";
+    const savedTheme = localStorage.getItem("theme") || "light";
     setTheme(savedTheme);
     applyTheme(savedTheme);
   }, []);

@@ -29,13 +29,25 @@ export default function JournalAnalysis() {
   const searchParams = useSearchParams()
   const popoverRef = useRef(null)
 
+  const formatDateWithoutTimezone = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const getInitialState = () => {
     const cookieFilters = Cookies.get("performanceAnalyticsFilters")
     const savedFilters = cookieFilters ? JSON.parse(cookieFilters) : {}
+    const parseDateString = (dateString) => {
+      if (!dateString) return null;
+      const [year, month, day] = dateString.split('-');
+      return new Date(year, month - 1, day);
+    };
     return {
       journalsDateRange: {
-        from: savedFilters.journalsFrom ? parseISO(savedFilters.journalsFrom) : startOfMonth(new Date()),
-        to: savedFilters.journalsTo ? parseISO(savedFilters.journalsTo) : endOfMonth(new Date()),
+        from: savedFilters.journalsFrom ? parseDateString(savedFilters.journalsFrom) : startOfMonth(new Date()),
+        to: savedFilters.journalsTo ? parseDateString(savedFilters.journalsTo) : endOfMonth(new Date()),
       },
       filters: {
         minWinRate: Number(savedFilters.minWinRate) || Number(searchParams.get("minWinRate")) || defaultFilters.minWinRate,
@@ -65,8 +77,8 @@ export default function JournalAnalysis() {
 
   const updateURLAndCookies = () => {
     const params = {
-      ...(journalsDateRange.from && { journalsFrom: journalsDateRange.from.toISOString() }),
-      ...(journalsDateRange.to && { journalsTo: journalsDateRange.to.toISOString() }),
+      ...(journalsDateRange.from && { journalsFrom: formatDateWithoutTimezone(journalsDateRange.from) }),
+      ...(journalsDateRange.to && { journalsTo: formatDateWithoutTimezone(journalsDateRange.to) }),
       ...(filters.minWinRate !== defaultFilters.minWinRate && { minWinRate: filters.minWinRate.toString() }),
       ...(filters.maxWinRate !== defaultFilters.maxWinRate && { maxWinRate: filters.maxWinRate.toString() }),
       ...(filters.minTrades !== defaultFilters.minTrades && { minTrades: filters.minTrades.toString() }),
@@ -74,42 +86,42 @@ export default function JournalAnalysis() {
       ...(filters.minRulesFollowed !== defaultFilters.minRulesFollowed && { minRulesFollowed: filters.minRulesFollowed.toString() }),
       ...(filters.maxRulesFollowed !== defaultFilters.maxRulesFollowed && { maxRulesFollowed: filters.maxRulesFollowed.toString() }),
       ...(pagination.currentPage > 1 && { page: pagination.currentPage.toString() }),
-    }
-    const queryString = new URLSearchParams(params).toString()
-    router.push(`/performance-analytics?${queryString}`, { scroll: false })
-    Cookies.set("performanceAnalyticsFilters", JSON.stringify(params), { expires: 1 / 48 })
-  }
+    };
+    const queryString = new URLSearchParams(params).toString();
+    router.push(`/performance-analytics?${queryString}`, { scroll: false });
+    Cookies.set("performanceAnalyticsFilters", JSON.stringify(params), { expires: 1 / 48 });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = Cookies.get("token")
+      const token = Cookies.get("token");
       if (!token) {
-        setError("No authentication token found")
-        return
+        setError("No authentication token found");
+        return;
       }
-
-      setLoading(true)
-      setError(null)
-
+    
+      setLoading(true);
+      setError(null);
+    
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/journals/filters`, {
           params: {
-            startDate: journalsDateRange.from?.toISOString() || startOfMonth(new Date()).toISOString(),
-            endDate: journalsDateRange.to?.toISOString() || endOfMonth(new Date()).toISOString(),
+            startDate: formatDateWithoutTimezone(journalsDateRange.from || startOfMonth(new Date())),
+            endDate: formatDateWithoutTimezone(journalsDateRange.to || endOfMonth(new Date())),
             page: pagination.currentPage,
             limit: pagination.limit,
             ...filters,
           },
           headers: { Authorization: `Bearer ${token}` },
-        })
-        setMonthlyJournals(Object.keys(response.data.data).length === 0 ? null : response.data.data)
-        setPagination(response.data.pagination)
+        });
+        setMonthlyJournals(Object.keys(response.data.data).length === 0 ? null : response.data.data);
+        setPagination(response.data.pagination);
       } catch (err) {
-        setError(err.response?.data?.error || "An error occurred")
+        setError(err.response?.data?.error || "An error occurred");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
     fetchData()
     updateURLAndCookies()

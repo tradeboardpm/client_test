@@ -85,7 +85,8 @@ export default function LoginPage() {
       <div className="w-[500px] max-w-lg  space-y-8 p-8">
         <Button
           variant="outline"
-          className="absolute left-4 top-20 rounded-full p-2 lg:left-8 "
+          size="icon"
+          className="absolute left-4 top-20 rounded-full  p-2 lg:left-8 "
           onClick={() => router.back()}
         >
           <ArrowLeft className="h-4 w-4" />

@@ -30,6 +30,7 @@ export const AddRulesDialog = ({
   const [rulesList, setRulesList] = useState([""]);
   const [isAddingRules, setIsAddingRules] = useState(false);
   const inputRefs = useRef([]);
+  const rulesContainerRef = useRef(null);
 
   const totalCost = useMemo(() => {
     const validRulesCount = rulesList.filter(
@@ -48,6 +49,22 @@ export const AddRulesDialog = ({
   const handleAddRuleInput = () => {
     if (rulesList.length < 10) {
       setRulesList([...rulesList, ""]);
+      
+      // Scroll to bottom after the new input is rendered
+      setTimeout(() => {
+        if (rulesContainerRef.current) {
+          rulesContainerRef.current.scrollTo({
+            top: rulesContainerRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
+        }
+        
+        // Focus the new input
+        const newIndex = rulesList.length;
+        if (inputRefs.current[newIndex]) {
+          inputRefs.current[newIndex].focus();
+        }
+      }, 0);
     } else {
       toast({
         title: "Maximum Rules Reached",
@@ -74,9 +91,6 @@ export const AddRulesDialog = ({
       e.preventDefault();
       if (index === rulesList.length - 1 && rulesList.length < 10) {
         handleAddRuleInput();
-        setTimeout(() => {
-          inputRefs.current[index + 1]?.focus();
-        }, 0);
       } else if (index < rulesList.length - 1) {
         inputRefs.current[index + 1]?.focus();
       }
@@ -149,7 +163,10 @@ export const AddRulesDialog = ({
             Here you can add Rules.
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-2 py-4 max-h-[300px] overflow-y-auto pr-2">
+        <div 
+          ref={rulesContainerRef}
+          className="space-y-2 py-4 max-h-[300px] overflow-y-auto pr-2"
+        >
           {rulesList.map((rule, index) => (
             <div key={index} className="flex flex-col space-y-1 p-2">
               <div className="flex items-center space-x-2">
@@ -165,6 +182,7 @@ export const AddRulesDialog = ({
                   placeholder="Enter your rule"
                   maxLength={MAX_RULE_LENGTH}
                   className="flex-1 text-sm"
+                  autoFocus={index === rulesList.length - 1 && rule === ""}
                 />
                 {rulesList.length > 1 && (
                   <Button
