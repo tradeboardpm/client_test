@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 @font-face {
-  font-family: "onest";
-  src: url("/fonts/onest.ttf");
+  font-family: "Poppins";
+  src: url("/fonts/Poppins.ttf");
 }
 
 @font-face {
