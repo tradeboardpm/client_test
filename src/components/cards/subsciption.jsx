@@ -212,7 +212,7 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
           <Button
             variant="ghost"
             onClick={goBackToPlans}
-            className="mb-6 text-gray-600 flex items-center hover:text-gray-800 transition-colors"
+            className="mb-6 text-muted-foreground flex items-center hover:text-primary transition-colors"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Plans
@@ -220,7 +220,7 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
 
           <div className="mb-6">
             <h2 className="text-2xl font-semibold mb-2">Checkout: {selectedPlan?.name}</h2>
-            <p className="text-gray-600 text-sm">Complete your purchase or apply a coupon for discounts.</p>
+            <p className="text-muted-foreground text-sm">Complete your purchase or apply a coupon for discounts.</p>
           </div>
 
           <Card className="border shadow-md rounded-xl">
@@ -283,7 +283,7 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
                       {couponCode && !discountDetails && (
                         <button
                           onClick={clearCoupon}
-                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-primary"
                           type="button"
                         >
                           <X className="h-4 w-4" />
@@ -362,7 +362,7 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
                   {index === 0 ? "₹ 0" : `₹ ${plan.price}`}
                   {plan.period && <span className="text-xs sm:text-sm font-normal">/{plan.period}</span>}
                 </div>
-                <div className="text-xs sm:text-sm font-normal mt-1 text-gray-600">{plan.subtitle}</div>
+                <div className="text-xs sm:text-sm font-normal mt-1 text-muted-foreground">{plan.subtitle}</div>
                 {initialSelectedPlan === plan.plan_name && (
                   <div className="text-xs sm:text-sm font-medium text-green-600 mt-2">You selected this plan</div>
                 )}

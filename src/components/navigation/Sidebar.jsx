@@ -5,25 +5,27 @@ import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { ChevronLeft, ChevronRight, Crown } from "lucide-react";
+import { ChevronLeft, ChevronRight, Crown, X } from "lucide-react";
 import Image from "next/image";
 import { usePointsStore } from "@/stores/points-store";
 import SubscriptionPlan from "@/components/cards/subsciption";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 
-export default function Sidebar({ isOpen }) {
+export default function Sidebar({ isOpen, onClose }) {
   const pathname = usePathname();
   const router = useRouter();
   const { points, currentLevel, nextLevel, pointsToNextLevel } = usePointsStore();
   const sidebarRef = useRef(null);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
-  const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 0);
+  const [windowWidth, setWindowWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 0
+  );
   const [needsUpgrade, setNeedsUpgrade] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [daysRemaining, setDaysRemaining] = useState(null);
 
-  // Load sidebar state from localStorage on component mount
   useEffect(() => {
     const savedSidebarState = localStorage.getItem("sidebarCollapsed");
     if (savedSidebarState !== null) {
@@ -33,7 +35,6 @@ export default function Sidebar({ isOpen }) {
     }
   }, []);
 
-  // Handle window resize
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -46,11 +47,11 @@ export default function Sidebar({ isOpen }) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Check for overflow
   useEffect(() => {
     const checkOverflow = () => {
       if (sidebarRef.current) {
-        const hasVerticalOverflow = sidebarRef.current.scrollHeight > sidebarRef.current.clientHeight;
+        const hasVerticalOverflow =
+          sidebarRef.current.scrollHeight > sidebarRef.current.clientHeight;
         setHasOverflow(hasVerticalOverflow);
       }
     };
@@ -60,15 +61,14 @@ export default function Sidebar({ isOpen }) {
     return () => window.removeEventListener("resize", checkOverflow);
   }, []);
 
-  // Function to clear cookies and redirect
   const clearCookiesAndRedirect = useCallback(() => {
     Cookies.remove("token");
     Cookies.remove("subscription");
     Cookies.remove("plan");
+    Cookies.remove("expiresAt");
     router.push("/login");
   }, [router]);
 
-  // Fetch and check subscription status from API
   const checkSubscriptionStatus = useCallback(async () => {
     try {
       const token = Cookies.get("token");
@@ -98,16 +98,23 @@ export default function Sidebar({ isOpen }) {
       const currentDate = new Date();
       const expiresAt = new Date(data.expiresAt);
 
-      const isWeeklyPlan = data.plan === "one-week";
-      const isExpired = expiresAt < currentDate;
+      Cookies.set("expiresAt", data.expiresAt, { expires: 7 });
 
-      setNeedsUpgrade(isExpired);
-      // setNeedsUpgrade(isWeeklyPlan || isExpired);
+      const isExpired = expiresAt < currentDate;
+      const timeDiff = expiresAt - currentDate;
+      const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+      const showUpgrade = isExpired || daysLeft <= 14;
+      setNeedsUpgrade(showUpgrade);
+      setDaysRemaining(isExpired ? 0 : daysLeft);
+
       Cookies.set("subscription", String(!isExpired), { expires: 7 });
       Cookies.set("plan", data.plan, { expires: 7 });
 
       if (isExpired) {
-        toast.error("Your subscription has expired. Please renew your subscription.");
+        toast.error(
+          "Your subscription has expired. Please renew your subscription."
+        );
       }
     } catch (error) {
       console.error("Subscription check error:", error);
@@ -116,24 +123,20 @@ export default function Sidebar({ isOpen }) {
     }
   }, [clearCookiesAndRedirect]);
 
-  // Fetch subscription status on mount
   useEffect(() => {
     checkSubscriptionStatus();
   }, [checkSubscriptionStatus]);
 
-  // Toggle sidebar collapse state
   const toggleCollapse = () => {
     const newState = !isCollapsed;
     setIsCollapsed(newState);
     localStorage.setItem("sidebarCollapsed", JSON.stringify(newState));
   };
 
-  // Check if a route is active
   const isRouteActive = (pattern) => {
     return pattern.test(pathname);
   };
 
-  // Nav items
   const navItems = [
     {
       icon: `/images/dashboard${pathname === "/dashboard" ? "_bold" : "_icon"}.svg`,
@@ -181,9 +184,14 @@ export default function Sidebar({ isOpen }) {
     } transition-all duration-200 ease-in-out z-0`;
   };
 
-  // Callback to close the dialog
   const handleCloseDialog = () => {
     setShowUpgradeDialog(false);
+  };
+
+  const handleMenuItemClick = () => {
+    if (isSmallScreen && isOpen && onClose) {
+      onClose();
+    }
   };
 
   return (
@@ -195,6 +203,20 @@ export default function Sidebar({ isOpen }) {
             isCollapsed && !isSmallScreen ? "p-2" : "p-3"
           }`}
         >
+          {/* Close button for mobile */}
+          {isSmallScreen && isOpen && (
+            <div className="flex justify-end p-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="h-8 w-8"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+          )}
+
           <div className="flex flex-col justify-between h-full space-y-4">
             <nav className="flex flex-col gap-2">
               {navItems.map((item) => (
@@ -205,17 +227,32 @@ export default function Sidebar({ isOpen }) {
                       isRouteActive(item.pattern)
                         ? "bg-primary text-background hover:text-background font-bold hover:bg-primary"
                         : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                    } ${isCollapsed && !isSmallScreen ? "px-0 justify-center" : "px-4 justify-start"}`}
+                    } ${
+                      isCollapsed && !isSmallScreen
+                        ? "px-0 justify-center"
+                        : "px-4 justify-start"
+                    }`}
+                    onClick={handleMenuItemClick}
                   >
-                    <span className={`flex items-center ${isCollapsed && !isSmallScreen ? "justify-center" : ""}`}>
+                    <span
+                      className={`flex items-center ${
+                        isCollapsed && !isSmallScreen ? "justify-center" : ""
+                      }`}
+                    >
                       <Image
                         src={item.icon || "/placeholder.svg"}
                         width={16}
                         height={16}
                         alt={item.label}
-                        className={isRouteActive(item.pattern) ? "text-background" : "text-muted-foreground"}
+                        className={
+                          isRouteActive(item.pattern)
+                            ? "text-background"
+                            : "text-muted-foreground"
+                        }
                       />
-                      {(!isCollapsed || isSmallScreen) && <span className="ml-2">{item.label}</span>}
+                      {(!isCollapsed || isSmallScreen) && (
+                        <span className="ml-2">{item.label}</span>
+                      )}
                     </span>
                   </Button>
                 </Link>
@@ -225,7 +262,9 @@ export default function Sidebar({ isOpen }) {
             <div className="flex flex-col gap-2">
               <Card
                 className={`bg-gradient-to-b from-[#A073F0] to-[#7886DD] shadow-[0px_8px_24px_rgba(6,46,112,0.25)] flex-shrink-0 ${
-                  isCollapsed && !isSmallScreen ? "p-2 rounded-lg" : "rounded-3xl"
+                  isCollapsed && !isSmallScreen
+                    ? "p-2 rounded-lg"
+                    : "rounded-3xl"
                 }`}
               >
                 <CardContent
@@ -235,14 +274,27 @@ export default function Sidebar({ isOpen }) {
                 >
                   {isCollapsed && !isSmallScreen ? (
                     <div className="flex flex-col items-center w-full">
-                      <Image src="/images/diamond.png" width={14} height={14} alt="Level" />
-                      <span className="text-xs text-white font-semibold mt-1">{points}</span>
+                      <Image
+                        src="/images/diamond.png"
+                        width={14}
+                        height={14}
+                        alt="Level"
+                      />
+                      <span className="text-xs text-white font-semibold mt-1">
+                        {points}
+                      </span>
                     </div>
                   ) : (
                     <>
-                      <Image src="/images/diamond.png" width={70} height={70} alt="Level" />
+                      <Image
+                        src="/images/diamond.png"
+                        width={70}
+                        height={70}
+                        alt="Level"
+                      />
                       <p className="mt-2 font-semibold text-base text-white">
-                        <span className="font-normal">Upcoming Level: </span> {nextLevel}
+                        <span className="font-normal">Upcoming Level: </span>{" "}
+                        {nextLevel}
                       </p>
                       <p className="text-xs text-white">Points: {points}</p>
                     </>
@@ -258,7 +310,9 @@ export default function Sidebar({ isOpen }) {
                 >
                   <CardContent
                     className={`text-center flex flex-col items-center bg-[#EBEEFF] dark:bg-[#38383c] ${
-                      isCollapsed && !isSmallScreen ? "px-2 py-4 rounded-lg" : "p-4 rounded-3xl"
+                      isCollapsed && !isSmallScreen
+                        ? "px-2 py-4 rounded-lg"
+                        : "p-4 rounded-3xl"
                     }`}
                   >
                     {isCollapsed && !isSmallScreen ? (
@@ -275,7 +329,20 @@ export default function Sidebar({ isOpen }) {
                           className="absolute top-1.5"
                         />
                         <p className="mt-24 font-semibold">
-                          Upgrade to <span className="text-primary">PRO</span> to stay disciplined.
+                          {daysRemaining <= 0 ? (
+                            <>
+                              Upgrade to{" "}
+                              <span className="text-primary">PRO</span> to stay
+                              disciplined.
+                            </>
+                          ) : (
+                            <>
+                              Your subscription ends in{" "}
+                              <span className="text-primary">
+                                {daysRemaining} days
+                              </span>
+                            </>
+                          )}
                         </p>
                         <Button
                           className="text-background w-full mt-2"
@@ -298,14 +365,18 @@ export default function Sidebar({ isOpen }) {
             onClick={toggleCollapse}
             className="absolute top-1/2 p-0 -right-5 z-10 h-8 w-8 rounded-full bg-card shadow-md border-none flex items-center justify-center transform -translate-y-1/2 border border-border hidden md:flex"
           >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
           </Button>
         )}
 
         {isSmallScreen && isOpen && (
           <div
-            className="fixed inset-0"
-            onClick={() => isOpen && window.dispatchEvent(new CustomEvent("closeSidebar"))}
+            className="fixed inset-0 bg-black/20"
+            onClick={onClose}
           />
         )}
       </div>

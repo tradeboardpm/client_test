@@ -256,7 +256,6 @@ const [currentImageUrl, setCurrentImageUrl] = useState("");
       <div className="flex flex-col md:flex-row min-h-screen bg-card">
         <main className="flex-1 p-6 bg-background rounded-t-xl">
           {renderDateNavigation()}
-          {/* ... rest of the renderJournalContent remains unchanged ... */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="flex-1 w-full h-full flex justify-between flex-col pb-6 shadow-[0px_8px_20px_rgba(0,0,0,0.08)] dark:shadow-[0px_8px_20px_rgba(0,0,0,0.32)]">
               <CardHeader>
@@ -336,7 +335,7 @@ const [currentImageUrl, setCurrentImageUrl] = useState("");
                           <div>
                             <Checkbox checked={rule.isFollowed} />
                           </div>
-                          <span className="text-gray-700 text-[0.8rem]">{rule.description}</span>
+                          <span className="text-muted-foreground text-[0.8rem]">{rule.description}</span>
                         </div>
                       ))}
                       {(!journalData.rules || journalData.rules.length === 0) && (

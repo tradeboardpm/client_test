@@ -119,7 +119,7 @@ export default function TradeboardIntelligence() {
   const searchParams = useSearchParams()
 
   const getInitialState = () => {
-    const cookieFilters = Cookies.get("performanceAnalyticsFilters")
+    const cookieFilters = Cookies.get("tradeboardIntelligenceFilters")
     const savedFilters = cookieFilters ? JSON.parse(cookieFilters) : {}
     return {
       period: savedFilters.period || searchParams.get("period") || "thisWeek",
@@ -138,14 +138,19 @@ export default function TradeboardIntelligence() {
   const [error, setError] = useState(null)
 
   const updateURLAndCookies = () => {
-    const params = {
+    const params = new URLSearchParams(searchParams)
+    params.set("period", period)
+    if (metricsDateRange.from) params.set("metricsFrom", metricsDateRange.from.toISOString())
+    else params.delete("metricsFrom")
+    if (metricsDateRange.to) params.set("metricsTo", metricsDateRange.to.toISOString())
+    else params.delete("metricsTo")
+    
+    router.push(`/performance-analytics?${params.toString()}`, { scroll: false })
+    Cookies.set("tradeboardIntelligenceFilters", JSON.stringify({
       period,
-      ...(metricsDateRange.from && { metricsFrom: metricsDateRange.from.toISOString() }),
-      ...(metricsDateRange.to && { metricsTo: metricsDateRange.to.toISOString() }),
-    }
-    const queryString = new URLSearchParams(params).toString()
-    router.push(`/performance-analytics?${queryString}`, { scroll: false })
-    Cookies.set("performanceAnalyticsFilters", JSON.stringify(params), { expires: 1 / 48 })
+      metricsFrom: metricsDateRange.from?.toISOString(),
+      metricsTo: metricsDateRange.to?.toISOString(),
+    }), { expires: 1 / 48 })
   }
 
   useEffect(() => {

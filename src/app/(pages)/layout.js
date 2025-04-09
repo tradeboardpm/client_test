@@ -20,7 +20,7 @@ export default function MainLayout({ children }) {
   const [subscriptionData, setSubscriptionData] = useState(null);
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [loading, setLoading] = useState(true); // New loading state
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   const clearCookiesAndRedirect = useCallback(() => {
@@ -159,8 +159,14 @@ export default function MainLayout({ children }) {
 
       if (tokenValid && subscriptionValid && announcementsValid) {
         setLoading(false);
+
+        const isFirstTimeLogin = localStorage.getItem("isFirstTimeLogin");
+        if (isFirstTimeLogin === "true") {
+          setIsSubscriptionDialogOpen(true);
+          localStorage.setItem("isFirstTimeLogin", "false");
+        }
       } else {
-        setLoading(false); // Even if some fail, stop loading to avoid infinite loading state
+        setLoading(false);
       }
     };
 
@@ -214,6 +220,8 @@ export default function MainLayout({ children }) {
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
+  const closeSidebar = () => setSidebarOpen(false);
+
   const handleRemoveAnnouncement = useCallback((announcement) => {
     setAnnouncements((prevAnnouncements) =>
       prevAnnouncements.filter((a) => a._id !== announcement._id)
@@ -237,8 +245,12 @@ export default function MainLayout({ children }) {
         notifications={notifications}
       />
 
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar isOpen={sidebarOpen} subscriptionData={subscriptionData} />
+      <div className="flex flex-1 overflow-hidden pt-14"> {/* Added pt-14 for topbar spacing */}
+        <Sidebar 
+          isOpen={sidebarOpen} 
+          onClose={closeSidebar} // Added onClose prop
+          subscriptionData={subscriptionData} 
+        />
         <div className="flex-1 overflow-auto">
           <Toaster />
           <Toaster2 />
@@ -263,7 +275,10 @@ export default function MainLayout({ children }) {
         }}
       >
         <DialogContent className="max-w-7xl">
-          <SubscriptionPlan selectedPlan={selectedPlan} onCloseDialog={handleCloseDialog} />
+          <SubscriptionPlan 
+            selectedPlan={selectedPlan} 
+            onCloseDialog={handleCloseDialog} 
+          />
         </DialogContent>
       </Dialog>
     </div>

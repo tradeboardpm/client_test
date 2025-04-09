@@ -7,27 +7,12 @@
   src: url("/fonts/Poppins.ttf");
 }
 
-@font-face {
-  font-family: "Poppins-Black";
-  src: url("/fonts/Poppins-Black.ttf");
-}
-
-@font-face {
-  font-family: "Poppins-Bold";
-  src: url("/fonts/Poppins-Bold.ttf");
-}
-
-.poppins-black {
-  font-family: "Poppins-Black";
-  color: #552c29;
-}
-
-.poppins-bold {
-  font-family: "Poppins-Bold";
-}
 
 body {
-  font-family: "Poppins";
+  font-family: "Poppins", sans-serif;
+  text-rendering: optimizeLegibility; /* Or try 'geometricPrecision' */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer utilities {

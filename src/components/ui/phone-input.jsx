@@ -1,264 +1,157 @@
-"use client";
-
 import * as React from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-import { Phone } from "lucide-react";
+import { CheckIcon, ChevronsUpDown } from "lucide-react";
 import * as RPNInput from "react-phone-number-input";
 import flags from "react-phone-number-input/flags";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
-const PhoneNumberInput = React.forwardRef(
-  ({ label, value, onChange, error, required, className, ...props }, ref) => {
-    return (
-      <div className={cn("space-y-2", className)} dir="ltr">
-        {label && (
-          <Label className="text-sm font-medium" htmlFor={props.id}>
-            {label}
-          </Label>
-        )}
-        <RPNInput.default
-          ref={ref}
-          className="flex rounded-md shadow-sm"
-          international
-          defaultCountry="IN"
-          flagComponent={FlagComponent}
-          countrySelectComponent={CountrySelect}
-          inputComponent={PhoneInput}
-          value={value || ""}
-          onChange={onChange}
-          required={required}
-          {...props}
-        />
-        {error && <p className="text-sm text-destructive mt-1">{error}</p>}
-      </div>
-    );
-  }
-);
-
-PhoneNumberInput.displayName = "PhoneNumberInput";
-
-const PhoneInput = React.forwardRef(({ className, ...props }, ref) => {
+const PhoneInput = React.forwardRef((props, ref) => {
+  const { className, onChange, ...rest } = props;
+  
   return (
-    <Input
-      className={cn(
-        "rounded-l-none border-l-0 pl-3 text-sm focus-visible:ring-0 focus-visible:ring-offset-0",
-        className
-      )}
+    <RPNInput.default
       ref={ref}
-      {...props}
+      className={cn("flex", className)}
+      flagComponent={FlagComponent}
+      countrySelectComponent={CountrySelect}
+      inputComponent={InputComponent}
+      smartCaret={false}
+      onChange={(value) => onChange?.(value || "")}
+      defaultCountry="IN"
+      international={false}
+      withCountryCallingCode={false}
+      {...rest}
     />
   );
 });
-
 PhoneInput.displayName = "PhoneInput";
 
-const CountrySelect = ({ disabled, value, onChange, options }) => {
+const InputComponent = React.forwardRef((props, ref) => {
+  const { className, ...rest } = props;
   return (
-    <Select disabled={disabled} value={value || "IN"} onValueChange={onChange}>
-      <SelectTrigger className="w-[100px] rounded-r-none border-r-0 focus:ring-0 focus:ring-offset-0">
-        <SelectValue>
-          <div className="flex items-center gap-2">
-            <FlagComponent
-              country={value || "IN"}
-              countryName={value || "India"}
-            />
-            <span className="text-sm">
-              +{RPNInput.getCountryCallingCode(value || "IN")}
-            </span>
-          </div>
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent className="max-h-[300px]">
-        {options.map((option) => (
-          <SelectItem key={option.value} value={option.value || option.label}>
-            <div className="flex items-center gap-2">
-              <FlagComponent
-                country={option.value || ""}
-                countryName={option.label || ""}
-              />
-              <span className="text-sm">
-                {option.label} (+
-                {RPNInput.getCountryCallingCode(option.value || "IN")})
-              </span>
-            </div>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <Input
+      className={cn("rounded-e-lg rounded-s-none", className)}
+      {...rest}
+      ref={ref}
+    />
+  );
+});
+InputComponent.displayName = "InputComponent";
+
+const CountrySelect = ({ disabled, value: selectedCountry, options: countryList, onChange }) => {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger asChild disabled={disabled}>
+        <Button
+          type="button"
+          variant="outline"
+          className="flex gap-1 rounded-e-none rounded-s-lg border-r-0 px-3 focus:z-10"
+        >
+          <FlagComponent
+            country={selectedCountry || "IN"}
+            countryName={selectedCountry}
+          />
+          <ChevronsUpDown
+            className={cn(
+              "-mr-2 size-4 opacity-50",
+              disabled ? "hidden" : "opacity-100"
+            )}
+          />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-[300px] p-0">
+        <Command>
+          <CommandInput placeholder="Search country..." />
+          <CommandList>
+            <CommandEmpty>No country found.</CommandEmpty>
+            <ScrollArea className="h-72">
+              <CommandGroup>
+                {countryList.map(({ value, label }) =>
+                  value ? (
+                    <CountrySelectOption
+                      key={value}
+                      country={value}
+                      countryName={label}
+                      selectedCountry={selectedCountry}
+                      onChange={(country) => {
+                        onChange(country);
+                        setOpen(false);
+                      }}
+                    />
+                  ) : null
+                )}
+              </CommandGroup>
+            </ScrollArea>
+          </CommandList>
+        </Command>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+};
+const CountrySelectOption = ({ country, countryName, selectedCountry, onChange }) => {
+  return (
+    <CommandItem className="gap-2" onSelect={() => onChange(country)}>
+      <FlagComponent country={country} countryName={countryName} />
+      <span className="flex-1 text-sm">{countryName}</span>
+      <span className="text-sm text-foreground/50">{`+${RPNInput.getCountryCallingCode(country)}`}</span>
+      <CheckIcon
+        className={cn("ml-auto size-4", country === selectedCountry ? "opacity-100" : "opacity-0")}
+      />
+    </CommandItem>
   );
 };
 
 const FlagComponent = ({ country, countryName }) => {
-  const Flag = flags[country];
+  const Flag = country ? flags[country] : null;
   return (
-    <span className="w-5 overflow-hidden rounded-sm">
+    <span className="flex h-4 w-6 overflow-hidden rounded-sm bg-foreground/20 [&_svg]:size-full">
       {Flag && <Flag title={countryName} />}
     </span>
   );
 };
 
-export default PhoneNumberInput;
+// Custom hook for handling phone input with country code detection
+const usePhoneInput = () => {
+  const [phone, setPhone] = React.useState("");
+  const [country, setCountry] = React.useState("IN");
 
+  const handlePhoneChange = (value) => {
+    setPhone(value || "");
+    
+    // If user manually enters a country code (starting with +), detect and change country
+    if (value && value.startsWith('+')) {
+      try {
+        const countryCode = value.split(' ')[0].slice(1);
+        // Find country by calling code
+        for (const c of Object.keys(RPNInput.countries)) {
+          if (RPNInput.getCountryCallingCode(c) === countryCode) {
+            setCountry(c);
+            break;
+          }
+        }
+      } catch (error) {
+        // Ignore parsing errors
+      }
+    }
+  };
 
-// "use client";
+  return {
+    phone,
+    country,
+    setPhone,
+    setCountry,
+    handleChange: handlePhoneChange
+  };
+};
 
-// import * as React from "react";
-// import { Input } from "@/components/ui/input";
-// import { Label } from "@/components/ui/label";
-// import { cn } from "@/lib/utils";
-// import { Phone } from "lucide-react";
-// import * as RPNInput from "react-phone-number-input";
-// import flags from "react-phone-number-input/flags";
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from "@/components/ui/select";
-
-// const PhoneNumberInput = React.forwardRef(
-//   ({ label, value, onChange, error, required, className, ...props }, ref) => {
-//     const [country, setCountry] = React.useState("IN");
-
-//     // Custom onChange handler to prevent automatic country detection
-//     const handleChange = (newValue) => {
-//       if (newValue) {
-//         // Strip any existing country code and plus sign
-//         const numberOnly = newValue.replace(/^\+\d+/, "").trim();
-//         // Construct the new value with the selected country code
-//         const formattedValue = `+${RPNInput.getCountryCallingCode(
-//           country
-//         )}${numberOnly}`;
-//         onChange(formattedValue);
-//       } else {
-//         onChange(newValue);
-//       }
-//     };
-
-//     return (
-//       <div className={cn("space-y-2", className)} dir="ltr">
-//         {label && (
-//           <Label className="text-sm font-medium" htmlFor={props.id}>
-//             {label}
-//           </Label>
-//         )}
-//         <RPNInput.default
-//           ref={ref}
-//           className="flex rounded-md shadow-sm"
-//           international
-//           country={country}
-//           defaultCountry="IN"
-//           flagComponent={FlagComponent}
-//           countrySelectComponent={(selectProps) => (
-//             <CountrySelect {...selectProps} onCountryChange={setCountry} />
-//           )}
-//           inputComponent={PhoneInput}
-//           value={value || ""}
-//           onChange={handleChange}
-//           required={required}
-//           withCountryCallingCode={false}
-//           smartCaret={false}
-//           countryCallingCodeEditable={false}
-//           autoComplete="tel"
-//           {...props}
-//         />
-//         {error && <p className="text-sm text-destructive mt-1">{error}</p>}
-//       </div>
-//     );
-//   }
-// );
-
-// PhoneNumberInput.displayName = "PhoneNumberInput";
-
-// const PhoneInput = React.forwardRef(({ className, ...props }, ref) => {
-//   // Remove any country code and plus sign from the input value
-//   const inputValue = props.value?.replace(/^\+\d+/, "") || "";
-
-//   return (
-//     <Input
-//       className={cn(
-//         "rounded-l-none border-l-0 pl-3 text-sm focus-visible:ring-0 focus-visible:ring-offset-0",
-//         className
-//       )}
-//       ref={ref}
-//       {...props}
-//       value={inputValue}
-//       type="tel"
-//     />
-//   );
-// });
-
-// PhoneInput.displayName = "PhoneInput";
-
-// const CountrySelect = ({
-//   disabled,
-//   value,
-//   onChange,
-//   options,
-//   onCountryChange,
-// }) => {
-//   const handleChange = (newCountry) => {
-//     onChange(newCountry);
-//     if (onCountryChange) {
-//       onCountryChange(newCountry);
-//     }
-//   };
-
-//   return (
-//     <Select
-//       disabled={disabled}
-//       value={value || "IN"}
-//       onValueChange={handleChange}
-//     >
-//       <SelectTrigger className="w-[100px] rounded-r-none border-r-0 focus:ring-0 focus:ring-offset-0">
-//         <SelectValue>
-//           <div className="flex items-center gap-2">
-//             <FlagComponent
-//               country={value || "IN"}
-//               countryName={value || "India"}
-//             />
-//             <span className="text-sm">
-//               +{RPNInput.getCountryCallingCode(value || "IN")}
-//             </span>
-//           </div>
-//         </SelectValue>
-//       </SelectTrigger>
-//       <SelectContent className="max-h-[300px]">
-//         {options.map((option) => (
-//           <SelectItem key={option.value} value={option.value || option.label}>
-//             <div className="flex items-center gap-2">
-//               <FlagComponent
-//                 country={option.value || ""}
-//                 countryName={option.label || ""}
-//               />
-//               <span className="text-sm">
-//                 {option.label} (+
-//                 {RPNInput.getCountryCallingCode(option.value || "IN")})
-//               </span>
-//             </div>
-//           </SelectItem>
-//         ))}
-//       </SelectContent>
-//     </Select>
-//   );
-// };
-
-// const FlagComponent = ({ country, countryName }) => {
-//   const Flag = flags[country];
-//   return (
-//     <span className="w-5 overflow-hidden rounded-sm">
-//       {Flag && <Flag title={countryName} />}
-//     </span>
-//   );
-// };
-
-// export default PhoneNumberInput;
+export { PhoneInput, usePhoneInput };

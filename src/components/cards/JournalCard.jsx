@@ -39,6 +39,7 @@ const JournalCard = ({
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [hasSubscription, setHasSubscription] = useState(false)
+  const [isDeleteClicked, setIsDeleteClicked] = useState(false)
 
   useEffect(() => {
     const subscription = Cookies.get('subscription');
@@ -77,12 +78,16 @@ const JournalCard = ({
   }
 
   const handleCardClick = (e) => {
-    if (e.target.closest(".delete-button")) return
+    if (isDeleteClicked || isDeleting || e.target.closest(".delete-button")) {
+      return
+    }
     router.push(`/${mainPage}/${date}`)
   }
 
   const handleDeleteClick = (e) => {
+    e.preventDefault()
     e.stopPropagation()
+    setIsDeleteClicked(true)
     if (!hasSubscription) {
       setShowSubscriptionDialog(true)
     } else {
@@ -90,40 +95,50 @@ const JournalCard = ({
     }
   }
 
-  const handleDelete = async () => {
+  const handleDelete = async (e) => {
+    e?.preventDefault()
+    e?.stopPropagation()
     if (!hasSubscription) return;
     
     try {
       setIsDeleting(true)
       const token = Cookies.get("token")
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/journals/${id}`, {
+      const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/journals/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
-      setShowDeleteDialog(false)
-      toast({
-        title: "Journal Entry Deleted",
-        description: "The journal entry was successfully deleted.",
-        variant: "default",
-      })
-      onDelete(id)
-      await refreshJournalData()
+
+      // Check the response status and data
+      if (response.status === 200 && response.data.journalDeleted === true) {
+        setShowDeleteDialog(false)
+        toast({
+          title: "Journal Entry Deleted Successfully",
+          description: "The journal entry was successfully deleted.",
+          variant: "default", // Use "success" if your toast supports it
+        })
+        onDelete(id)
+        // await refreshJournalData()
+      } else {
+        // Only throw an error if the response explicitly indicates failure
+        throw new Error(response.data.message || "Unexpected response from server")
+      }
     } catch (error) {
       console.error("Error deleting journal entry:", error)
       toast({
         title: "Delete Failed",
-        description: "Failed to delete journal entry. Please try again.",
+        description: error.message || "Failed to delete journal entry. Please try again.",
         variant: "destructive",
       })
     } finally {
       setIsDeleting(false)
+      setIsDeleteClicked(false)
     }
   }
 
   const handleUpgradeClick = () => {
     setShowSubscriptionDialog(false)
-    router.push('/plans') // Adjust this route to your pricing page route
+    router.push('/plans')
   }
 
   return (
@@ -137,7 +152,7 @@ const JournalCard = ({
             size="icon"
             variant="destructive"
             onClick={handleDeleteClick}
-            className="absolute top-0 left-0  hover:scale-110 rounded-none rounded-tl-lg opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-br-3xl border-t-0 border-l-0 delete-button"
+            className="absolute top-0 left-0 hover:scale-110 rounded-none rounded-tl-lg opacity-0 group-hover:opacity-100 transition-all duration-300 rounded-br-3xl border-t-0 border-l-0 delete-button"
           >
             <Trash2 className="w-4 h-4 text-white" />
           </Button>
@@ -195,7 +210,6 @@ const JournalCard = ({
         </CardFooter>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -205,15 +219,18 @@ const JournalCard = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600" disabled={isDeleting}>
+            <AlertDialogCancel onClick={() => setIsDeleteClicked(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete} 
+              className="bg-red-500 hover:bg-red-600" 
+              disabled={isDeleting}
+            >
               {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Subscription Required Dialog */}
       <AlertDialog open={showSubscriptionDialog} onOpenChange={setShowSubscriptionDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -223,7 +240,7 @@ const JournalCard = ({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setIsDeleteClicked(false)}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleUpgradeClick} className="bg-primary hover:bg-primary/90">
               Upgrade Now
             </AlertDialogAction>

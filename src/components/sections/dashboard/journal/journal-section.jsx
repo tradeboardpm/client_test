@@ -517,8 +517,8 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
               <HoverCardContent className="w-80">
                 <div className="flex flex-col gap-2">
                   <p className="text-sm text-muted-foreground">
-                    You can add maximum 3 documents Formats: JPEG, JPG, PDF,
-                    PNG, HEIF File Size: Maximum 5MB
+                    You can add maximum 3 documents Formats: JPEG, JPG,
+                    PNG File Size: Maximum 5MB
                     {!hasSubscription && <br />}
                     {!hasSubscription && "(Subscribe to unlock this feature)"}
                   </p>

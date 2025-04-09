@@ -9,7 +9,15 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
-import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
 import { X, ChevronDown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import JournalCard from "@/components/cards/JournalCard"
@@ -30,20 +38,20 @@ export default function JournalAnalysis() {
   const popoverRef = useRef(null)
 
   const formatDateWithoutTimezone = (date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, "0")
+    const day = String(date.getDate()).padStart(2, "0")
+    return `${year}-${month}-${day}`
+  }
 
   const getInitialState = () => {
-    const cookieFilters = Cookies.get("performanceAnalyticsFilters")
+    const cookieFilters = Cookies.get("journalAnalysisFilters")
     const savedFilters = cookieFilters ? JSON.parse(cookieFilters) : {}
     const parseDateString = (dateString) => {
-      if (!dateString) return null;
-      const [year, month, day] = dateString.split('-');
-      return new Date(year, month - 1, day);
-    };
+      if (!dateString) return null
+      const [year, month, day] = dateString.split("-")
+      return new Date(year, month - 1, day)
+    }
     return {
       journalsDateRange: {
         from: savedFilters.journalsFrom ? parseDateString(savedFilters.journalsFrom) : startOfMonth(new Date()),
@@ -54,8 +62,10 @@ export default function JournalAnalysis() {
         maxWinRate: Number(savedFilters.maxWinRate) || Number(searchParams.get("maxWinRate")) || defaultFilters.maxWinRate,
         minTrades: Number(savedFilters.minTrades) || Number(searchParams.get("minTrades")) || defaultFilters.minTrades,
         maxTrades: Number(savedFilters.maxTrades) || Number(searchParams.get("maxTrades")) || defaultFilters.maxTrades,
-        minRulesFollowed: Number(savedFilters.minRulesFollowed) || Number(searchParams.get("minRulesFollowed")) || defaultFilters.minRulesFollowed,
-        maxRulesFollowed: Number(savedFilters.maxRulesFollowed) || Number(searchParams.get("maxRulesFollowed")) || defaultFilters.maxRulesFollowed,
+        minRulesFollowed:
+          Number(savedFilters.minRulesFollowed) || Number(searchParams.get("minRulesFollowed")) || defaultFilters.minRulesFollowed,
+        maxRulesFollowed:
+          Number(savedFilters.maxRulesFollowed) || Number(searchParams.get("maxRulesFollowed")) || defaultFilters.maxRulesFollowed,
       },
       pagination: {
         currentPage: Number(savedFilters.page) || Number(searchParams.get("page")) || 1,
@@ -76,33 +86,47 @@ export default function JournalAnalysis() {
   const [openPopover, setOpenPopover] = useState(null)
 
   const updateURLAndCookies = () => {
-    const params = {
-      ...(journalsDateRange.from && { journalsFrom: formatDateWithoutTimezone(journalsDateRange.from) }),
-      ...(journalsDateRange.to && { journalsTo: formatDateWithoutTimezone(journalsDateRange.to) }),
-      ...(filters.minWinRate !== defaultFilters.minWinRate && { minWinRate: filters.minWinRate.toString() }),
-      ...(filters.maxWinRate !== defaultFilters.maxWinRate && { maxWinRate: filters.maxWinRate.toString() }),
-      ...(filters.minTrades !== defaultFilters.minTrades && { minTrades: filters.minTrades.toString() }),
-      ...(filters.maxTrades !== defaultFilters.maxTrades && { maxTrades: filters.maxTrades.toString() }),
-      ...(filters.minRulesFollowed !== defaultFilters.minRulesFollowed && { minRulesFollowed: filters.minRulesFollowed.toString() }),
-      ...(filters.maxRulesFollowed !== defaultFilters.maxRulesFollowed && { maxRulesFollowed: filters.maxRulesFollowed.toString() }),
-      ...(pagination.currentPage > 1 && { page: pagination.currentPage.toString() }),
-    };
-    const queryString = new URLSearchParams(params).toString();
-    router.push(`/performance-analytics?${queryString}`, { scroll: false });
-    Cookies.set("performanceAnalyticsFilters", JSON.stringify(params), { expires: 1 / 48 });
-  };
+    const params = new URLSearchParams(searchParams)
+    if (journalsDateRange.from) params.set("journalsFrom", formatDateWithoutTimezone(journalsDateRange.from))
+    else params.delete("journalsFrom")
+    if (journalsDateRange.to) params.set("journalsTo", formatDateWithoutTimezone(journalsDateRange.to))
+    else params.delete("journalsTo")
+    
+    if (filters.minWinRate !== defaultFilters.minWinRate) params.set("minWinRate", filters.minWinRate.toString())
+    else params.delete("minWinRate")
+    if (filters.maxWinRate !== defaultFilters.maxWinRate) params.set("maxWinRate", filters.maxWinRate.toString())
+    else params.delete("maxWinRate")
+    if (filters.minTrades !== defaultFilters.minTrades) params.set("minTrades", filters.minTrades.toString())
+    else params.delete("minTrades")
+    if (filters.maxTrades !== defaultFilters.maxTrades) params.set("maxTrades", filters.maxTrades.toString())
+    else params.delete("maxTrades")
+    if (filters.minRulesFollowed !== defaultFilters.minRulesFollowed) params.set("minRulesFollowed", filters.minRulesFollowed.toString())
+    else params.delete("minRulesFollowed")
+    if (filters.maxRulesFollowed !== defaultFilters.maxRulesFollowed) params.set("maxRulesFollowed", filters.maxRulesFollowed.toString())
+    else params.delete("maxRulesFollowed")
+    if (pagination.currentPage > 1) params.set("page", pagination.currentPage.toString())
+    else params.delete("page")
+
+    router.push(`/performance-analytics?${params.toString()}`, { scroll: false })
+    Cookies.set("journalAnalysisFilters", JSON.stringify({
+      journalsFrom: journalsDateRange.from ? formatDateWithoutTimezone(journalsDateRange.from) : null,
+      journalsTo: journalsDateRange.to ? formatDateWithoutTimezone(journalsDateRange.to) : null,
+      ...filters,
+      page: pagination.currentPage,
+    }), { expires: 1 / 48 })
+  }
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = Cookies.get("token");
+      const token = Cookies.get("token")
       if (!token) {
-        setError("No authentication token found");
-        return;
+        setError("No authentication token found")
+        return
       }
-    
-      setLoading(true);
-      setError(null);
-    
+
+      setLoading(true)
+      setError(null)
+
       try {
         const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/journals/filters`, {
           params: {
@@ -113,15 +137,15 @@ export default function JournalAnalysis() {
             ...filters,
           },
           headers: { Authorization: `Bearer ${token}` },
-        });
-        setMonthlyJournals(Object.keys(response.data.data).length === 0 ? null : response.data.data);
-        setPagination(response.data.pagination);
+        })
+        setMonthlyJournals(Object.keys(response.data.data).length === 0 ? null : response.data.data)
+        setPagination((prev) => ({ ...prev, ...response.data.pagination }))
       } catch (err) {
-        setError(err.response?.data?.error || "An error occurred");
+        setError(err.response?.data?.error || "An error occurred")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
+    }
 
     fetchData()
     updateURLAndCookies()
@@ -198,11 +222,18 @@ export default function JournalAnalysis() {
   }
 
   const renderDateRangeButton = (dateRange, placeholder) => {
-    const isDefaultRange = dateRange.from && dateRange.to && format(dateRange.from, "LLL y") === format(startOfMonth(new Date()), "LLL y")
+    const isDefaultRange =
+      dateRange.from &&
+      dateRange.to &&
+      format(dateRange.from, "LLL y") === format(startOfMonth(new Date()), "LLL y") &&
+      format(dateRange.to, "LLL y") === format(endOfMonth(new Date()), "LLL y")
     return (
       <Button
         variant="outline"
-        className={cn("w-full sm:w-fit h-8 flex items-center justify-between gap-2 text-xs sm:text-sm", (!dateRange.from || isDefaultRange) && "text-foreground")}
+        className={cn(
+          "w-full sm:w-fit h-8 flex items-center justify-between gap-2 text-xs sm:text-sm",
+          isDefaultRange ? "text-foreground" : "text-purple-600"
+        )}
       >
         {dateRange.from && !isDefaultRange ? (
           dateRange.to ? `${format(dateRange.from, "LLL dd, y")} - ${format(dateRange.to, "LLL dd, y")}` : format(dateRange.from, "LLL dd, y")
@@ -215,15 +246,20 @@ export default function JournalAnalysis() {
   }
 
   const hasActiveFilters = () =>
-    filters.minWinRate !== 0 ||
-    filters.maxWinRate !== 100 ||
-    filters.minTrades !== 0 ||
-    filters.maxTrades !== 50 ||
-    filters.minRulesFollowed !== 0 ||
-    filters.maxRulesFollowed !== 100 ||
+    filters.minWinRate !== defaultFilters.minWinRate ||
+    filters.maxWinRate !== defaultFilters.maxWinRate ||
+    filters.minTrades !== defaultFilters.minTrades ||
+    filters.maxTrades !== defaultFilters.maxTrades ||
+    filters.minRulesFollowed !== defaultFilters.minRulesFollowed ||
+    filters.maxRulesFollowed !== defaultFilters.maxRulesFollowed ||
     (journalsDateRange.from && format(journalsDateRange.from, "LLL y") !== format(startOfMonth(new Date()), "LLL y"))
 
   const handleCardClick = (date) => router.push(`/performance-analytics/${date}`)
+
+  const isWinRateModified = filters.minWinRate !== defaultFilters.minWinRate || filters.maxWinRate !== defaultFilters.maxWinRate
+  const isTradesModified = filters.minTrades !== defaultFilters.minTrades || filters.maxTrades !== defaultFilters.maxTrades
+  const isRulesFollowedModified =
+    filters.minRulesFollowed !== defaultFilters.minRulesFollowed || filters.maxRulesFollowed !== defaultFilters.maxRulesFollowed
 
   return (
     <div className="p-4 sm:p-6 bg-background rounded-b-xl">
@@ -258,10 +294,31 @@ export default function JournalAnalysis() {
               </Popover>
               <div ref={popoverRef} className="flex flex-wrap gap-2 sm:gap-4 items-center">
                 {[
-                  { title: "Win Rate", min: 0, max: 100, valueKey: ["minWinRate", "maxWinRate"], showPercentage: true },
-                  { title: "Trades", min: 0, max: 50, valueKey: ["minTrades", "maxTrades"], showPercentage: false },
-                  { title: "Rules Followed", min: 0, max: 100, valueKey: ["minRulesFollowed", "maxRulesFollowed"], showPercentage: true },
-                ].map(({ title, min, max, valueKey, showPercentage }) => (
+                  {
+                    title: "Win Rate",
+                    min: 0,
+                    max: 100,
+                    valueKey: ["minWinRate", "maxWinRate"],
+                    showPercentage: true,
+                    isModified: isWinRateModified,
+                  },
+                  {
+                    title: "Trades",
+                    min: 0,
+                    max: 50,
+                    valueKey: ["minTrades", "maxTrades"],
+                    showPercentage: false,
+                    isModified: isTradesModified,
+                  },
+                  {
+                    title: "Rules Followed",
+                    min: 0,
+                    max: 100,
+                    valueKey: ["minRulesFollowed", "maxRulesFollowed"],
+                    showPercentage: true,
+                    isModified: isRulesFollowedModified,
+                  },
+                ].map(({ title, min, max, valueKey, showPercentage, isModified }) => (
                   <FilterPopover
                     key={title}
                     title={title}
@@ -272,6 +329,7 @@ export default function JournalAnalysis() {
                     open={openPopover === title.replace(/\s/g, "").toLowerCase()}
                     onOpenChange={(open) => setOpenPopover(open ? title.replace(/\s/g, "").toLowerCase() : null)}
                     showPercentage={showPercentage}
+                    isModified={isModified}
                   />
                 ))}
                 {hasActiveFilters() && (

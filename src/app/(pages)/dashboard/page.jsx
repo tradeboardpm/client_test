@@ -238,19 +238,26 @@ export default function JournalTradePage() {
           )}
         </div>
 
-        <div className="primary_gradient rounded-xl p-2 sm:p-3 md:p-4 mb-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center relative">
-            <div className="flex-1 w-full sm:w-auto order-2 sm:order-1"></div>
-            <div className="w-full sm:w-auto sm:absolute sm:left-1/2 sm:-translate-x-1/2 bg-[#ffffff]/30 text-center text-background px-2 py-1 rounded-lg mb-2 sm:mb-0 order-1 sm:order-2">
-              <p className="text-lg px-3 py-1 font-semibold">{formatDate(selectedDate)}</p>
-            </div>
-            <p className="text-background text-sm sm:text-base lg:text-xl order-3 px-4">
-              Capital: {formattedCapital}
-            </p>
-          </div>
-        </div>
+        <div className="primary_gradient rounded-xl p-2 sm:p-3 md:p-4 lg:p-5 mb-6">
+  <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-3 md:gap-4">
+    {/* Left Spacer */}
+    <div className="flex-1  sm:w-auto min-w-0 order-2 sm:order-1"></div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+    {/* Centered Date */}
+    <div className=" flex-1 w-full flex-shrink-0  sm:w-auto sm:flex-0 sm:max-w-[50%] md:max-w-[50%] bg-[#ffffff]/30 text-center text-background px-2 py-1 rounded-lg mb-2 sm:mb-0 order-1 sm:order-2">
+      <p className="text-sm sm:text-base md:text-lg lg:text-xl px-2 sm:px-3 py-1 font-semibold ">
+        {formatDate(selectedDate)}
+      </p>
+    </div>
+
+    {/* Right Capital Text */}
+    <p className=" flex-1 text-right  w-full flex-shrink-0 text-background text-xs sm:text-sm md:text-base lg:text-lg order-3 px-2 sm:px-3 md:px-4 whitespace-nowrap">
+      Capital: {formattedCapital}
+    </p>
+  </div>
+</div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
           <JournalSection
             selectedDate={selectedDate}
             journalData={journalData}

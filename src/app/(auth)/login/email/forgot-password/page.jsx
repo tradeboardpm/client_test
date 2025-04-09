@@ -51,15 +51,16 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="w-full max-w-lg p-8 space-y-8">
+    <div className="flex min-h-screen w-full items-center justify-center px-4">
+      <div className="w-[500px] max-w-lg  space-y-8 p-8">
       <Button
-      size="icon"
-        variant="outline"
-        className="mb-8 rounded-full size-10 p-0 absolute left-10 lg:left-32 top-20"
-        onClick={() => router.back()}
-      >
-        <ArrowLeft className="h-4 w-4" />
-      </Button>
+          variant="outline"
+          size="icon"
+          className="absolute left-4 top-20 rounded-full  p-2 lg:left-8 "
+          onClick={() => router.back()}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-semibold">Forgot Password?</h1>
         <p className="text-muted-foreground text-sm">
@@ -86,6 +87,7 @@ export default function ForgotPasswordPage() {
           {isLoading ? "Sending OTP..." : "Send OTP"}
         </Button>
       </form>
+    </div>
     </div>
   );
 }

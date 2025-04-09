@@ -234,6 +234,7 @@ export default function AccountabilityPartner() {
                   variant="outline"
                   className="text-primary"
                   onClick={() => setShowDialog(false)}
+                  disabled={!isSubscriptionActive}
                 >
                   Close
                 </Button>
@@ -309,6 +310,7 @@ export default function AccountabilityPartner() {
                       <MultiSelectorInput
                         placeholder="Select details..."
                         className="bg-card text-sm"
+                        disabled={!isSubscriptionActive}
                       />
                     </MultiSelectorTrigger>
                     <MultiSelectorContent>
@@ -317,6 +319,7 @@ export default function AccountabilityPartner() {
                           <MultiSelectorItem
                             key={option.value}
                             value={option.value}
+                            disabled={!isSubscriptionActive}
                           >
                             {option.label}
                           </MultiSelectorItem>
@@ -351,10 +354,18 @@ export default function AccountabilityPartner() {
                 starting from today.
               </div>
               <div className="flex justify-end space-x-2">
-                <Button type="button" variant="outline" onClick={resetForm}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={resetForm}
+                  disabled={!isSubscriptionActive}
+                >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={isLoading || !isSubscriptionActive}>
+                <Button 
+                  type="submit" 
+                  disabled={isLoading || !isSubscriptionActive}
+                >
                   {isLoading ? "Adding..." : "Add"}
                 </Button>
               </div>
@@ -433,12 +444,14 @@ export default function AccountabilityPartner() {
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
+              disabled={!isSubscriptionActive}
             >
               No
             </Button>
             <Button
               variant="destructive"
               onClick={handleConfirmDelete}
+              disabled={!isSubscriptionActive}
             >
               Yes
             </Button>

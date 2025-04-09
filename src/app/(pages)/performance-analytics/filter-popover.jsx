@@ -17,6 +17,7 @@ const FilterPopover = ({
   open,
   onOpenChange,
   showPercentage = false,
+  isModified = false, // New prop to indicate if filter is modified
 }) => {
   const [tempValue, setTempValue] = useState(value);
   const dropdownContentRef = useRef(null);
@@ -28,12 +29,10 @@ const FilterPopover = ({
     onOpenChange(false);
   };
 
-  // Prevent clicks inside the dropdown from closing it
   const handleContentClick = (e) => {
     e.stopPropagation();
   };
 
-  // Handle slider value change while preventing propagation
   const handleSliderChange = (newValue) => {
     setTempValue(newValue);
   };
@@ -43,14 +42,16 @@ const FilterPopover = ({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="w-fit flex items-center gap-2 justify-between text-foreground h-8 border-border bg-card"
+          className={`w-fit flex items-center gap-2 justify-between text-foreground h-8 border-border bg-card ${
+            isModified ? "bg-[#fafafa] dark:bg-popover border-primary" : ""
+          }`}
         >
           {title}
           <ChevronDown className="h-4 w-4 text-foreground/65" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent
-        className="w-80 p-4 z-50 bg-card border rounded-md shadow-lg"
+        className="w-80 p-4 z-50 bg-popover border rounded-md shadow-lg"
         align="start"
         onClick={handleContentClick}
       >

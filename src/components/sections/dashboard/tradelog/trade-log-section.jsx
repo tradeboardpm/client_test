@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { TradesTable } from "./trades-table.jsx";
 import { TradeSummary } from "./trade-summary.jsx";
 import { ImportTradeDialog } from "./import-trade.jsx";
-import { Plus, Import, Search } from "lucide-react";
+import { Plus, Import, Search, Info } from "lucide-react";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { AddTradeDialog } from "@/components/dialogs/trades/AddTradeDialog";
@@ -14,6 +14,7 @@ import { EditOpenTradeDialog } from "@/components/dialogs/trades/EditOpenTradeDi
 import { EditCompleteTradeDialog } from "@/components/dialogs/trades/EditCompleteTradeDialog";
 import { DeleteTradeDialog } from "@/components/dialogs/trades/DeleteTradeDialog";
 import { CompleteTradeDialog } from "@/components/dialogs/trades/CompleteTradeDialog.jsx";
+import { HoverCard, HoverCardTrigger , HoverCardContent} from "@/components/ui/hover-card.jsx";
 
 export function TradesSection({
   selectedDate,
@@ -110,8 +111,13 @@ export function TradesSection({
   return (
     <Card className="shadow-[0px_8px_20px_rgba(0,0,0,0.08)] dark:shadow-[0px_8px_20px_rgba(0,0,0,0.32)] p-4">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 p-0 pb-3 border-b border-primary/15">
-        <div className="space-y-1 text-xl">
+        <div className="space-y-1 text-xl flex gap-2">
           <CardTitle>Trade Log</CardTitle>
+          <HoverCard>
+            <HoverCardTrigger><Info size={14} /></HoverCardTrigger>
+            
+            <HoverCardContent className="text-sm">Add the trades which you executed on the broker’s platform to keep track.</HoverCardContent>
+          </HoverCard>
         </div>
         <div className="flex items-center space-x-2">
           <Button

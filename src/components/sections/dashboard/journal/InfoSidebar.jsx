@@ -64,7 +64,7 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpd
   const modifiersStyles = {
     future: { opacity: 0.5, pointerEvents: "none" },
     today: { 
-      backgroundColor: "#6200EA", // Full purple background for today
+      backgroundColor: "#9A76ED", // Full purple background for today
       color: "white", 
       borderRadius: "4px",
     },
@@ -140,7 +140,7 @@ export function TradingCalendar({ selectedDate, onSelect, tradesPerDay, forceUpd
           {/* Legend */}
           <div className="p-3 border-t border-primary/15 flex items-center justify-between gap-1 text-[0.65rem]">
             <div className="flex items-center gap-1">
-              <div className="w-2.5 h-2.5 rounded-[3px] bg-[#6200EA]" />
+              <div className="w-2.5 h-2.5 rounded-[3px] bg-primary" />
               <span>Today</span>
             </div>
             <div className="flex items-center gap-1">

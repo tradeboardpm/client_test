@@ -30,7 +30,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Monitor, MonitorX } from "lucide-react";
-import PhoneNumberInput from "@/components/ui/phone-input";
+import {PhoneInput} from "@/components/ui/phone-input";
 import SubscriptionPlan from "@/components/cards/subsciption";
 
 export default function AccountPage() {
@@ -164,11 +164,19 @@ export default function AccountPage() {
       await api.patch("/user/profile", personalForm);
       setUser(personalForm);
       setPersonalDetailsOpen(false);
+      
+      // Update cookies with new username and email
+      Cookies.set("userName", personalForm.name || "", { expires: 7 });
+      Cookies.set("userEmail", personalForm.email || "", { expires: 7 });
+      
       toast({
         title: "Success",
         description: "Profile updated successfully",
         variant: "default",
       });
+      
+      // Refresh the entire window
+      window.location.reload();
     } catch (error) {
       toast({
         title: "Error",
@@ -653,7 +661,7 @@ export default function AccountPage() {
               {user?.phone && (
                 <div>
                   <Label htmlFor="phone">Phone</Label>
-                  <PhoneNumberInput
+                  <PhoneInput
                     id="phone"
                     value={personalForm.phone}
                     onChange={(value) =>
@@ -946,7 +954,7 @@ export default function AccountPage() {
             <div className="grid gap-4 py-4">
               <div>
                 <Label htmlFor="phoneNumber">Phone Number</Label>
-                <PhoneNumberInput
+                <PhoneInput
                   id="phoneNumber"
                   value={phoneNumber}
                   onChange={(value) => setPhoneNumber(value || "")}
