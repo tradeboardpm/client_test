@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import axios from "axios";
 import Cookies from "js-cookie";
+import { useToast } from "@/hooks/use-toast";
 
 export default function OTPVerificationContent() {
   const [otp, setOtp] = useState("");
@@ -14,6 +15,7 @@ export default function OTPVerificationContent() {
   const [phone, setPhone] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
 
   useEffect(() => {
     const phoneParam = searchParams.get("phone");
@@ -48,13 +50,26 @@ export default function OTPVerificationContent() {
           expires: expiryTime,
         });
 
+        toast({
+          title: "Success",
+          description: "OTP verified successfully",
+          variant: "default",
+        });
+
         router.push("/subscription-plan");
       } else {
-        // Handle error
-        console.error("Failed to verify OTP");
+        toast({
+          title: "Error",
+          description: "Failed to verify OTP",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Error:", error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Invalid OTP",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +95,7 @@ export default function OTPVerificationContent() {
             value={otp}
             onChange={(e) => setOtp(e.target.value)}
             required
-            className="text-center text-lg"
+            className="text-center text-sm"
             maxLength={6}
           />
         </div>

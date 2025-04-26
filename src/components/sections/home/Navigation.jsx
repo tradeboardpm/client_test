@@ -77,10 +77,10 @@ const Navigation = ({ isSticky, showNav }) => {
       <nav className="flex items-center justify-between p-4 text-background mx-auto container max-w-[84rem]">
         <div className="flex items-center space-x-2">
           <Image
-            src="/images/home_logo.png"
+            src="/images/Tradeboard.in_logo_Final White.png"
             alt="Tradeboard.in Logo"
-            width={240}
-            height={60}
+            width={160}
+            height={40}
           />
         </div>
         <div className="hidden md:flex space-x-7 text-sm">

@@ -39,12 +39,34 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
   const [calculatedExchangeRate, setCalculatedExchangeRate] = useState(0);
   const [exchangeRateEdited, setExchangeRateEdited] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [capital, setCapital] = useState(null);
+  const [showCapitalAlert, setShowCapitalAlert] = useState(false);
+
+  // Fetch capital when component mounts
+  useEffect(() => {
+    const fetchCapital = async () => {
+      try {
+        const token = Cookies.get("token");
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/user/settings`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        setCapital(response.data.capital || 0);
+      } catch (error) {
+        console.error("Error fetching capital:", error);
+        setCapital(0);
+      }
+    };
+    fetchCapital();
+  }, []);
 
   useEffect(() => {
     if (trade) {
       setEditedTrade({
         ...trade,
-        time: trade.time || getCurrentTime(), // Use existing time or current time if unset
+        time: trade.time || getCurrentTime(),
       });
       setError("");
       setExchangeRateEdited(false);
@@ -71,8 +93,14 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
         brokerage: editedTrade.brokerage,
       });
       setCalculatedExchangeRate(charges.totalCharges - charges.brokerage);
+      if (!exchangeRateEdited) {
+        setEditedTrade((prev) => ({
+          ...prev,
+          exchangeRate: charges.totalCharges - charges.brokerage,
+        }));
+      }
     }
-  }, [editedTrade]);
+  }, [editedTrade, exchangeRateEdited]);
 
   const validateTrade = () => {
     if (!editedTrade.quantity || editedTrade.quantity <= 0) {
@@ -90,6 +118,18 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
     }
     setError("");
     return true;
+  };
+
+  const calculateTotalOrder = (trade) => {
+    const price = trade.action === TRANSACTION_TYPES.BUY ? trade.buyingPrice : trade.sellingPrice;
+    const charges = calculateCharges({
+      equityType: trade.equityType,
+      action: trade.action,
+      price,
+      quantity: trade.quantity,
+      brokerage: trade.brokerage,
+    });
+    return charges.turnover + charges.totalCharges;
   };
 
   const handleTradeTypeChange = (value) => {
@@ -114,6 +154,14 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
   const handleOpenTradeEdit = async () => {
     if (!editedTrade) return;
     if (!validateTrade()) return;
+
+    // Check if total order amount exceeds capital
+    const totalOrderAmount = calculateTotalOrder(editedTrade);
+    if (capital !== null && totalOrderAmount > capital) {
+      setShowCapitalAlert(true);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
@@ -133,6 +181,7 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
       setError("");
     } catch (error) {
       console.error("Error editing open trade:", error);
+      setError("Failed to save changes. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -147,176 +196,203 @@ export function EditOpenTradeDialog({ open, onOpenChange, trade, onSubmit }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="md:max-w-[50vw]">
-        <DialogHeader className="border-b pb-4">
-          <DialogTitle>Edit Open Trade</DialogTitle>
-        </DialogHeader>
-        {editedTrade && (
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="col-span-2">
-                <Label>Instrument Name</Label>
-                <Input
-                  value={editedTrade.instrumentName}
-                  onChange={(e) =>
-                    setEditedTrade({
-                      ...editedTrade,
-                      instrumentName: e.target.value.toUpperCase(),
-                    })
-                  }
-                />
-              </div>
-              <div className="col-span-2">
-                <Label>Quantity</Label>
-                <Input 
-                  type="number" 
-                  min="1" 
-                  value={editedTrade.quantity} 
-                  onChange={handleQuantityChange} 
-                />
-                {error && error.includes("Quantity") && <p className="text-sm text-red-500 mt-1">{error}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="col-span-2">
-                <Label>Transaction Type</Label>
-                <RadioGroup 
-                  className="flex space-x-4" 
-                  value={editedTrade.action} 
-                  onValueChange={handleTradeTypeChange}
-                >
-                  <div
-                    className={cn(
-                      "flex items-center space-x-2 border border-border/25 shadow rounded-lg w-36 p-2",
-                      editedTrade.action === TRANSACTION_TYPES.BUY ? "bg-[#A073F01A]" : "bg-card",
-                    )}
-                  >
-                    <RadioGroupItem value={TRANSACTION_TYPES.BUY} id="edit-open-buy" />
-                    <Label htmlFor="edit-open-buy" className="w-full">
-                      Buy
-                    </Label>
-                  </div>
-                  <div
-                    className={cn(
-                      "flex items-center space-x-2 border border-border/25 shadow rounded-lg w-36 p-2",
-                      editedTrade.action === TRANSACTION_TYPES.SELL ? "bg-[#A073F01A]" : "bg-card",
-                    )}
-                  >
-                    <RadioGroupItem value={TRANSACTION_TYPES.SELL} id="edit-open-sell" />
-                    <Label htmlFor="edit-open-sell" className="w-full">
-                      Sell
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div className="col-span-2">
-                <Label>{editedTrade.action === TRANSACTION_TYPES.BUY ? "Buying" : "Selling"} Price</Label>
-                <Input
-                  type="number"
-                  value={
-                    editedTrade.action === TRANSACTION_TYPES.BUY
-                      ? (editedTrade.buyingPrice ?? "")
-                      : (editedTrade.sellingPrice ?? "")
-                  }
-                  onChange={(e) => {
-                    const price = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)));
-                    setError("");
-                    setEditedTrade({
-                      ...editedTrade,
-                      [editedTrade.action === TRANSACTION_TYPES.BUY ? "buyingPrice" : "sellingPrice"]: price,
-                    });
-                  }}
-                />
-                {error && !error.includes("Quantity") && <p className="text-sm text-red-500 mt-1">{error}</p>}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="col-span-2">
-                <Label>Equity Type</Label>
-                <Select
-                  value={editedTrade.equityType}
-                  onValueChange={(value) => setEditedTrade({ ...editedTrade, equityType: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={EQUITY_TYPES.FNO_OPTIONS}>F&O-OPTIONS</SelectItem>
-                    <SelectItem value={EQUITY_TYPES.FNO_FUTURES}>F&O-FUTURES</SelectItem>
-                    <SelectItem value={EQUITY_TYPES.INTRADAY}>INTRADAY EQUITY</SelectItem>
-                    <SelectItem value={EQUITY_TYPES.DELIVERY}>DELIVERY EQUITY</SelectItem>
-                    <SelectItem value={EQUITY_TYPES.OTHER}>OTHER</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="col-span-2">
-                <Label>Time</Label>
-                <TimePicker
-                  value={editedTrade.time}
-                  onChange={(time) =>
-                    setEditedTrade({
-                      ...editedTrade,
-                      time: time,
-                    })
-                  }
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <div className="col-span-2">
-                <Label>Exchange Charges (₹)</Label>
-                <div className="flex items-center space-x-2">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="md:max-w-[50vw]">
+          <DialogHeader className="border-b pb-4">
+            <DialogTitle>Edit Open Trade</DialogTitle>
+          </DialogHeader>
+          {editedTrade && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="col-span-2">
+                  <Label>Instrument Name</Label>
                   <Input
-                    type="number"
-                    value={editedTrade.exchangeRate.toFixed(2)}
-                    onChange={(e) => {
-                      const value = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)));
+                    value={editedTrade.instrumentName}
+                    onChange={(e) =>
                       setEditedTrade({
                         ...editedTrade,
-                        exchangeRate: value,
-                      });
-                      setExchangeRateEdited(true);
-                    }}
+                        instrumentName: e.target.value.toUpperCase(),
+                      })
+                    }
                   />
-                  {exchangeRateEdited && (
-                    <Button onClick={resetExchangeRate} variant="outline" size="sm">
-                      Reset
-                    </Button>
-                  )}
+                </div>
+                <div className="col-span-2">
+                  <Label>Quantity</Label>
+                  <Input 
+                    type="number" 
+                    min="1" 
+                    value={editedTrade.quantity} 
+                    onChange={handleQuantityChange} 
+                  />
+                  {error && error.includes("Quantity") && <p className="text-sm text-red-500 mt-1">{error}</p>}
                 </div>
               </div>
-              <div className="col-span-2">
-                <Label>Brokerage (₹)</Label>
-                <Input
-                  type="number"
-                  value={editedTrade.brokerage}
-                  onChange={(e) =>
-                    setEditedTrade({
-                      ...editedTrade,
-                      brokerage: Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2))),
-                    })
-                  }
-                />
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="col-span-2">
+                  <Label>Transaction Type</Label>
+                  <RadioGroup 
+                    className="flex space-x-4" 
+                    value={editedTrade.action} 
+                    onValueChange={handleTradeTypeChange}
+                  >
+                    <div
+                      className={cn(
+                        "flex items-center space-x-2 border border-border/25 shadow rounded-lg w-36 p-2",
+                        editedTrade.action === TRANSACTION_TYPES.BUY ? "bg-[#A073F01A]" : "bg-card",
+                      )}
+                    >
+                      <RadioGroupItem value={TRANSACTION_TYPES.BUY} id="edit-open-buy" />
+                      <Label htmlFor="edit-open-buy" className="w-full">
+                        Buy
+                      </Label>
+                    </div>
+                    <div
+                      className={cn(
+                        "flex items-center space-x-2 border border-border/25 shadow rounded-lg w-36 p-2",
+                        editedTrade.action === TRANSACTION_TYPES.SELL ? "bg-[#A073F01A]" : "bg-card",
+                      )}
+                    >
+                      <RadioGroupItem value={TRANSACTION_TYPES.SELL} id="edit-open-sell" />
+                      <Label htmlFor="edit-open-sell" className="w-full">
+                        Sell
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                <div className="col-span-2">
+                  <Label>{editedTrade.action === TRANSACTION_TYPES.BUY ? "Buying" : "Selling"} Price</Label>
+                  <Input
+                    type="number"
+                    value={
+                      editedTrade.action === TRANSACTION_TYPES.BUY
+                        ? (editedTrade.buyingPrice ?? "")
+                        : (editedTrade.sellingPrice ?? "")
+                    }
+                    onChange={(e) => {
+                      const price = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)));
+                      setError("");
+                      setEditedTrade({
+                        ...editedTrade,
+                        [editedTrade.action === TRANSACTION_TYPES.BUY ? "buyingPrice" : "sellingPrice"]: price,
+                      });
+                    }}
+                  />
+                  {error && !error.includes("Quantity") && <p className="text-sm text-red-500 mt-1">{error}</p>}
+                </div>
               </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="col-span-2">
+                  <Label>Equity Type</Label>
+                  <Select
+                    value={editedTrade.equityType}
+                    onValueChange={(value) => setEditedTrade({ ...editedTrade, equityType: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={EQUITY_TYPES.FNO_OPTIONS}>F&O-OPTIONS</SelectItem>
+                      <SelectItem value={EQUITY_TYPES.FNO_FUTURES}>F&O-FUTURES</SelectItem>
+                      <SelectItem value={EQUITY_TYPES.INTRADAY}>INTRADAY EQUITY</SelectItem>
+                      <SelectItem value={EQUITY_TYPES.DELIVERY}>DELIVERY EQUITY</SelectItem>
+                      <SelectItem value={EQUITY_TYPES.OTHER}>OTHER</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="col-span-2">
+                  <Label>Time</Label>
+                  <TimePicker
+                    value={editedTrade.time}
+                    onChange={(time) =>
+                      setEditedTrade({
+                        ...editedTrade,
+                        time: time,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <div className="col-span-2">
+                  <Label>Exchange Charges (₹)</Label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      type="number"
+                      value={editedTrade.exchangeRate.toFixed(2)}
+                      onChange={(e) => {
+                        const value = Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2)));
+                        setEditedTrade({
+                          ...editedTrade,
+                          exchangeRate: value,
+                        });
+                        setExchangeRateEdited(true);
+                      }}
+                    />
+                    {exchangeRateEdited && (
+                      <Button onClick={resetExchangeRate} variant="outline" size="sm">
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                <div className="col-span-2">
+                  <Label>Brokerage (₹)</Label>
+                  <Input
+                    type="number"
+                    value={editedTrade.brokerage}
+                    onChange={(e) =>
+                      setEditedTrade({
+                        ...editedTrade,
+                        brokerage: Math.max(0, Number(Number.parseFloat(e.target.value).toFixed(2))),
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <ChargesBreakdown
+                trade={{
+                  ...editedTrade,
+                  manualExchangeCharge: exchangeRateEdited || editedTrade.equityType === EQUITY_TYPES.OTHER,
+                }}
+              />
             </div>
-            <ChargesBreakdown
-              trade={{
-                ...editedTrade,
-                manualExchangeCharge: exchangeRateEdited || editedTrade.equityType === EQUITY_TYPES.OTHER,
-              }}
-            />
-          </div>
-        )}
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleOpenTradeEdit} className="bg-primary" disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Changes"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleOpenTradeEdit} 
+              className="bg-primary" 
+              disabled={isLoading || capital === null}
+            >
+              {isLoading ? "Saving..." : "Save Changes"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Capital Insufficient Alert Dialog */}
+      <Dialog open={showCapitalAlert} onOpenChange={setShowCapitalAlert}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Insufficient Capital</DialogTitle>
+          </DialogHeader>
+          <p className="py-4">
+            Available capital is less than the total order amount. Please increase
+            capital value in My Account &gt; Dashboard Settings.
+          </p>
+          <DialogFooter>
+            <Button
+              onClick={() => setShowCapitalAlert(false)}
+              className="bg-primary"
+            >
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

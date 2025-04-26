@@ -306,7 +306,7 @@ export default function AccountabilityPartner() {
                     className="w-full -mt-2 h-fit"
                     disabled={!isSubscriptionActive}
                   >
-                    <MultiSelectorTrigger className="w-full rounded-md bg-card border border-input/25 shadow-sm p-2">
+                    <MultiSelectorTrigger className="w-full rounded-md bg-card border-none shadow-sm p-2">
                       <MultiSelectorInput
                         placeholder="Select details..."
                         className="bg-card text-sm"

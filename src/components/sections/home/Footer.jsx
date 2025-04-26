@@ -103,8 +103,7 @@ const Footer = () => {
           <div className="max-w-sm">
             <h3 className="text-xl md:text-4xl font-bold mb-4">TradeBoard</h3>
             <p className="text-base">
-              We offer traders the tools to analyse their daily trading patterns
-              and learn from it to establish themselves as successful traders.
+            Tradeboard assists you to maintain discipline, track performance and achieve consistent results through data-driven decisions.
             </p>
             <p className="mt-3">Follow us on:</p>
             <div className="flex space-x-4 mt-2">

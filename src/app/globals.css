@@ -2,23 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: "Poppins";
-  src: url("/fonts/Poppins.ttf");
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-poppins: var(--font-poppins);
 }
 
-
 body {
-  font-family: "Poppins", sans-serif;
-  text-rendering: optimizeLegibility; /* Or try 'geometricPrecision' */
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-poppins), Arial, Helvetica, sans-serif;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+input:read-only:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: inherit;
+  cursor:not-allowed;
+  caret:none;
 }
 
 @layer base {

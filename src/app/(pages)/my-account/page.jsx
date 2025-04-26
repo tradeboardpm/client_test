@@ -72,8 +72,6 @@ export default function AccountPage() {
     symbol: false,
   });
 
-
-
   const [isGoogleUser, setIsGoogleUser] = useState(false);
   const [createPasswordOpen, setCreatePasswordOpen] = useState(false);
   const [addPhoneOpen, setAddPhoneOpen] = useState(false);
@@ -168,6 +166,7 @@ export default function AccountPage() {
       // Update cookies with new username and email
       Cookies.set("userName", personalForm.name || "", { expires: 7 });
       Cookies.set("userEmail", personalForm.email || "", { expires: 7 });
+      Cookies.set("userPhone", personalForm.phone || "", { expires: 7 });
       
       toast({
         title: "Success",
@@ -178,12 +177,21 @@ export default function AccountPage() {
       // Refresh the entire window
       window.location.reload();
     } catch (error) {
-      toast({
-        title: "Error",
-        description:
-          error.response?.data?.message || "Failed to update profile",
-        variant: "destructive",
-      });
+      if (error.response && error.response.status === 400) {
+        toast({
+          title: "Error",
+          description:
+            error.response.data.message || "Email or phone number already in use",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description:
+            error.response?.data?.message || "Failed to update profile",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -388,11 +396,10 @@ export default function AccountPage() {
     }
   };
 
-    // Callback to close the dialog
+  // Callback to close the dialog
   const handleCloseDialog = () => {
     setShowUpgradeDialog(false);
   };
-
 
   const formatPlanName = (plan) => {
     switch (plan) {
@@ -401,7 +408,7 @@ export default function AccountPage() {
       case "half-year":
         return "6 Months Plan";
       case "yearly":
-        return "Yearly Plan";
+        return " κιYearly Plan";
       default:
         return plan;
     }
@@ -473,16 +480,16 @@ export default function AccountPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Name</Label>
-                <Input value={user?.name} readOnly />
+                <Input value={user?.name} readOnly className=" active:outline-none" />
               </div>
               <div>
                 <Label>Email</Label>
-                <Input value={user?.email} readOnly />
+                <Input value={user?.email} readOnly className=" active:outline-none" />
               </div>
               {user?.phone && (
                 <div>
                   <Label>Phone number</Label>
-                  <Input value={user?.phone} readOnly />
+                  <Input value={user?.phone} readOnly className=" active:outline-none" />
                 </div>
               )}
             </div>
@@ -545,7 +552,7 @@ export default function AccountPage() {
                 <Input
                   type={showPassword ? "text" : "password"}
                   value="********"
-                  readOnly
+                  readOnly className=" active:outline-none"
                 />
               </div>
             </CardContent>
@@ -570,15 +577,15 @@ export default function AccountPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label>Capital</Label>
-                <Input value={settings?.capital.toFixed(2)} readOnly />
+                <Input value={settings?.capital} readOnly className=" active:outline-none" />
               </div>
               <div>
                 <Label>Brokerage</Label>
-                <Input value={settings?.brokerage} readOnly />
+                <Input value={settings?.brokerage} readOnly className=" active:outline-none" />
               </div>
               <div>
                 <Label>Trades Per Day</Label>
-                <Input value={settings?.tradesPerDay} readOnly />
+                <Input value={settings?.tradesPerDay} readOnly className=" active:outline-none" />
               </div>
             </div>
           </CardContent>
@@ -607,7 +614,7 @@ export default function AccountPage() {
                 <Label>Current Plan</Label>
                 <Input 
                   value={user?.subscription ? formatPlanName(user.subscription.plan) : 'No Plan'} 
-                  readOnly 
+                  readOnly className=" active:outline-none" 
                 />
               </div>
               <div>
@@ -617,7 +624,7 @@ export default function AccountPage() {
                     ? new Date(user.subscription.expiresAt).toLocaleDateString()
                     : 'N/A'
                   } 
-                  readOnly 
+                  readOnly className=" active:outline-none" 
                 />
               </div>
             </div>
@@ -806,7 +813,7 @@ export default function AccountPage() {
                 <Input
                   id="capital"
                   type="number"
-                  value={settingsForm.capital.toFixed(2)}
+                  value={settingsForm.capital}
                   onChange={(e) =>
                     setSettingsForm({
                       ...settingsForm,

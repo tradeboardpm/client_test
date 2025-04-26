@@ -1,4 +1,5 @@
 "use client";
+
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import PropTypes from "prop-types";
@@ -101,7 +102,12 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) {
-      setCouponError("Please enter a valid coupon code");
+      setCouponError("Please enter a coupon code");
+      return;
+    }
+
+    if (couponCode.length > 15) {
+      setCouponError("Coupon code must be 15 characters or less");
       return;
     }
 
@@ -122,7 +128,7 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
           finalAmount: data.finalAmount,
           percentOff: Math.round((data.discountApplied / selectedPlan.plan_total_price) * 100),
         });
-        toast({ title: "Success", description: "Coupon applied successfully!" });
+        toast({ title: "Success", description: "Coupon applied successfully!", variant: "default" });
       } else {
         throw new Error(data.error || "Failed to apply coupon.");
       }
@@ -146,7 +152,8 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
       return;
     }
     setSelectedPlan(plan);
-    clearCoupon();
+    clearCoupon(); // Clear coupon when switching plans
+    setGstin("");
     setShowCheckout(true);
   };
 
@@ -264,7 +271,7 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
 
               <div className="h-px bg-gray-200" />
 
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
                   <label htmlFor="coupon" className="text-sm font-medium block mb-1">Coupon Code</label>
                   <div className="flex gap-2">
@@ -277,6 +284,7 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
                           setCouponCode(e.target.value);
                           if (couponError) setCouponError("");
                         }}
+                        maxLength={15}
                         className={`pr-8 text-sm ${couponError ? "border-red-500 focus-visible:ring-red-500" : ""} ${discountDetails ? "border-green-500 focus-visible:ring-green-500" : ""}`}
                         disabled={discountDetails !== null || couponLoading}
                       />
@@ -309,13 +317,17 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
                 </div>
 
                 <div>
-                  <label htmlFor="gstin" className="text-sm font-medium block mb-1">GSTIN (Optional)</label>
+                  <label htmlFor="gstin" className="text-sm font-medium block mb-1">
+                    GSTIN (Optional)
+                    <span className="text-xs text-muted-foreground ml-1">(e.g., 22AAAAA0000A1Z5)</span>
+                  </label>
                   <Input
                     id="gstin"
-                    placeholder="Enter GSTIN number"
+                    placeholder="22AAAAA0000A1Z5"
                     value={gstin}
-                    onChange={(e) => setGstin(e.target.value)}
-                    className="w-full text-sm"
+                    onChange={(e) => setGstin(e.target.value.toUpperCase())}
+                    maxLength={15}
+                    className="w-full text-sm uppercase"
                   />
                 </div>
               </div>

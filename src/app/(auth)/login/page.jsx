@@ -97,13 +97,16 @@ export default function LoginOptionsPage() {
             </p>
           </div>
           <div className="space-y-4">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap={false}
-              disabled={isLoading}
-              render={({ onClick }) => <CustomGoogleButton onClick={onClick} />}
-            />
+            {/* Add flex justify-center div here to center the GoogleLogin component */}
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                useOneTap={false}
+                disabled={isLoading}
+                render={({ onClick }) => <CustomGoogleButton onClick={onClick} />}
+              />
+            </div>
 
             <div className="relative mb-6">
               <img src="/images/or.svg" alt="or" className="mx-auto" />

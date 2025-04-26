@@ -52,6 +52,8 @@ export default function LandingPage() {
         <HeroSection heroSectionRef={heroSectionRef} />
       </div>
 
+      
+
       <main>
         <AnimatedSection>
           <TradingPsychologySection />

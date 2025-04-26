@@ -403,9 +403,9 @@ const [currentImageUrl, setCurrentImageUrl] = useState("");
                     </TableBody>
                   </Table>
                 </div>
-                <div className="flex gap-6 items-center justify-between mt-6">
+                <div className="flex-col lg:flex-row flex gap-6 items-center justify-between mt-6">
                   <div
-                    className={`rounded-lg p-2 flex items-center gap-2 w-fit ${
+                    className={`rounded-lg p-2 flex items-center gap-2 w-full lg:w-fit ${
                       journalDetails.summary?.totalPnL >= 0 ? "bg-green-600/20" : "bg-red-600/20"
                     }`}
                   >
@@ -425,7 +425,7 @@ const [currentImageUrl, setCurrentImageUrl] = useState("");
                     </div>
                   </div>
 
-                  <div className="rounded-lg bg-[#A073F0]/25 flex items-center gap-2 p-2 w-fit">
+                  <div className="rounded-lg bg-[#A073F0]/25 flex items-center gap-2 p-2  w-full lg:w-fit">
                     <div className="text-sm font-medium text-primary">Today's Charges:</div>
                     <div className="text-lg font-medium text-primary">
                       ₹ {(journalDetails.summary?.totalCharges ?? 0).toFixed(2)}
@@ -433,7 +433,7 @@ const [currentImageUrl, setCurrentImageUrl] = useState("");
                   </div>
 
                   <div
-                    className={`rounded-lg p-2 flex items-center gap-2 w-fit ${
+                    className={`rounded-lg p-2 flex items-center gap-2 w-full lg:w-fit ${
                       journalDetails.summary?.netPnL >= 0 ? "bg-green-600/20" : "bg-red-600/20"
                     }`}
                   >
