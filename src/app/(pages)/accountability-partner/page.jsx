@@ -234,7 +234,6 @@ export default function AccountabilityPartner() {
                   variant="outline"
                   className="text-primary"
                   onClick={() => setShowDialog(false)}
-                  disabled={!isSubscriptionActive}
                 >
                   Close
                 </Button>

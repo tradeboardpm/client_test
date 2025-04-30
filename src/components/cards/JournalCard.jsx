@@ -16,7 +16,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import SubscriptionPlan from "./subsciption"
 
 const JournalCard = ({
   id,
@@ -37,6 +42,7 @@ const JournalCard = ({
   const { toast } = useToast()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false)
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [hasSubscription, setHasSubscription] = useState(false)
   const [isDeleteClicked, setIsDeleteClicked] = useState(false)
@@ -78,7 +84,13 @@ const JournalCard = ({
   }
 
   const handleCardClick = (e) => {
-    if (isDeleteClicked || isDeleting || e.target.closest(".delete-button")) {
+    // Prevent navigation if clicking on delete button or during delete operation
+    if (
+      isDeleteClicked || 
+      isDeleting || 
+      e.target.closest(".delete-button") || 
+      e.target.closest(".upgrade-button")
+    ) {
       return
     }
     router.push(`/${mainPage}/${date}`)
@@ -109,18 +121,15 @@ const JournalCard = ({
         },
       })
 
-      // Check the response status and data
       if (response.status === 200 && response.data.journalDeleted === true) {
         setShowDeleteDialog(false)
         toast({
           title: "Journal Entry Deleted Successfully",
           description: "The journal entry was successfully deleted.",
-          variant: "default", // Use "success" if your toast supports it
+          variant: "default",
         })
         onDelete(id)
-        // await refreshJournalData()
       } else {
-        // Only throw an error if the response explicitly indicates failure
         throw new Error(response.data.message || "Unexpected response from server")
       }
     } catch (error) {
@@ -136,9 +145,16 @@ const JournalCard = ({
     }
   }
 
-  const handleUpgradeClick = () => {
+  const handleUpgradeClick = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
     setShowSubscriptionDialog(false)
-    router.push('/plans')
+    setShowUpgradeDialog(true)
+  }
+
+  const handleCloseDialog = () => {
+    setShowUpgradeDialog(false)
+    setIsDeleteClicked(false)
   }
 
   return (
@@ -241,12 +257,21 @@ const JournalCard = ({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsDeleteClicked(false)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleUpgradeClick} className="bg-primary hover:bg-primary/90">
+            <AlertDialogAction 
+              onClick={handleUpgradeClick} 
+              className="bg-primary hover:bg-primary/90 upgrade-button"
+            >
               Upgrade Now
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <DialogContent className="sm:max-w-7xl">
+          <SubscriptionPlan onCloseDialog={handleCloseDialog} />
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

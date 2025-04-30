@@ -23,6 +23,7 @@ import { Info, SquarePen, Trash2, Plus, Search, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { AddRulesDialog } from "@/components/dialogs/rules/AddRulesDialog";
 import { EmptyState } from "./EmptyState";
+import { Spinner } from "@/components/ui/spinner";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const MAX_RULE_LENGTH = 150;
@@ -345,8 +346,8 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     return (
       <Card className="w-full max-w-4xl h-full mx-auto p-4 flex items-center justify-center">
         <div className="flex items-center">
-          <Loader2 className="mr-2 h-8 w-8 animate-spin" />
-          <span>Loading rules...</span>
+                  <Spinner className="h-12 w-12" />
+           
         </div>
       </Card>
     );
@@ -408,7 +409,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
             </div>
 
             <Button
-  className="bg-primary h-fit text-white text-xs px-3 hover:bg-purple-600"
+  className="bg-primary h-fit text-background text-xs px-3 hover:bg-purple-600"
   onClick={() => setNewRulesDialog(true)}
   disabled={
     isLoadingAction.addRule ||

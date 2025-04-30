@@ -120,22 +120,27 @@ export function AddTradeDialog({
     newTrade.brokerage,
   ]);
 
-  // Update exchange rate based on calculated charges
+  // Update exchange rate based on calculated charges or set to 0 for OTHER
   useEffect(() => {
-    if (charges) {
+    if (newTrade.equityType === EQUITY_TYPES.OTHER) {
+      if (!exchangeRateEdited) {
+        setNewTrade((prev) => ({
+          ...prev,
+          exchangeRate: 0,
+        }));
+        setCalculatedExchangeRate(0);
+      }
+    } else if (charges) {
       const newExchangeRate = charges.totalCharges - charges.brokerage;
       setCalculatedExchangeRate(newExchangeRate);
-
-      if (!exchangeRateEdited && newTrade.equityType !== EQUITY_TYPES.OTHER) {
-        if (newTrade.exchangeRate !== newExchangeRate) {
-          setNewTrade((prev) => ({
-            ...prev,
-            exchangeRate: newExchangeRate,
-          }));
-        }
+      if (!exchangeRateEdited) {
+        setNewTrade((prev) => ({
+          ...prev,
+          exchangeRate: Number(newExchangeRate.toFixed(2)),
+        }));
       }
     }
-  }, [charges, exchangeRateEdited, newTrade.equityType, newTrade.exchangeRate]);
+  }, [charges, exchangeRateEdited, newTrade.equityType]);
 
   const handleTradeTypeChange = (value) => {
     setNewTrade((prev) => ({
@@ -237,7 +242,7 @@ export function AddTradeDialog({
       buyingPrice: null,
       sellingPrice: null,
       brokerage: initialBrokerage,
-      exchangeRate: 0,
+      exchangeRate: newTrade.equityType === EQUITY_TYPES.OTHER ? 0 : 0,
       time: getCurrentTime(),
       equityType: EQUITY_TYPES.INTRADAY,
     });
@@ -247,7 +252,8 @@ export function AddTradeDialog({
   };
 
   const resetExchangeRate = () => {
-    setNewTrade((prev) => ({ ...prev, exchangeRate: calculatedExchangeRate }));
+    const resetValue = newTrade.equityType === EQUITY_TYPES.OTHER ? 0 : Number(calculatedExchangeRate.toFixed(2));
+    setNewTrade((prev) => ({ ...prev, exchangeRate: resetValue }));
     setExchangeRateEdited(false);
     setManualExchangeCharge(false);
   };
@@ -368,9 +374,18 @@ export function AddTradeDialog({
                 <Label>Equity Type</Label>
                 <Select
                   value={newTrade.equityType}
-                  onValueChange={(value) =>
-                    setNewTrade({ ...newTrade, equityType: value })
-                  }
+                  onValueChange={(value) => {
+                    setNewTrade({
+                      ...newTrade,
+                      equityType: value,
+                      exchangeRate: value === EQUITY_TYPES.OTHER ? 0 : newTrade.exchangeRate,
+                    });
+                    if (value === EQUITY_TYPES.OTHER) {
+                      setExchangeRateEdited(false);
+                      setManualExchangeCharge(true);
+                      setCalculatedExchangeRate(0);
+                    }
+                  }}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -406,12 +421,15 @@ export function AddTradeDialog({
                 <div className="flex items-center space-x-2">
                   <Input
                     type="number"
-                    value={newTrade.exchangeRate.toFixed(2)}
+                    step="0.01"
+                    value={Number(newTrade.exchangeRate.toFixed(2))}
                     onChange={(e) => {
-                      const value = Math.max(
-                        0,
-                        Number(Number.parseFloat(e.target.value).toFixed(2))
-                      );
+                      let value = e.target.value;
+                      // Parse and limit to 2 decimal places if decimals exist
+                      if (value.includes('.')) {
+                        value = Number.parseFloat(value).toFixed(2);
+                      }
+                      value = Math.max(0, Number(value));
                       setNewTrade({
                         ...newTrade,
                         exchangeRate: value,
@@ -423,10 +441,7 @@ export function AddTradeDialog({
                   {(exchangeRateEdited ||
                     newTrade.equityType === EQUITY_TYPES.OTHER) && (
                     <Button
-                      onClick={() => {
-                        resetExchangeRate();
-                        setManualExchangeCharge(false);
-                      }}
+                      onClick={resetExchangeRate}
                       variant="outline"
                       size="sm"
                     >
@@ -484,7 +499,7 @@ export function AddTradeDialog({
           </DialogHeader>
           <p className="py-4">
             Available capital is less than the total order amount. Please increase
-            capital value in My Account &gt; Dashboard Settings.
+            capital value in My Account {">"} Dashboard Settings.
           </p>
           <DialogFooter>
             <Button

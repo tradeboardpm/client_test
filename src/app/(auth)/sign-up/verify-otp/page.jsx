@@ -122,6 +122,7 @@ export default function OTPVerification() {
               <div>
                 <Label htmlFor="emailOTP">Email OTP</Label>
                 <Input
+                  maxLength={6}
                   className="text-base h-10"
                   id="emailOTP"
                   value={emailOTP}
@@ -142,6 +143,7 @@ export default function OTPVerification() {
               <div>
                 <Label htmlFor="phoneOTP">Phone OTP</Label>
                 <Input
+                  maxLength={6}
                   className="text-base h-10"
                   id="phoneOTP"
                   value={phoneOTP}
@@ -164,7 +166,9 @@ export default function OTPVerification() {
       <Dialog open={isSuccessDialogOpen} onOpenChange={setIsSuccessDialogOpen}>
         <DialogContent className="flex flex-col items-center">
           <CheckCircle className="text-green-500 w-16 h-16 mb-4" />
-          <h2 className="text-2xl font-semibold">Account Created Successfully!</h2>
+          <h2 className="text-2xl font-semibold">
+            Account Created Successfully!
+          </h2>
           <p className="text-gray-500 mt-2">Redirecting to login...</p>
         </DialogContent>
       </Dialog>

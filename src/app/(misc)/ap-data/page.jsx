@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
 import Topbar from "./topbar";
+import { format, parseISO } from "date-fns";
 
 const CustomLegend = ({ items }) => (
   <div className="flex flex-wrap items-center gap-2 ml-4 text-xs text-muted-foreground">
@@ -51,9 +52,9 @@ const CustomLegend = ({ items }) => (
 );
 
 const RuleItem = ({ rule, count, isFollowed }) => (
-  <div className="flex items-center justify-between p-3 border-b border-gray-200 hover:bg-gray-50">
+  <div className="flex items-center justify-between p-3 border-b border-gray-200  dark:border-gray-600">
     <div className="flex-1">
-      <p className="text-sm font-medium text-gray-900">{rule}</p>
+      <p className="text-sm font-medium text-gray-900 dark:text-white">{rule}</p>
     </div>
     <div className="flex items-center gap-2">
       <span
@@ -144,292 +145,356 @@ function ApDataInner() {
     return "Diamond";
   };
 
+  const CustomTooltipContent = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+  
+    // Find the day data safely without assuming fullDate exists
+    const dayData = chartData.find((d) => d.date === label);
+    
+    // Use label as fallback if we can't format the date
+    let formattedDate = label;
+    
+    // Only try to format the date if dayData exists and has fullDate property
+    if (dayData && dayData.fullDate) {
+      try {
+        formattedDate = format(
+          parseISO(dayData.fullDate),
+          sharedData.dataRange.frequency === "weekly" ? "MMM dd" : "EEE dd MMM"
+        );
+      } catch (error) {
+        // If there's an error parsing the date, fall back to the label
+        console.error("Error formatting date:", error);
+        formattedDate = label;
+      }
+    }
+  
+    return (
+      <div className="rounded-lg shadow-lg bg-background border p-2 text-xs">
+        <p className="font-medium mb-1">{formattedDate}</p>
+        {payload.map((item, index) => {
+          let displayName = item.name;
+          let displayValue = item.value;
+  
+          switch (item.dataKey) {
+            case "tradesTaken":
+              displayName = "Trades";
+              break;
+            case "winTrades":
+              displayName = "Win";
+              break;
+            case "lossTrades":
+              displayName = "Loss";
+              break;
+            case "totalProfitLoss":
+              displayName = "P&L";
+              displayValue =
+                Number(item.value) >= 0
+                  ? `+${(Number(item.value) / 1000).toFixed(1)}K`
+                  : `${(Number(item.value) / 1000).toFixed(1)}K`;
+              break;
+            case "rulesFollowed":
+              displayName = "Followed";
+              break;
+            case "rulesUnfollowed":
+              displayName = "Broken";
+              break;
+            default:
+              displayName = item.name;
+          }
+  
+          return (
+            <div key={index} className="flex items-center gap-2">
+              <div
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: item.color }}
+              />
+              <span>{displayName}:</span>
+              <span className="font-medium">{displayValue}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
   <>
   <Topbar/>
   <div className="lg:px-20 mx-auto p-4 sm:p-6">
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">Welcome {sharedData.apName},</h1>
-        <h1 className="text-xl font-semibold text-muted-foreground opacity-70">
+        <h2 className="text-lg text-muted-foreground ">
           You are viewing the {sharedData.dataRange.frequency} progress of{" "}
           {sharedData.userName}
-        </h1>
+        </h2>
         <p className="text-sm text-muted-foreground">
           Shared with you since:{" "}
           {new Date(sharedData.dataSentAt).toLocaleString()}
         </p>
       </div>
 
+//charts
       <Card className="mb-6">
-        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <CardTitle className="text-xl">Performance</CardTitle>
-          <p className="text-lg font-semibold rounded-lg border-2 text-primary py-1 px-2 w-fit mt-2 sm:mt-0">
-            Capital: ₹ {sharedData.overall.capital?.toFixed(2) ?? "N/A"}
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Trades Taken Chart */}
-            <Card className="shadow-lg bg-popover">
-              <CardHeader className="p-4">
-                <CardTitle className="text-base font-semibold">
-                  Trades Taken
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Daily trade count
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ChartContainer
-                  config={{
-                    trades: {
-                      label: "Trades",
-                      color: "var(--primary)",
-                    },
-                  }}
-                >
-                  <ResponsiveContainer width="100%" height={200}>
-                    <LineChart
-                      data={chartData}
-                      margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
-                    >
-                      <CartesianGrid
-                        vertical={false}
-                        stroke="var(--border)"
-                        strokeDasharray="3 3"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={12}
-                      />
-                      <YAxis
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={12}
-                      />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Line
-                        type="monotone"
-                        dataKey="tradesTaken"
-                        stroke="var(--primary)"
-                        strokeWidth={2}
-                        dot={{ fill: "var(--primary)", r: 4 }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+          <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <CardTitle className="text-xl">Performance</CardTitle>
+            <p className="text-lg font-semibold rounded-lg border-2 text-primary py-1 px-2 w-fit mt-2 sm:mt-0">
+              Capital: ₹ {sharedData.overall.capital?.toFixed(2) ?? "N/A"}
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Trades Taken Chart */}
+              <Card className="border border-foreground/15">
+                <CardHeader className="p-4">
+                  <CardTitle className="text-base font-semibold">
+                    Trades Taken
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Daily trade count
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ChartContainer
+                    config={{
+                      trades: {
+                        label: "Trades",
+                        color: "var(--primary)",
+                      },
+                    }}
+                  >
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart
+                        data={chartData}
+                        margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
+                      >
+                        <CartesianGrid
+                          vertical={false}
+                          stroke="var(--border)"
+                          strokeDasharray="3 3"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={12}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={12}
+                        />
+                        <ChartTooltip content={<CustomTooltipContent />} />
+                        <Line
+                          type="monotone"
+                          dataKey="tradesTaken"
+                          stroke="var(--primary)"
+                          strokeWidth={2}
+                          dot={{ fill: "var(--primary)", r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
 
-            {/* Win Rate Chart */}
-            <Card className="shadow-lg bg-popover">
-              <CardHeader className="p-4">
-                <CardTitle className="text-base font-semibold">
-                  Win Rate
-                </CardTitle>
-                <CustomLegend
-                  items={[
-                    { label: "Win", color: "var(--chart-1)" },
-                    { label: "Loss", color: "var(--destructive)" },
-                  ]}
-                />
-              </CardHeader>
-              <CardContent className="p-0">
-                <ChartContainer
-                  config={{
-                    win: {
-                      label: "Win",
-                      color: "var(--chart-1)",
-                    },
-                    loss: {
-                      label: "Loss",
-                      color: "var(--destructive)",
-                    },
-                  }}
-                >
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart
-                      data={chartData}
-                      margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
-                      stackOffset="sign"
-                    >
-                      <CartesianGrid
-                        vertical={false}
-                        stroke="var(--border)"
-                        strokeDasharray="3 3"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={12}
-                      />
-                      <YAxis
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={12}
-                      />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar
-                        dataKey="winTrades"
-                        stackId="a"
-                        fill="var(--chart-1)"
-                        barSize={20}
-                        radius={[4, 4, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="lossTrades"
-                        stackId="a"
-                        fill="var(--destructive)"
-                        barSize={20}
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+              {/* Win Rate Chart */}
+              <Card className="border border-foreground/15">
+                <CardHeader className="p-4">
+                  <CardTitle className="text-base font-semibold">
+                    Win Rate
+                  </CardTitle>
+                  <CustomLegend
+                    items={[
+                      { label: "Win", color: "var(--chart-1)" },
+                      { label: "Loss", color: "var(--destructive)" },
+                    ]}
+                  />
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ChartContainer
+                    config={{
+                      win: {
+                        label: "Win",
+                        color: "var(--chart-1)",
+                      },
+                      loss: {
+                        label: "Loss",
+                        color: "var(--destructive)",
+                      },
+                    }}
+                  >
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart
+                        data={chartData}
+                        margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
+                        stackOffset="sign"
+                      >
+                        <CartesianGrid
+                          vertical={false}
+                          stroke="var(--border)"
+                          strokeDasharray="3 3"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={12}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={12}
+                        />
+                        <ChartTooltip content={<CustomTooltipContent />} />
+                        <Bar
+                          dataKey="winTrades"
+                          stackId="a"
+                          fill="var(--chart-1)"
+                          barSize={20}
+                          radius={[4, 4, 0, 0]}
+                        />
+                        <Bar
+                          dataKey="lossTrades"
+                          stackId="a"
+                          fill="var(--destructive)"
+                          barSize={20}
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
 
-            {/* Profit & Loss Chart */}
-            <Card className="shadow-lg bg-popover">
-              <CardHeader className="p-4">
-                <CardTitle className="text-base font-semibold">
-                  Profit & Loss
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <ChartContainer
-                  config={{
-                    amount: {
-                      label: "Amount",
-                      color: "var(--primary)",
-                    },
-                  }}
-                >
-                  <ResponsiveContainer width="100%" height={200}>
-                    <LineChart
-                      data={chartData}
-                      margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
-                    >
-                      <CartesianGrid
-                        vertical={false}
-                        stroke="var(--border)"
-                        strokeDasharray="3 3"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={12}
-                      />
-                      <YAxis
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={12}
-                        tickFormatter={(value) =>
-                          value >= 0
-                            ? `+${(value / 1000).toFixed(0)}K`
-                            : `${(value / 1000).toFixed(0)}K`
-                        }
-                      />
-                      <ChartTooltip
-                        content={
-                          <ChartTooltipContent
-                            formatter={(value) =>
-                              value >= 0
-                                ? `+${(value / 1000).toFixed(1)}K`
-                                : `${(value / 1000).toFixed(1)}K`
-                            }
-                          />
-                        }
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="totalProfitLoss"
-                        stroke="var(--primary)"
-                        strokeWidth={2}
-                        dot={{ fill: "var(--primary)", r: 4 }}
-                        activeDot={{ r: 6 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
+              {/* Profit & Loss Chart */}
+              <Card className="border border-foreground/15">
+                <CardHeader className="p-4">
+                  <CardTitle className="text-base font-semibold">
+                    Profit & Loss
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ChartContainer
+                    config={{
+                      amount: {
+                        label: "P&L",
+                        color: "var(--primary)",
+                      },
+                    }}
+                  >
+                    <ResponsiveContainer width="100%" height={200}>
+                      <LineChart
+                        data={chartData}
+                        margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
+                      >
+                        <CartesianGrid
+                          vertical={false}
+                          stroke="var(--border)"
+                          strokeDasharray="3 3"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={12}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={12}
+                          tickFormatter={(value) =>
+                            value >= 0
+                              ? `+${(value / 1000).toFixed(0)}K`
+                              : `${(value / 1000).toFixed(0)}K`
+                          }
+                        />
+                        <ChartTooltip content={<CustomTooltipContent />} />
+                        <Line
+                          type="monotone"
+                          dataKey="totalProfitLoss"
+                          stroke="var(--primary)"
+                          strokeWidth={2}
+                          dot={{ fill: "var(--primary)", r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
 
-            {/* Rules Chart */}
-            <Card className="shadow-lg bg-popover">
-              <CardHeader className="p-4">
-                <CardTitle className="text-base font-semibold">Rules</CardTitle>
-                <CustomLegend
-                  items={[
-                    { label: "Followed", color: "var(--chart-1)" },
-                    { label: "Broken", color: "var(--destructive)" },
-                  ]}
-                />
-              </CardHeader>
-              <CardContent className="p-0">
-                <ChartContainer
-                  config={{
-                    followed: {
-                      label: "Followed",
-                      color: "var(--chart-1)",
-                    },
-                    broken: {
-                      label: "Broken",
-                      color: "var(--destructive)",
-                    },
-                  }}
-                >
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart
-                      data={chartData}
-                      margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
-                      stackOffset="sign"
-                    >
-                      <CartesianGrid
-                        vertical={false}
-                        stroke="var(--border)"
-                        strokeDasharray="3 3"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={12}
-                      />
-                      <YAxis
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={12}
-                      />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar
-                        dataKey="rulesFollowed"
-                        stackId="a"
-                        fill="var(--chart-1)"
-                        barSize={20}
-                        radius={[4, 4, 0, 0]}
-                      />
-                      <Bar
-                        dataKey="rulesUnfollowed"
-                        stackId="a"
-                        fill="var(--destructive)"
-                        barSize={20}
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
+              {/* Rules Chart */}
+              <Card className="border border-foreground/15">
+                <CardHeader className="p-4">
+                  <CardTitle className="text-base font-semibold">Rules</CardTitle>
+                  <CustomLegend
+                    items={[
+                      { label: "Followed", color: "var(--chart-1)" },
+                      { label: "Broken", color: "var(--destructive)" },
+                    ]}
+                  />
+                </CardHeader>
+                <CardContent className="p-0">
+                  <ChartContainer
+                    config={{
+                      followed: {
+                        label: "Followed",
+                        color: "var(--chart-1)",
+                      },
+                      broken: {
+                        label: "Broken",
+                        color: "var(--destructive)",
+                      },
+                    }}
+                  >
+                    <ResponsiveContainer width="100%" height={200}>
+                      <BarChart
+                        data={chartData}
+                        margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
+                        stackOffset="sign"
+                      >
+                        <CartesianGrid
+                          vertical={false}
+                          stroke="var(--border)"
+                          strokeDasharray="3 3"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={12}
+                        />
+                        <YAxis
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={12}
+                        />
+                        <ChartTooltip content={<CustomTooltipContent />} />
+                        <Bar
+                          dataKey="rulesFollowed"
+                          stackId="a"
+                          fill="var(--chart-1)"
+                          barSize={20}
+                          radius={[4, 4, 0, 0]}
+                        />
+                        <Bar
+                          dataKey="rulesUnfollowed"
+                          stackId="a"
+                          fill="var(--destructive)"
+                          barSize={20}
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
 
+// info
       <Card>
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <CardTitle className="text-xl">Journaling Trends</CardTitle>
@@ -451,7 +516,7 @@ function ApDataInner() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card className="bg-popover">
+            <Card className="border border-foreground/15">
               <CardHeader>
                 <CardTitle>On Profitable Days</CardTitle>
               </CardHeader>
@@ -493,7 +558,7 @@ function ApDataInner() {
               </CardContent>
             </Card>
 
-            <Card className="bg-popover">
+            <Card className="border border-foreground/15">
               <CardHeader>
                 <CardTitle>On Loss Making Days</CardTitle>
               </CardHeader>
@@ -535,7 +600,7 @@ function ApDataInner() {
               </CardContent>
             </Card>
 
-            <Card className="bg-popover">
+            <Card className="border border-foreground/15">
               <CardHeader>
                 <CardTitle>On Break-Even Days</CardTitle>
               </CardHeader>
@@ -578,13 +643,13 @@ function ApDataInner() {
             </Card>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              {/* Top Followed Rules Card */}
+              {/* Most Followed Rules Card */}
               <Card
-                className="cursor-pointer bg-popover hover:bg-accent flex-1"
+                className="cursor-pointer border border-foreground/15 hover:bg-accent flex-1"
                 onClick={() => setOpenFollowedDialog(true)}
               >
                 <CardHeader>
-                  <CardTitle>Top Followed Rules</CardTitle>
+                  <CardTitle>Most Followed Rules</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="flex flex-col">
@@ -601,13 +666,13 @@ function ApDataInner() {
                 </CardContent>
               </Card>
 
-              {/* Top Unfollowed Rules Card */}
+              {/* Most Unfollowed Rules Card */}
               <Card
-                className="cursor-pointer bg-popover hover:bg-accent flex-1"
+                className="cursor-pointer border border-foreground/15 hover:bg-accent flex-1"
                 onClick={() => setOpenUnfollowedDialog(true)}
               >
                 <CardHeader>
-                  <CardTitle>Top Unfollowed Rules</CardTitle>
+                  <CardTitle>Most Unfollowed Rules</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="flex flex-col">

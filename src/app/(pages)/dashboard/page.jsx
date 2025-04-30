@@ -15,8 +15,6 @@ import { Spinner } from "@/components/ui/spinner";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { JournalSection } from "@/components/sections/dashboard/journal/journal-section";
@@ -52,13 +50,6 @@ const formatDate = (date) => {
     year: "numeric",
     month: "long",
     day: "numeric",
-  });
-};
-
-const formatTime = (date) => {
-  return date.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
   });
 };
 
@@ -213,14 +204,6 @@ function Dashboard() {
 
   const isLoading = isCapitalLoading || isJournalLoading || isMetricsLoading;
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <Spinner />
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-card">
       <main className="flex-1 overflow-y-auto p-6 w-full bg-background rounded-t-xl">
@@ -351,7 +334,7 @@ function Dashboard() {
   );
 }
 
-export default function JournalTradePage() {
+export default function DashboardPage() {
   return (
     <QueryClientProvider client={queryClient}>
       <Dashboard />

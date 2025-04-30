@@ -40,6 +40,7 @@ export function EditCompleteTradeDialog({
   const [editedTrade, setEditedTrade] = useState(trade);
   const [error, setError] = useState("");
   const [exchangeRateEdited, setExchangeRateEdited] = useState(false);
+  const [manualExchangeCharge, setManualExchangeCharge] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [capital, setCapital] = useState(null);
   const [showCapitalAlert, setShowCapitalAlert] = useState(false);
@@ -70,9 +71,11 @@ export function EditCompleteTradeDialog({
       setEditedTrade({
         ...trade,
         time: trade.time || getCurrentTime(),
+        exchangeRate: trade.equityType === EQUITY_TYPES.OTHER ? 0 : trade.exchangeRate,
       });
       setError("");
       setExchangeRateEdited(false);
+      setManualExchangeCharge(trade.equityType === EQUITY_TYPES.OTHER);
     }
   }, [trade]);
 
@@ -86,9 +89,18 @@ export function EditCompleteTradeDialog({
     }
   }, [open]);
 
-  // Memoize exchange rate calculation to prevent infinite loops
+  // Memoize exchange rate calculation
   const calculatedExchangeRate = useMemo(() => {
-    if (editedTrade) {
+    if (
+      editedTrade &&
+      editedTrade.quantity &&
+      editedTrade.equityType &&
+      editedTrade.buyingPrice &&
+      editedTrade.sellingPrice
+    ) {
+      if (editedTrade.equityType === EQUITY_TYPES.OTHER) {
+        return 0;
+      }
       const buyCharges = calculateCharges({
         equityType: editedTrade.equityType,
         action: TRANSACTION_TYPES.BUY,
@@ -103,11 +115,7 @@ export function EditCompleteTradeDialog({
         quantity: editedTrade.quantity,
         brokerage: editedTrade.brokerage / 2,
       });
-      return (
-        buyCharges.totalCharges +
-        sellCharges.totalCharges -
-        editedTrade.brokerage
-      );
+      return Number((buyCharges.totalCharges + sellCharges.totalCharges - editedTrade.brokerage).toFixed(2));
     }
     return 0;
   }, [
@@ -121,12 +129,15 @@ export function EditCompleteTradeDialog({
   // Update exchange rate only when not manually edited
   useEffect(() => {
     if (!exchangeRateEdited && editedTrade) {
-      setEditedTrade((prev) => ({
-        ...prev,
-        exchangeRate: calculatedExchangeRate,
-      }));
+      const newExchangeRate = editedTrade.equityType === EQUITY_TYPES.OTHER ? 0 : calculatedExchangeRate;
+      if (editedTrade.exchangeRate !== newExchangeRate) {
+        setEditedTrade((prev) => ({
+          ...prev,
+          exchangeRate: newExchangeRate,
+        }));
+      }
     }
-  }, [calculatedExchangeRate, exchangeRateEdited]);
+  }, [calculatedExchangeRate, exchangeRateEdited, editedTrade?.equityType]);
 
   const validateTrade = () => {
     if (!editedTrade.quantity || editedTrade.quantity <= 0) {
@@ -203,11 +214,13 @@ export function EditCompleteTradeDialog({
   };
 
   const resetExchangeRate = () => {
+    const resetValue = editedTrade.equityType === EQUITY_TYPES.OTHER ? 0 : calculatedExchangeRate;
     setEditedTrade((prev) => ({
       ...prev,
-      exchangeRate: calculatedExchangeRate,
+      exchangeRate: resetValue,
     }));
     setExchangeRateEdited(false);
+    setManualExchangeCharge(false);
   };
 
   return (
@@ -301,9 +314,17 @@ export function EditCompleteTradeDialog({
                   <Label>Equity Type</Label>
                   <Select
                     value={editedTrade.equityType}
-                    onValueChange={(value) =>
-                      setEditedTrade({ ...editedTrade, equityType: value })
-                    }
+                    onValueChange={(value) => {
+                      setEditedTrade({
+                        ...editedTrade,
+                        equityType: value,
+                        exchangeRate: value === EQUITY_TYPES.OTHER ? 0 : editedTrade.exchangeRate,
+                      });
+                      if (value === EQUITY_TYPES.OTHER) {
+                        setExchangeRateEdited(false);
+                        setManualExchangeCharge(true);
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -346,20 +367,23 @@ export function EditCompleteTradeDialog({
                   <div className="flex items-center space-x-2">
                     <Input
                       type="number"
-                      value={editedTrade.exchangeRate.toFixed(2)}
+                      step="0.01"
+                      value={Number(editedTrade.exchangeRate.toFixed(2))}
                       onChange={(e) => {
-                        const value = Math.max(
-                          0,
-                          Number(parseFloat(e.target.value).toFixed(2))
-                        );
+                        let value = e.target.value;
+                        if (value.includes('.')) {
+                          value = Number.parseFloat(value).toFixed(2);
+                        }
+                        value = Math.max(0, Number(value));
                         setEditedTrade({
                           ...editedTrade,
                           exchangeRate: value,
                         });
                         setExchangeRateEdited(true);
+                        setManualExchangeCharge(true);
                       }}
                     />
-                    {exchangeRateEdited && (
+                    {(exchangeRateEdited || editedTrade.equityType === EQUITY_TYPES.OTHER) && (
                       <Button
                         onClick={resetExchangeRate}
                         variant="outline"
@@ -374,23 +398,21 @@ export function EditCompleteTradeDialog({
                   <Label>Brokerage (₹)</Label>
                   <Input
                     type="number"
-                    value={editedTrade.brokerage.toFixed(2)}
-                    onChange={(e) =>
+                    value={editedTrade.brokerage}
+                    onChange={(e) => {
+                      const value = Math.max(0, Number(parseFloat(e.target.value).toFixed(2)));
                       setEditedTrade({
                         ...editedTrade,
-                        brokerage: Math.max(
-                          0,
-                          Number(parseFloat(e.target.value).toFixed(2))
-                        ),
-                      })
-                    }
+                        brokerage: value,
+                      });
+                    }}
                   />
                 </div>
               </div>
-              <ChargesBreakdown 
+              <ChargesBreakdown
                 trade={{
                   ...editedTrade,
-                  manualExchangeCharge: exchangeRateEdited || editedTrade.equityType === EQUITY_TYPES.OTHER
+                  manualExchangeCharge: manualExchangeCharge || editedTrade.equityType === EQUITY_TYPES.OTHER,
                 }}
               />
             </div>
@@ -418,7 +440,7 @@ export function EditCompleteTradeDialog({
           </DialogHeader>
           <p className="py-4">
             Available capital is less than the total order amount. Please increase
-            capital value in My Account &gt; Dashboard Settings.
+            capital value in My Account {">"} Dashboard Settings.
           </p>
           <DialogFooter>
             <Button

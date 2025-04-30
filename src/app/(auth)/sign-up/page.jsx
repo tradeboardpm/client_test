@@ -102,8 +102,10 @@ export default function SignUp() {
         break;
       case "phone":
         if (!value.trim()) errors.push("Phone number is required");
-        if (value.replace(/\D/g, "").length > MAX_CHARS.phone) errors.push(`Max ${MAX_CHARS.phone} digits allowed`);
-        if (!/^\d{6,15}$/.test(value.replace(/\D/g, ""))) errors.push("Invalid phone number (6-15 digits)");
+        // First strip all non-digit characters to count only actual digits
+        const digitOnlyPhone = value.replace(/\D/g, "");
+        if (digitOnlyPhone.length > MAX_CHARS.phone) errors.push(`Max ${MAX_CHARS.phone} digits allowed`);
+        if (digitOnlyPhone.length < 6) errors.push("Phone number too short (min 6 digits)");
         break;
       case "password":
         if (!value.trim()) errors.push("Password is required");
@@ -182,18 +184,29 @@ export default function SignUp() {
   }, [validateField, formData.confirmPassword, touchedFields]);
 
   const handlePhoneInputChange = useCallback((value) => {
-    handlePhoneChange(value);
+    // First, check if adding this value would exceed our digit limit
+    const digitOnlyPhone = value.replace(/\D/g, "");
     
-    // Mark phone field as touched
-    if (!touchedFields.phone) {
-      setTouchedFields(prev => ({ ...prev, phone: true }));
+    // Only update if within limit or if deleting
+    if (digitOnlyPhone.length <= MAX_CHARS.phone || (phone && value.length < phone.length)) {
+      handlePhoneChange(value);
+      
+      // Mark phone field as touched
+      if (!touchedFields.phone) {
+        setTouchedFields(prev => ({ ...prev, phone: true }));
+      }
+      
+      const phoneErrors = validateField("phone", value || "");
+      setErrors(prev => ({ ...prev, phone: phoneErrors }));
+    } else {
+      // Optional: Show toast about exceeding limit
+      toast({
+        title: "Input Limit",
+        description: `Phone number cannot exceed ${MAX_CHARS.phone} digits`,
+        variant: "destructive",
+      });
     }
-    
-    const phoneErrors = validateField("phone", value || "");
-    setErrors(prev => ({ ...prev, phone: phoneErrors }));
-    
-    // Don't show toast while typing
-  }, [handlePhoneChange, validateField, touchedFields]);
+  }, [handlePhoneChange, validateField, touchedFields, phone, toast]);
 
   const handleBlur = useCallback((fieldName) => {
     setTouchedFields(prev => ({ ...prev, [fieldName]: true }));
