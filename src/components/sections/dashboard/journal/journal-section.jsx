@@ -42,7 +42,8 @@ const DeleteConfirmationDialog = ({
         <DialogHeader>
           <DialogTitle>Delete Image</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this image? This action cannot be undone.
+            Are you sure you want to delete this image? This action cannot be
+            undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -68,7 +69,8 @@ const DeleteConfirmationDialog = ({
 };
 
 const ImageDialog = ({ isOpen, onClose, imageUrl, onDelete, isDeleting }) => {
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = React.useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] =
+    React.useState(false);
 
   const handleDelete = () => {
     setShowDeleteConfirmation(true);
@@ -138,42 +140,27 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   });
   const [files, setFiles] = useState([]);
   const [deletingFileKey, setDeletingFileKey] = useState(null);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Check subscription status with each render and whenever component is focused
+  // Check subscription status
   const checkSubscriptionStatus = useCallback(() => {
     const subscriptionStatus = Cookies.get("subscription") === "true";
     setHasSubscription(subscriptionStatus);
   }, []);
 
   useEffect(() => {
-    // Check on initial mount
     checkSubscriptionStatus();
-    
-    // Add event listeners to check when tab becomes visible
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         checkSubscriptionStatus();
       }
     };
-    
-    // Add event listener for tab focus/blur
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    
-    // Add event listener for window focus
     window.addEventListener("focus", checkSubscriptionStatus);
-    
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", checkSubscriptionStatus);
     };
   }, [checkSubscriptionStatus]);
-
-  // Re-check subscription status whenever the component re-renders
-  // This helps when switching tabs within your application
-  useEffect(() => {
-    checkSubscriptionStatus();
-  }, [selectedDate, checkSubscriptionStatus]);
 
   const getUTCDate = (date) => {
     return new Date(
@@ -201,9 +188,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
-      // Re-check subscription status before fetching data
       checkSubscriptionStatus();
-      
       const utcDate = getUTCDate(selectedDate);
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/journals`,
@@ -214,35 +199,27 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
       );
 
       setJournal(response.data);
-      if (isInitialLoad) {
-        setLocalJournal({
-          note: response.data?.note || "",
-          mistake: response.data?.mistake || "",
-          lesson: response.data?.lesson || "",
-        });
-        setFiles(response.data?.attachedFiles || []);
-        setIsInitialLoad(false);
-      }
+      setLocalJournal({
+        note: response.data?.note || "",
+        mistake: response.data?.mistake || "",
+        lesson: response.data?.lesson || "",
+      });
+      setFiles(response.data?.attachedFiles || []);
 
       onUpdate?.();
       onJournalChange?.();
     } catch (error) {
       console.error("Error fetching journal data:", error);
       setJournal(null);
-      if (isInitialLoad) {
-        setLocalJournal({ note: "", mistake: "", lesson: "" });
-        setFiles([]);
-        setIsInitialLoad(false);
-      }
+      setLocalJournal({ note: "", mistake: "", lesson: "" });
+      setFiles([]);
     } finally {
       setIsLoading(false);
     }
   };
 
   const saveJournal = async (journalData) => {
-    // Re-check subscription status before saving
     checkSubscriptionStatus();
-    
     if (!journalData || !hasSubscription) return;
 
     setIsSaving(true);
@@ -260,7 +237,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         }
       );
 
-      // Handle response properly
       if (response.data.message === "Empty journal entry deleted") {
         setJournal(null);
         setLocalJournal({ note: "", mistake: "", lesson: "" });
@@ -289,9 +265,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   ]);
 
   const handleChange = (e) => {
-    // Re-check subscription before handling changes
     checkSubscriptionStatus();
-    
     if (!hasSubscription) return;
 
     const { name, value } = e.target;
@@ -305,9 +279,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   };
 
   const handleBlur = () => {
-    // Re-check subscription before handling blur
     checkSubscriptionStatus();
-    
     if (!hasSubscription) return;
 
     debouncedSaveJournal.cancel();
@@ -315,9 +287,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   };
 
   const handleFileUpload = async (e) => {
-    // Re-check subscription before uploading
     checkSubscriptionStatus();
-    
     if (!hasSubscription) return;
 
     const originalFile = e.target.files?.[0];
@@ -377,29 +347,24 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   };
 
   const handleFileDelete = async (fileKey) => {
-    // Re-check subscription before deleting
     checkSubscriptionStatus();
-    
     if (!hasSubscription) return;
-  
+
     setDeletingFileKey(fileKey);
     setIsDeletingFile(true);
-  
+
     try {
       const token = Cookies.get("token");
       const filename = fileKey.split("/").pop();
-  
+
       await axios.delete(
         `${process.env.NEXT_PUBLIC_API_URL}/journals/${journal?._id}/file/${filename}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      
-      // Update local files state immediately to reflect the change in UI
-      setFiles(files.filter(file => file !== fileKey));
-      
-      // Then fetch the latest data from the server
+
+      setFiles(files.filter((file) => file !== fileKey));
       fetchJournalData();
       setSelectedImage(null);
     } catch (error) {
@@ -411,15 +376,13 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   };
 
   useEffect(() => {
-    setIsInitialLoad(true);
+    setLocalJournal({ note: "", mistake: "", lesson: "" });
+    setFiles([]);
     fetchJournalData();
-  }, [selectedDate]);
-
-  useEffect(() => {
     return () => {
       debouncedSaveJournal.cancel();
     };
-  }, [debouncedSaveJournal]);
+  }, [selectedDate]);
 
   if (isLoading) {
     return <div>Loading journal...</div>;
@@ -448,7 +411,11 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             <label className="text-xs font-medium">Notes</label>
             <Textarea
               name="note"
-              placeholder={hasSubscription ? "Type your notes here..." : "Subscribe to unlock journaling"}
+              placeholder={
+                hasSubscription
+                  ? "Type your notes here..."
+                  : "Subscribe to unlock journaling"
+              }
               value={localJournal.note}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -461,7 +428,11 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             <label className="text-xs font-medium">Mistakes</label>
             <Textarea
               name="mistake"
-              placeholder={hasSubscription ? "Type your mistakes here..." : "Subscribe to unlock journaling"}
+              placeholder={
+                hasSubscription
+                  ? "Type your mistakes here..."
+                  : "Subscribe to unlock journaling"
+              }
               value={localJournal.mistake}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -474,7 +445,11 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             <label className="text-xs font-medium">Lessons</label>
             <Textarea
               name="lesson"
-              placeholder={hasSubscription ? "Type your lessons here..." : "Subscribe to unlock journaling"}
+              placeholder={
+                hasSubscription
+                  ? "Type your lessons here..."
+                  : "Subscribe to unlock journaling"
+              }
               value={localJournal.lesson}
               onChange={handleChange}
               onBlur={handleBlur}
@@ -494,7 +469,10 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
                 <img
                   src={fileKey}
                   alt={`Uploaded file ${index + 1}`}
-                  className={cn("w-full h-full object-cover", !hasSubscription && "opacity-50")}
+                  className={cn(
+                    "w-full h-full object-cover",
+                    !hasSubscription && "opacity-50"
+                  )}
                 />
               </motion.div>
             ))}
@@ -517,8 +495,8 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
               <HoverCardContent className="w-80">
                 <div className="flex flex-col gap-2">
                   <p className="text-sm text-muted-foreground">
-                    You can add maximum 3 documents Formats: JPEG, JPG,
-                    PNG File Size: Maximum 5MB
+                    You can add maximum 3 documents Formats: JPEG, JPG, PNG File
+                    Size: Maximum 5MB
                     {!hasSubscription && <br />}
                     {!hasSubscription && "(Subscribe to unlock this feature)"}
                   </p>
@@ -530,11 +508,16 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
               variant="outline"
               className={cn(
                 "w-fit flex items-center h-fit px-2 py-1.5 text-xs",
-                ((files.length >= 3 || isFileUploading || !hasSubscription) &&
-                  "opacity-50 cursor-not-allowed")
+                (files.length >= 3 || isFileUploading || !hasSubscription) &&
+                  "opacity-50 cursor-not-allowed"
               )}
-              onClick={() => hasSubscription && document.getElementById("file-upload")?.click()}
-              disabled={files.length >= 3 || isFileUploading || !hasSubscription}
+              onClick={() =>
+                hasSubscription &&
+                document.getElementById("file-upload")?.click()
+              }
+              disabled={
+                files.length >= 3 || isFileUploading || !hasSubscription
+              }
             >
               {isFileUploading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
