@@ -165,7 +165,7 @@ const Footer = () => {
           </p>
 
           <p className="text-center md:text-right mt-4 md:mt-0">
-            v{process.env.NEXT_PUBLIC_APP_VERSION}
+            v 0.3.0
           </p>
           <div className="flex items-center gap-3">
             <button
