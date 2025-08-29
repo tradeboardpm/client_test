@@ -196,6 +196,10 @@ function Dashboard() {
     setForceChartUpdate((prev) => prev + 1);
   };
 
+  const handleTradeUpdate = async () => {
+    await queryClient.invalidateQueries(["capital"]);
+  };
+
   const formattedCapital = new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
@@ -271,9 +275,10 @@ function Dashboard() {
         <TradesSection
           selectedDate={selectedDate}
           onUpdate={() => queryClient.invalidateQueries(["journal"])}
+          onTradeChange={handleCalendarUpdate}
+          onCapitalUpdate={handleTradeUpdate}
           brokerage={capitalData?.brokerage}
           trades={journalData?.trades || []}
-          onTradeChange={handleCalendarUpdate}
         />
       </main>
 

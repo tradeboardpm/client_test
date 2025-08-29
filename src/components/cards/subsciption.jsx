@@ -323,7 +323,7 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
                   </label>
                   <Input
                     id="gstin"
-                    placeholder="22AAAAA0000A1Z5"
+                    placeholder="GSTIN"
                     value={gstin}
                     onChange={(e) => setGstin(e.target.value.toUpperCase())}
                     maxLength={15}

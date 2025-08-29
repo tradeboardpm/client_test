@@ -280,7 +280,7 @@ export default function JournalAnalysis() {
                 <PopoverTrigger asChild>
                   {renderDateRangeButton(journalsDateRange, "Date Range")}
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 border-0" align="start">
                   <Calendar
                     initialFocus
                     mode="range"

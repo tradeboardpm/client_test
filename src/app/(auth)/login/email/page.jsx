@@ -82,11 +82,11 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center px-4">
-      <div className="w-[500px] max-w-lg  space-y-8 p-8">
+      <div className="w-[500px] max-w-lg space-y-8 p-8">
         <Button
           variant="outline"
           size="icon"
-          className="absolute left-4 top-20 rounded-full  p-2 lg:left-8 "
+          className="absolute left-4 top-20 rounded-full p-2 lg:left-8"
           onClick={() => router.back()}
         >
           <ArrowLeft className="h-4 w-4" />
@@ -108,6 +108,7 @@ export default function LoginPage() {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value.trim())}
+              maxLength={50}
               required
               disabled={isLoading}
             />
@@ -121,6 +122,7 @@ export default function LoginPage() {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              maxLength={15}
               required
               disabled={isLoading}
             />
@@ -129,13 +131,13 @@ export default function LoginPage() {
           <div className="flex justify-end">
             <Link
               href="/login/email/forgot-password"
-              className="text-sm  hover:underline"
+              className="text-sm hover:underline"
             >
               Forgot Password?
             </Link>
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && <p className="text-sm text-red-500" role="alert">{error}</p>}
 
           <Button
             type="submit"

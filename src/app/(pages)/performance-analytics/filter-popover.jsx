@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,10 +17,15 @@ const FilterPopover = ({
   open,
   onOpenChange,
   showPercentage = false,
-  isModified = false, // New prop to indicate if filter is modified
+  isModified = false,
 }) => {
   const [tempValue, setTempValue] = useState(value);
   const dropdownContentRef = useRef(null);
+
+  // Synchronize tempValue with the value prop when it changes
+  useEffect(() => {
+    setTempValue(value);
+  }, [value]);
 
   const handleDone = (e) => {
     e.preventDefault();
@@ -69,7 +74,7 @@ const FilterPopover = ({
                 onMouseDown={(e) => e.stopPropagation()}
                 className="relative flex w-full touch-none select-none items-center"
               >
-                <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
+                  <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-secondary">
                   <SliderPrimitive.Range className="absolute h-full bg-primary" />
                 </SliderPrimitive.Track>
                 {tempValue.map(
@@ -116,8 +121,8 @@ const FilterPopover = ({
               Done
             </Button>
           </div>
-        </div>
-      </DropdownMenuContent>
+          </div>
+        </DropdownMenuContent>
     </DropdownMenu>
   );
 };

@@ -27,9 +27,9 @@ import { PhoneInput, usePhoneInput } from "@/components/ui/phone-input";
 // Maximum character limits
 const MAX_CHARS = {
   fullName: 30,
-  email: 30,
+  email: 50,
   phone: 15,
-  password: 20,
+  password: 15,
 };
 
 const LegalDrawer = ({ isOpen, onClose, content }) => (

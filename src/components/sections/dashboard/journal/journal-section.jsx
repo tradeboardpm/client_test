@@ -245,13 +245,15 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         setJournal(null);
       } else {
         setJournal(response.data.journal);
-        setLocalJournal({
+        setLocalJournal((prev) => ({
+          ...prev,
           note: response.data.journal.note || "",
           mistake: response.data.journal.mistake || "",
           lesson: response.data.journal.lesson || "",
-        });
+        }));
         setFiles(response.data.journal.attachedFiles || []);
       }
+      onJournalChange?.();
     } catch (error) {
       console.error("Error saving journal:", error);
     } finally {
@@ -269,13 +271,11 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     if (!hasSubscription) return;
 
     const { name, value } = e.target;
-    const updatedJournal = {
-      ...localJournal,
+    setLocalJournal((prev) => ({
+      ...prev,
       [name]: value,
-    };
-
-    setLocalJournal(updatedJournal);
-    debouncedSaveJournal(updatedJournal);
+    }));
+    debouncedSaveJournal({ ...localJournal, [name]: value });
   };
 
   const handleBlur = () => {
@@ -304,6 +304,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     }
 
     setIsFileUploading(true);
+    debouncedSaveJournal.cancel(); // Cancel any pending debounced saves
 
     const cleanedFileName = originalFile.name.replace(/[^a-zA-Z0-9.]/g, "");
     const file = new File([originalFile], cleanedFileName, {
@@ -333,12 +334,15 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
       );
 
       setJournal(response.data.journal);
-      setLocalJournal({
-        note: response.data.journal.note || "",
-        mistake: response.data.journal.mistake || "",
-        lesson: response.data.journal.lesson || "",
-      });
       setFiles(response.data.journal.attachedFiles || []);
+      // Preserve localJournal state to prevent overwriting user input
+      setLocalJournal((prev) => ({
+        ...prev,
+        note: response.data.journal.note || prev.note,
+        mistake: response.data.journal.mistake || prev.mistake,
+        lesson: response.data.journal.lesson || prev.lesson,
+      }));
+      onJournalChange?.();
     } catch (error) {
       console.error("Error uploading file:", error);
     } finally {

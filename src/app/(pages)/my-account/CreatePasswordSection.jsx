@@ -10,7 +10,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -24,6 +23,7 @@ export default function CreatePasswordSection({ api, fetchUserData }) {
   const [newPassword, setNewPassword] = useState("");
   const [passwordValidation, setPasswordValidation] = useState({
     length: false,
+    maxLength: false,
     uppercase: false,
     lowercase: false,
     number: false,
@@ -33,6 +33,7 @@ export default function CreatePasswordSection({ api, fetchUserData }) {
   const validatePassword = (password) => {
     const validationRules = {
       length: password.length >= 8,
+      maxLength: password.length <= 15,
       uppercase: /[A-Z]/.test(password),
       lowercase: /[a-z]/.test(password),
       number: /[0-9]/.test(password),
@@ -46,7 +47,7 @@ export default function CreatePasswordSection({ api, fetchUserData }) {
     if (!validatePassword(newPassword)) {
       toast({
         title: "Invalid Password",
-        description: "Please meet all password requirements",
+        description: "Please meet all password requirements, including maximum length of 15 characters",
         variant: "destructive",
       });
       return;
@@ -76,7 +77,7 @@ export default function CreatePasswordSection({ api, fetchUserData }) {
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Create Password</CardTitle>
-            <CardDescription>Set a password for your Google account</CardDescription>
+            <CardDescription>Please set your password</CardDescription>
           </div>
           <Button
             variant="outline"
@@ -105,6 +106,7 @@ export default function CreatePasswordSection({ api, fetchUserData }) {
                   setNewPassword(password);
                   validatePassword(password);
                 }}
+                maxLength={15}
               />
             </div>
             <div className="text-sm text-muted-foreground">
@@ -112,6 +114,9 @@ export default function CreatePasswordSection({ api, fetchUserData }) {
               <ul className="list-disc pl-5">
                 <li className={passwordValidation.length ? "text-green-600" : "text-red-600"}>
                   At least 8 characters
+                </li>
+                <li className={passwordValidation.maxLength ? "text-green-600" : "text-red-600"}>
+                  No more than 15 characters
                 </li>
                 <li className={passwordValidation.uppercase ? "text-green-600" : "text-red-600"}>
                   Contains an uppercase letter

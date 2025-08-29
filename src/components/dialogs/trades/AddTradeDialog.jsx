@@ -46,7 +46,7 @@ export function AddTradeDialog({
     action: TRANSACTION_TYPES.BUY,
     buyingPrice: null,
     sellingPrice: null,
-    brokerage: initialBrokerage,
+    brokerage: initialBrokerage || 0,
     exchangeRate: 0,
     time: getCurrentTime(),
     equityType: EQUITY_TYPES.INTRADAY,
@@ -80,15 +80,33 @@ export function AddTradeDialog({
     fetchCapital();
   }, []);
 
-  // Reset time to current time when dialog opens
+  // Update brokerage when initialBrokerage prop changes
+  useEffect(() => {
+    setNewTrade((prev) => ({
+      ...prev,
+      brokerage: initialBrokerage || 0,
+    }));
+  }, [initialBrokerage]);
+
+  // Reset time and other fields when dialog opens
   useEffect(() => {
     if (open) {
-      setNewTrade((prev) => ({
-        ...prev,
+      setNewTrade({
+        instrumentName: "",
+        quantity: null,
+        action: TRANSACTION_TYPES.BUY,
+        buyingPrice: null,
+        sellingPrice: null,
+        brokerage: initialBrokerage || 0,
+        exchangeRate: 0,
         time: getCurrentTime(),
-      }));
+        equityType: EQUITY_TYPES.INTRADAY,
+      });
+      setError("");
+      setExchangeRateEdited(false);
+      setManualExchangeCharge(false);
     }
-  }, [open]);
+  }, [open, initialBrokerage]);
 
   // Memoize charges calculation
   const charges = useMemo(() => {
@@ -241,7 +259,7 @@ export function AddTradeDialog({
       action: TRANSACTION_TYPES.BUY,
       buyingPrice: null,
       sellingPrice: null,
-      brokerage: initialBrokerage,
+      brokerage: initialBrokerage || 0,
       exchangeRate: newTrade.equityType === EQUITY_TYPES.OTHER ? 0 : 0,
       time: getCurrentTime(),
       equityType: EQUITY_TYPES.INTRADAY,
@@ -272,10 +290,10 @@ export function AddTradeDialog({
                 <Input
                   value={newTrade.instrumentName}
                   onChange={(e) =>
-                    setNewTrade({
-                      ...newTrade,
+                    setNewTrade((prev) => ({
+                      ...prev,
                       instrumentName: e.target.value.toUpperCase().trim(),
-                    })
+                    }))
                   }
                 />
               </div>
@@ -291,10 +309,10 @@ export function AddTradeDialog({
                       Number(Number.parseFloat(e.target.value).toFixed(2))
                     );
                     setError("");
-                    setNewTrade({
-                      ...newTrade,
+                    setNewTrade((prev) => ({
+                      ...prev,
                       quantity: value,
-                    });
+                    }));
                   }}
                 />
                 {error && error.includes("Quantity") && (
@@ -358,12 +376,12 @@ export function AddTradeDialog({
                       Number(Number.parseFloat(e.target.value).toFixed(2))
                     );
                     setError("");
-                    setNewTrade({
-                      ...newTrade,
+                    setNewTrade((prev) => ({
+                      ...prev,
                       [newTrade.action === TRANSACTION_TYPES.BUY
                         ? "buyingPrice"
                         : "sellingPrice"]: price,
-                    });
+                    }));
                   }}
                 />
                 {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
@@ -375,11 +393,11 @@ export function AddTradeDialog({
                 <Select
                   value={newTrade.equityType}
                   onValueChange={(value) => {
-                    setNewTrade({
-                      ...newTrade,
+                    setNewTrade((prev) => ({
+                      ...prev,
                       equityType: value,
-                      exchangeRate: value === EQUITY_TYPES.OTHER ? 0 : newTrade.exchangeRate,
-                    });
+                      exchangeRate: value === EQUITY_TYPES.OTHER ? 0 : prev.exchangeRate,
+                    }));
                     if (value === EQUITY_TYPES.OTHER) {
                       setExchangeRateEdited(false);
                       setManualExchangeCharge(true);
@@ -411,7 +429,7 @@ export function AddTradeDialog({
                 <Label>Time</Label>
                 <TimePicker
                   value={newTrade.time}
-                  onChange={(time) => setNewTrade({ ...newTrade, time: time })}
+                  onChange={(time) => setNewTrade((prev) => ({ ...prev, time: time }))}
                 />
               </div>
             </div>
@@ -430,10 +448,10 @@ export function AddTradeDialog({
                         value = Number.parseFloat(value).toFixed(2);
                       }
                       value = Math.max(0, Number(value));
-                      setNewTrade({
-                        ...newTrade,
+                      setNewTrade((prev) => ({
+                        ...prev,
                         exchangeRate: value,
-                      });
+                      }));
                       setExchangeRateEdited(true);
                       setManualExchangeCharge(true);
                     }}
@@ -454,16 +472,20 @@ export function AddTradeDialog({
                 <Label>Brokerage (₹)</Label>
                 <Input
                   type="number"
-                  value={newTrade.brokerage}
-                  onChange={(e) =>
-                    setNewTrade({
-                      ...newTrade,
-                      brokerage: Math.max(
-                        0,
-                        Number(Number.parseFloat(e.target.value).toFixed(2))
-                      ),
-                    })
-                  }
+                  step="0.01"
+                  value={Number(newTrade.brokerage.toFixed(2))}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    // Parse and limit to 2 decimal places if decimals exist
+                    if (value.includes('.')) {
+                      value = Number.parseFloat(value).toFixed(2);
+                    }
+                    value = Math.max(0, Number(value));
+                    setNewTrade((prev) => ({
+                      ...prev,
+                      brokerage: value,
+                    }));
+                  }}
                 />
               </div>
             </div>
