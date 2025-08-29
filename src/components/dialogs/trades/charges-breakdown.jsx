@@ -36,7 +36,7 @@ const ChargesBreakdown = ({ trade }) => {
       <div className="flex justify-start gap-2 items-center w-full h-16 rounded-lg px-4 bg-[#F4E4FF] dark:bg-[#312d33]">
         <span className="font-medium">Total Order Amount:</span>
         <span className="text-base font-medium text-primary">
-          ₹ {(charges.turnover + (trade.exchangeRate || 0)).toFixed(2)}
+          ₹ {(charges.turnover + (trade.exchangeRate || 0) + (trade.brokerage || 0)).toFixed(2)}
         </span>
       </div>
     );
