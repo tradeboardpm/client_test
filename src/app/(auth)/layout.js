@@ -41,9 +41,9 @@ export default function AuthLayout({ children }) {
         className="absolute top-4 left-4 z-10 bg-transparent border-2 border-secondary p-0  transition-colors overflow-hidden border-none rounded"
       >
         <img
-          src="/images/Tradeboard_logo_RGB.png"
+          src="/images/Tradeboard_Logo_Final.png"
           alt="logo"
-          className="h-7 object-cover p-1"
+          className="h-10 object-cover"
         />
       </button>
       <div className="flex-1 flex items-center justify-center">

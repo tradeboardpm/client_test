@@ -27,20 +27,21 @@ const ChargesBreakdown = ({ trade }) => {
     brokerage: trade.brokerage || 0, // Default to 0 if NaN
   });
 
-  const totalCharges = (charges.totalCharges - (charges.brokerage || 0)) + (trade.brokerage || 0);
-  const showBreakdown = trade.equityType !== EQUITY_TYPES.OTHER && !trade.manualExchangeCharge;
+  // For OTHER equity type, use manual exchange rate if available
+  const exchangeCharges = trade.equityType === EQUITY_TYPES.OTHER 
+    ? (trade.exchangeRate || 0) 
+    : charges.exchangeCharges;
 
-  // Show simple total when exchange charges are manual or equity type is OTHER
-  if (!showBreakdown) {
-    return (
-      <div className="flex justify-start gap-2 items-center w-full h-16 rounded-lg px-4 bg-[#F4E4FF] dark:bg-[#312d33]">
-        <span className="font-medium">Total Order Amount:</span>
-        <span className="text-base font-medium text-primary">
-          ₹ {(charges.turnover + (trade.exchangeRate || 0) + (trade.brokerage || 0)).toFixed(2)}
-        </span>
-      </div>
-    );
-  }
+  // Calculate total charges with proper exchange rate handling
+  const totalCharges = trade.equityType === EQUITY_TYPES.OTHER
+    ? (trade.brokerage || 0) + (trade.exchangeRate || 0) + charges.sttCharges + charges.sebiCharges + charges.stampDuty + charges.gstCharges
+    : (charges.totalCharges - (charges.brokerage || 0)) + (trade.brokerage || 0);
+
+  const totalOrderAmount = charges.turnover + (
+    trade.equityType === EQUITY_TYPES.OTHER
+      ? (trade.brokerage || 0) + (trade.exchangeRate || 0)
+      : totalCharges
+  );
 
   return (
     <Accordion type="single" collapsible className="w-full">
@@ -49,7 +50,7 @@ const ChargesBreakdown = ({ trade }) => {
           <div className="flex justify-start gap-2 items-center w-full">
             <span className="font-medium">Total Order Amount:</span>
             <span className="text-base font-medium text-primary">
-              ₹ {(charges.turnover + totalCharges).toFixed(2)}
+              ₹ {totalOrderAmount.toFixed(2)}
             </span>
           </div>
         </AccordionTrigger>
@@ -58,11 +59,26 @@ const ChargesBreakdown = ({ trade }) => {
             {[
               { label: "Order Value:", value: charges.turnover },
               { label: "Brokerage:", value: trade.brokerage || 0 },
-              { label: "STT:", value: charges.sttCharges },
-              { label: "Exchange Charges:", value: charges.exchangeCharges },
-              { label: "SEBI Charges:", value: charges.sebiCharges },
-              { label: "Stamp Duty:", value: charges.stampDuty },
-              { label: "GST:", value: charges.gstCharges },
+              { 
+                label: "STT:", 
+                value: trade.equityType === EQUITY_TYPES.OTHER ? 0 : charges.sttCharges 
+              },
+              { 
+                label: "Exchange Charges:", 
+                value: exchangeCharges 
+              },
+              { 
+                label: "SEBI Charges:", 
+                value: trade.equityType === EQUITY_TYPES.OTHER ? 0 : charges.sebiCharges 
+              },
+              { 
+                label: "Stamp Duty:", 
+                value: trade.equityType === EQUITY_TYPES.OTHER ? 0 : charges.stampDuty 
+              },
+              { 
+                label: "GST:", 
+                value: trade.equityType === EQUITY_TYPES.OTHER ? 0 : charges.gstCharges 
+              },
             ].map(({ label, value }, index) => (
               <div key={index} className="flex justify-between">
                 <span className="text-muted-foreground">{label}</span>
@@ -72,11 +88,11 @@ const ChargesBreakdown = ({ trade }) => {
             <div className="border-t pt-1 mt-1 space-y-1 font-medium">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Total Charges:</span>
-                <span>₹ {totalCharges.toFixed(2)}</span>
+                <span>₹ {(trade.equityType === EQUITY_TYPES.OTHER ? (trade.brokerage || 0) + (trade.exchangeRate || 0) : totalCharges).toFixed(2)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Break Even Per Unit:</span>
-                <span>₹ {(totalCharges / trade.quantity).toFixed(2)}</span>
+                <span>₹ {((trade.equityType === EQUITY_TYPES.OTHER ? (trade.brokerage || 0) + (trade.exchangeRate || 0) : totalCharges) / trade.quantity).toFixed(2)}</span>
               </div>
             </div>
           </div>

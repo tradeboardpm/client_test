@@ -10,6 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import axios from "axios";
 import Cookies from "js-cookie";
 import {
@@ -249,6 +255,42 @@ export function CompleteTradeDialog({
     setManualExchangeCharge(false);
   };
 
+  // Calculate total order amount for display
+  const getTotalOrderAmount = () => {
+    if (!charges) return 0;
+    
+    if (completeTrade.equityType === EQUITY_TYPES.OTHER) {
+      return charges.turnover + (completeTrade.brokerage || 0) + (completeTrade.exchangeRate || 0);
+    } else {
+      // For non-OTHER types, use calculated charges but replace exchange charges with manual if edited
+      const totalCharges = exchangeRateEdited 
+        ? (charges.totalCharges - charges.exchangeCharges - charges.brokerage) + (completeTrade.exchangeRate || 0) + (completeTrade.brokerage || 0)
+        : charges.totalCharges;
+      return charges.turnover + totalCharges;
+    }
+  };
+
+  // Get exchange charges for display
+  const getExchangeCharges = () => {
+    if (completeTrade.equityType === EQUITY_TYPES.OTHER) {
+      return completeTrade.exchangeRate || 0;
+    }
+    return exchangeRateEdited ? (completeTrade.exchangeRate || 0) : (charges?.exchangeCharges || 0);
+  };
+
+  // Calculate total charges for breakdown
+  const getTotalCharges = () => {
+    if (!charges) return 0;
+    
+    if (completeTrade.equityType === EQUITY_TYPES.OTHER) {
+      return (completeTrade.brokerage || 0) + (completeTrade.exchangeRate || 0);
+    } else {
+      return exchangeRateEdited 
+        ? (charges.totalCharges - charges.exchangeCharges - charges.brokerage) + (completeTrade.exchangeRate || 0) + (completeTrade.brokerage || 0)
+        : charges.totalCharges;
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -384,14 +426,65 @@ export function CompleteTradeDialog({
                 />
               </div>
             </div>
-            <div className="bg-[#F4E4FF] dark:bg-[#312d33] p-4 rounded-lg">
-              <div className="flex justify-start gap-2 items-center">
-                <span className="font-medium">Total Order Amount:</span>
-                <span className="text-base font-medium text-primary">
-                  ₹ {calculateTotalOrder(completeTrade).toFixed(2)}
-                </span>
-              </div>
-            </div>
+            
+            {/* Updated charges breakdown section */}
+            {charges && (
+              <Accordion type="single" collapsible className="w-full">
+                <AccordionItem value="charges" className="border-none h-full">
+                  <AccordionTrigger className="p-0 hover:no-underline w-full h-16 rounded-lg px-4 bg-[#F4E4FF] dark:bg-[#312d33] max-h-52 overflow-y-auto">
+                    <div className="flex justify-start gap-2 items-center w-full">
+                      <span className="font-medium">Total Order Amount:</span>
+                      <span className="text-base font-medium text-primary">
+                        ₹ {getTotalOrderAmount().toFixed(2)}
+                      </span>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pt-4">
+                    <div className="space-y-1 text-xs bg-card p-2 rounded-lg">
+                      {[
+                        { label: "Order Value:", value: charges.turnover },
+                        { label: "Brokerage:", value: completeTrade.brokerage || 0 },
+                        { 
+                          label: "STT:", 
+                          value: completeTrade.equityType === EQUITY_TYPES.OTHER ? 0 : charges.sttCharges 
+                        },
+                        { 
+                          label: "Exchange Charges:", 
+                          value: getExchangeCharges()
+                        },
+                        { 
+                          label: "SEBI Charges:", 
+                          value: completeTrade.equityType === EQUITY_TYPES.OTHER ? 0 : charges.sebiCharges 
+                        },
+                        { 
+                          label: "Stamp Duty:", 
+                          value: completeTrade.equityType === EQUITY_TYPES.OTHER ? 0 : charges.stampDuty 
+                        },
+                        { 
+                          label: "GST:", 
+                          value: completeTrade.equityType === EQUITY_TYPES.OTHER ? 0 : charges.gstCharges 
+                        },
+                      ].map(({ label, value }, index) => (
+                        <div key={index} className="flex justify-between">
+                          <span className="text-muted-foreground">{label}</span>
+                          <span>₹ {value.toFixed(2)}</span>
+                        </div>
+                      ))}
+                      <div className="border-t pt-1 mt-1 space-y-1 font-medium">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Total Charges:</span>
+                          <span>₹ {getTotalCharges().toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Break Even Per Unit:</span>
+                          <span>₹ {(getTotalCharges() / completeTrade.quantity).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => onOpenChange(false)}>

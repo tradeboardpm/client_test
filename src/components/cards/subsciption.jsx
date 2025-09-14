@@ -44,17 +44,24 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
     [discountDetails, selectedPlan]
   );
 
-  useEffect(() => {
-    const token = Cookies.get("token");
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-    setIsLoggedIn(true);
-    setActivePlan(Cookies.get("plan"));
-    fetchUserProfile(token);
-    fetchPlans();
-  }, [router]);
+useEffect(() => {
+  const token = Cookies.get("token");
+  if (!token) {
+    router.push("/login");
+    return;
+  }
+  setIsLoggedIn(true);
+  setActivePlan(Cookies.get("plan"));
+  Promise.all([fetchUserProfile(token), fetchPlans()])
+    .catch((error) => {
+      console.error("Initial Fetch Error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load initial data. Please try refreshing.",
+        variant: "destructive",
+      });
+    });
+}, [router]);
 
   const fetchUserProfile = async (token) => {
     try {
@@ -76,29 +83,45 @@ const SubscriptionPlan = ({ selectedPlan: initialSelectedPlan, onCloseDialog }) 
     }
   };
 
-  const handlePaymentSuccess = async (response, planName) => {
-    setLoading(true);
-    try {
-      const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = response;
-      const token = Cookies.get("token");
-      const { data } = await axios.post(
-        `${API_URL}/payment/payment-success`,
-        { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan: planName, couponCode, gstin },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+const handlePaymentSuccess = async (response, planName) => {
+  setLoading(true);
+  try {
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = response;
+    const token = Cookies.get("token");
+    const { data } = await axios.post(
+      `${API_URL}/payment/payment-success`,
+      { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan: planName, couponCode, gstin },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      if (data.success) {
-        router.push(`/payment-success?reference=${data.reference}&plan=${data.plan}`);
-      } else {
-        throw new Error(data.error || "Payment verification failed.");
-      }
-    } catch (error) {
-      toast({ title: "Error", description: error.message || "Payment verification failed.", variant: "destructive" });
-    } finally {
-      setLoading(false);
-      setShowCheckout(false);
+    if (data.success) {
+      // Update activePlan cookie and state immediately
+      Cookies.set("plan", planName, { expires: 365 }); // Set cookie with 1-year expiry
+      setActivePlan(planName); // Update local state
+      toast({
+        title: "Payment Successful",
+        description: `Subscribed to ${planName} plan successfully!`,
+        variant: "default",
+      });
+      router.push(`/payment-success?reference=${data.reference}&plan=${data.plan}`);
+    } else {
+      throw new Error(data.error || "Payment verification failed.");
     }
-  };
+  } catch (error) {
+    console.error("Payment Success Error:", error); // Log for debugging
+    toast({
+      title: "Payment Error",
+      description:
+        error.response?.data?.error ||
+        error.message ||
+        "Failed to verify payment. Please contact support if the issue persists.",
+      variant: "destructive",
+    });
+  } finally {
+    setLoading(false);
+    setShowCheckout(false);
+  }
+};
 
   const applyCoupon = async () => {
     if (!couponCode.trim()) {
