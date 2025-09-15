@@ -124,10 +124,16 @@ export default function Topbar({
         >
           <Menu className="h-5 w-5 sm:h-6 sm:w-6" />
         </Button>
-        <img
+        {/* <img
           src="/images/Tradeboard_logo_RGB.png"
           alt="logo"
           className="h-6 sm:h-7 object-cover p-1 mt-2"
+        /> */}
+
+           <img
+          src="/images/Tradeboard_Logo_Final.png"
+          alt="logo"
+          className="h-10 object-cover  mt-2"
         />
       </div>
       <div className="flex items-center space-x-2 sm:space-x-4">

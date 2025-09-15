@@ -32,9 +32,9 @@ export default function DashboardSettingsSection({ settings, setSettings, api })
   useEffect(() => {
     if (settings) {
       setSettingsForm({
-        capital: settings.capital || 0,
-        brokerage: settings.brokerage || 0,
-        tradesPerDay: settings.tradesPerDay || 0,
+        capital: parseFloat((settings.capital || 0).toFixed(2)),
+        brokerage: parseFloat((settings.brokerage || 0).toFixed(2)),
+        tradesPerDay: Math.max(0, Math.floor(settings.tradesPerDay || 0)),
       });
     }
   }, [settings]);
@@ -58,6 +58,12 @@ export default function DashboardSettingsSection({ settings, setSettings, api })
     }
   };
 
+  // Helper to round values to two decimals
+  const formatTwoDecimals = (val) => {
+    const num = parseFloat(val);
+    return isNaN(num) ? 0 : parseFloat(num.toFixed(2));
+  };
+
   return (
     <>
       <Card className="mb-6">
@@ -77,15 +83,27 @@ export default function DashboardSettingsSection({ settings, setSettings, api })
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <Label>Capital</Label>
-              <Input value={settings?.capital || 0} readOnly className="active:outline-none" />
+              <Input
+                value={(settings?.capital ?? 0).toFixed(2)}
+                readOnly
+                className="active:outline-none"
+              />
             </div>
             <div>
               <Label>Brokerage</Label>
-              <Input value={settings?.brokerage || 0} readOnly className="active:outline-none" />
+              <Input
+                value={(settings?.brokerage ?? 0).toFixed(2)}
+                readOnly
+                className="active:outline-none"
+              />
             </div>
             <div>
               <Label>Trades Per Day</Label>
-              <Input value={settings?.tradesPerDay || 0} readOnly className="active:outline-none" />
+              <Input
+                value={Math.max(0, Math.floor(settings?.tradesPerDay ?? 0))}
+                readOnly
+                className="active:outline-none"
+              />
             </div>
           </div>
         </CardContent>
@@ -104,17 +122,14 @@ export default function DashboardSettingsSection({ settings, setSettings, api })
                 id="capital"
                 type="number"
                 min="0"
-                step="1"
+                step="0.01"
                 value={settingsForm.capital}
-                onChange={(e) => {
-                  const value = Math.floor(Number(e.target.value));
-                  if (value >= 0) {
-                    setSettingsForm({
-                      ...settingsForm,
-                      capital: value,
-                    });
-                  }
-                }}
+                onChange={(e) =>
+                  setSettingsForm({
+                    ...settingsForm,
+                    capital: formatTwoDecimals(e.target.value),
+                  })
+                }
               />
             </div>
             <div>
@@ -122,11 +137,13 @@ export default function DashboardSettingsSection({ settings, setSettings, api })
               <Input
                 id="brokerage"
                 type="number"
+                min="0"
+                step="0.01"
                 value={settingsForm.brokerage}
                 onChange={(e) =>
                   setSettingsForm({
                     ...settingsForm,
-                    brokerage: Number(e.target.value),
+                    brokerage: formatTwoDecimals(e.target.value),
                   })
                 }
               />
@@ -136,11 +153,13 @@ export default function DashboardSettingsSection({ settings, setSettings, api })
               <Input
                 id="tradesPerDay"
                 type="number"
+                min="0"
+                step="1"
                 value={settingsForm.tradesPerDay}
                 onChange={(e) =>
                   setSettingsForm({
                     ...settingsForm,
-                    tradesPerDay: Number(e.target.value),
+                    tradesPerDay: Math.max(0, Math.floor(Number(e.target.value))),
                   })
                 }
               />

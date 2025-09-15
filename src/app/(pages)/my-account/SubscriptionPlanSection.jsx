@@ -34,6 +34,8 @@ export default function SubscriptionPlanSection({
     setShowUpgradeDialog(false);
   };
 
+  const isLoading = !user || user.subscription === undefined;
+
   return (
     <>
       <Card>
@@ -56,7 +58,13 @@ export default function SubscriptionPlanSection({
             <div>
               <Label>Current Plan</Label>
               <Input
-                value={user?.subscription ? formatPlanName(user.subscription.plan) : 'No Plan'}
+                value={
+                  isLoading
+                    ? "Loading..."
+                    : user.subscription
+                    ? formatPlanName(user.subscription.plan)
+                    : "No Plan"
+                }
                 readOnly
                 className="active:outline-none"
               />
@@ -64,9 +72,13 @@ export default function SubscriptionPlanSection({
             <div>
               <Label>Expiry Date</Label>
               <Input
-                value={user?.subscription
-                  ? new Date(user.subscription.expiresAt).toLocaleDateString()
-                  : 'N/A'}
+                value={
+                  isLoading
+                    ? "Loading..."
+                    : user.subscription
+                    ? new Date(user.subscription.expiresAt).toLocaleDateString()
+                    : "N/A"
+                }
                 readOnly
                 className="active:outline-none"
               />
