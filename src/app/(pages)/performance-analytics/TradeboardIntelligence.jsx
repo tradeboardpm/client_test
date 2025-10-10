@@ -259,7 +259,7 @@ export default function TradeboardIntelligence() {
                     <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 text-foreground/65" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 border-0" align="start">
                   <Calendar
                     initialFocus
                     mode="range"

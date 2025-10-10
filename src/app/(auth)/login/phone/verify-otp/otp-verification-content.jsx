@@ -56,7 +56,7 @@ export default function OTPVerificationContent() {
           variant: "default",
         });
 
-        router.push("/subscription-plan");
+        router.push("/dashboard");
       } else {
         toast({
           title: "Error",
