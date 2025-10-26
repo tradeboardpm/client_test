@@ -233,7 +233,6 @@ function ApDataInner() {
         </p>
       </div>
 
-//charts
       <Card className="mb-6">
           <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <CardTitle className="text-xl">Performance</CardTitle>
@@ -494,7 +493,6 @@ function ApDataInner() {
           </CardContent>
         </Card>
 
-// info
       <Card>
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
           <CardTitle className="text-xl">Journaling Trends</CardTitle>
