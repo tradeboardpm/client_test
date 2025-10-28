@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut, Monitor, MonitorX } from "lucide-react";
+import { logoutAndClearAll } from "@/lib/auth";
 
 // Axios instance with interceptor
 const api = axios.create({
@@ -63,7 +64,8 @@ export default function AccountPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to fetch user data",
+        description:
+          error.response?.data?.message || "Failed to fetch user data",
         variant: "destructive",
       });
     }
@@ -76,7 +78,8 @@ export default function AccountPage() {
     } catch (error) {
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to fetch settings",
+        description:
+          error.response?.data?.message || "Failed to fetch settings",
         variant: "destructive",
       });
     }
@@ -111,33 +114,36 @@ export default function AccountPage() {
     router.push(redirectTo);
   };
 
-  const handleLogout = async () => {
-    try {
-      await api.post("/auth/logout");
-      toast({ title: "Success", description: "Logged out successfully" });
-      clearAuthAndRedirect("/login");
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Logout failed",
-        variant: "destructive",
-      });
-    }
-  };
+  // const handleLogout = async () => {
+  //   try {
+  //     await api.post("/auth/logout");
+  //     toast({ title: "Success", description: "Logged out successfully" });
+  //     clearAuthAndRedirect("/login");
+  //   } catch (error) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Logout failed",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
 
-  const handleLogoutAll = async () => {
-    try {
-      await api.post("/auth/logout-all");
-      toast({ title: "Success", description: "Logged out from all devices" });
-      clearAuthAndRedirect("/login");
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Logout from all devices failed",
-        variant: "destructive",
-      });
-    }
-  };
+  // const handleLogoutAll = async () => {
+  //   try {
+  //     await api.post("/auth/logout-all");
+  //     toast({ title: "Success", description: "Logged out from all devices" });
+  //     clearAuthAndRedirect("/login");
+  //   } catch (error) {
+  //     toast({
+  //       title: "Error",
+  //       description: "Logout from all devices failed",
+  //       variant: "destructive",
+  //     });
+  //   }
+  // };
+
+  const handleLogout = () => logoutAndClearAll(router);
+  const handleLogoutAll = () => logoutAndClearAll(router);
 
   const needsUpgrade = () => {
     if (!user?.subscription) return false;

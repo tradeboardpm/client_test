@@ -1,18 +1,17 @@
-  import { create } from 'zustand';
+// src/stores/points-store.ts
+import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// Define the levels and their point thresholds
 const LEVELS = [
-  { name: 'Pearl', threshold: 250 },
+  { name: 'Pearl',      threshold: 250 },
   { name: 'Aquamarine', threshold: 500 },
-  { name: 'Topaz', threshold: 750 },
-  { name: 'Opal', threshold: 1000 },
-  { name: 'Sapphire', threshold: 1250 },
-  { name: 'Emerald', threshold: 1500 },
-  { name: 'Ruby', threshold: 1750 },
-  { name: 'Diamond', threshold: 2000 }
+  { name: 'Topaz',      threshold: 750 },
+  { name: 'Opal',       threshold: 1000 },
+  { name: 'Sapphire',   threshold: 1250 },
+  { name: 'Emerald',    threshold: 1500 },
+  { name: 'Ruby',       threshold: 1750 },
+  { name: 'Diamond',    threshold: 2000 },
 ];
-
 
 export const usePointsStore = create()(
   persist(
@@ -22,34 +21,40 @@ export const usePointsStore = create()(
       nextLevel: 'Aquamarine',
       pointsToNextLevel: 250,
 
-      // Set points directly
-      setPoints: (newPoints) => {
-        const currentLevelObj = LEVELS.reduce((prev, current) => 
-          newPoints >= current.threshold ? current : prev
-        , LEVELS[0]);
+      // ---- NEW: reset everything (used on logout) ----
+      reset: () => set({
+        points: 0,
+        currentLevel: 'Pearl',
+        nextLevel: 'Aquamarine',
+        pointsToNextLevel: 250,
+      }),
 
-        const nextLevelIndex = LEVELS.findIndex(l => l.name === currentLevelObj.name) + 1;
-        const nextLevel = nextLevelIndex < LEVELS.length ? LEVELS[nextLevelIndex].name : null;
-        const pointsToNextLevel = nextLevel 
-          ? LEVELS.find(l => l.name === nextLevel).threshold 
+      setPoints: (newPoints) => {
+        const currentLevelObj = LEVELS.reduce((prev, cur) =>
+          newPoints >= cur.threshold ? cur : prev,
+        LEVELS[0]);
+
+        const nextIdx = LEVELS.findIndex(l => l.name === currentLevelObj.name) + 1;
+        const nextLevel = nextIdx < LEVELS.length ? LEVELS[nextIdx].name : null;
+        const pointsToNextLevel = nextLevel
+          ? LEVELS.find(l => l.name === nextLevel).threshold - newPoints
           : 0;
 
         set({
           points: newPoints,
           currentLevel: currentLevelObj.name,
           nextLevel,
-          pointsToNextLevel: pointsToNextLevel - newPoints
+          pointsToNextLevel,
         });
       },
 
-      // Add points to the current total
-      addPoints: (pointsToAdd) => {
-        const newPoints = get().points + pointsToAdd;
-        get().setPoints(newPoints);
-      }
+      addPoints: (pts) => {
+        const newPts = get().points + pts;
+        get().setPoints(newPts);
+      },
     }),
     {
-      name: 'points-storage', // unique name
+      name: 'points-storage',               // <-- key in localStorage
       storage: {
         getItem: (name) => {
           const str = localStorage.getItem(name);
@@ -66,13 +71,14 @@ export const usePointsStore = create()(
   )
 );
 
-// // Optional: Helper function to sync points from backend
-// export const syncPointsFromBackend = async (api) => {
-//   try {
-//     const response = await api.get("/user/settings");
-//     const points = response.data.points || 0;
-//     usePointsStore.getState().setPoints(points);
-//   } catch (error) {
-//     console.error("Error syncing points:", error);
-//   }
-// };
+/* -------------------------------------------------------------
+   Sync with backend – unchanged, just exported for convenience
+   ------------------------------------------------------------- */
+export const syncPointsFromBackend = async (api) => {
+  try {
+    const { data } = await api.get('/user/settings');
+    usePointsStore.getState().setPoints(data.points ?? 0);
+  } catch (err) {
+    console.error('Error syncing points:', err);
+  }
+};

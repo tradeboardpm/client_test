@@ -12,6 +12,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import SubscriptionPlan from "@/components/cards/subsciption";
+import { logoutAndClearAll } from "@/lib/auth";
 
 export default function MainLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -226,41 +227,46 @@ export default function MainLayout({ children }) {
     }
   }, []);
 
+  // const handleLogout = async () => {
+  //   try {
+  //     const token = Cookies.get("token");
+  //     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
+  //       method: "POST",
+  //       headers: {
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //     });
+
+  //     // Reset theme
+  //     document.documentElement.classList.remove("dark");
+  //     localStorage.setItem("theme", "light");
+
+  //     // Clear cookies
+  //     Object.keys(Cookies.get()).forEach((cookieName) => {
+  //       Cookies.remove(cookieName);
+  //     });
+
+  //     // Save theme
+  //     const theme = localStorage.getItem("theme");
+
+  //     // Clear localStorage
+  //     localStorage.clear();
+
+  //     // Restore theme
+  //     localStorage.setItem("theme", theme || "light");
+
+  //     router.push("/");
+  //     toast.success("Logged out successfully");
+  //   } catch (error) {
+  //     console.error("Logout error:", error);
+  //     toast.error("Failed to logout. Please try again.");
+  //   }
+  // };
+
+  
   const handleLogout = async () => {
-    try {
-      const token = Cookies.get("token");
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/logout`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      // Reset theme
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-
-      // Clear cookies
-      Object.keys(Cookies.get()).forEach((cookieName) => {
-        Cookies.remove(cookieName);
-      });
-
-      // Save theme
-      const theme = localStorage.getItem("theme");
-
-      // Clear localStorage
-      localStorage.clear();
-
-      // Restore theme
-      localStorage.setItem("theme", theme || "light");
-
-      router.push("/");
-      toast.success("Logged out successfully");
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.error("Failed to logout. Please try again.");
-    }
-  };
+  logoutAndClearAll(router);
+};
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
   const closeSidebar = () => setSidebarOpen(false);
