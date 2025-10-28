@@ -5,7 +5,7 @@ import Topbar from "@/components/navigation/Topbar";
 import Sidebar from "@/components/navigation/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { Toaster as Toaster2 } from "@/components/ui/toaster";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Cookies from "js-cookie";
 import AnnouncementManager from "@/components/AnnouncementManager";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,19 +22,56 @@ export default function MainLayout({ children }) {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // ===================================================================
+  // 1. CLEAR LOCALSTORAGE ON SESSION EXPIRY (from middleware)
+  // ===================================================================
+  useEffect(() => {
+    const sessionExpired = searchParams.get("session_expired");
+    if (sessionExpired === "true") {
+      // Save theme before clearing
+      const theme = localStorage.getItem("theme") || "light";
+
+      // Clear everything
+      localStorage.clear();
+
+      // Restore theme
+      localStorage.setItem("theme", theme);
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // Remove ?session_expired=true from URL without reload
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete("session_expired");
+      router.replace(newUrl.pathname + newUrl.search, { scroll: false });
+    }
+  }, [searchParams, router]);
+  // ===================================================================
 
   const clearCookiesAndRedirect = useCallback(() => {
-    document.documentElement.classList.remove('dark');
-    localStorage.setItem('theme', 'light');
-    
-    Object.keys(Cookies.get()).forEach(cookieName => {
+    // Reset theme
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("theme", "light");
+
+    // Clear all cookies
+    Object.keys(Cookies.get()).forEach((cookieName) => {
       Cookies.remove(cookieName);
     });
-    
-    const theme = localStorage.getItem('theme');
+
+    // Save theme before clearing localStorage
+    const theme = localStorage.getItem("theme");
+
+    // Clear localStorage
     localStorage.clear();
-    localStorage.setItem('theme', theme || 'light');
-    
+
+    // Restore theme
+    localStorage.setItem("theme", theme || "light");
+
+    // Redirect to home
     router.push("/");
   }, [router]);
 
@@ -198,18 +235,25 @@ export default function MainLayout({ children }) {
           Authorization: `Bearer ${token}`,
         },
       });
-      
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      
-      Object.keys(Cookies.get()).forEach(cookieName => {
+
+      // Reset theme
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+
+      // Clear cookies
+      Object.keys(Cookies.get()).forEach((cookieName) => {
         Cookies.remove(cookieName);
       });
-      
-      const theme = localStorage.getItem('theme');
+
+      // Save theme
+      const theme = localStorage.getItem("theme");
+
+      // Clear localStorage
       localStorage.clear();
-      localStorage.setItem('theme', theme || 'light');
-      
+
+      // Restore theme
+      localStorage.setItem("theme", theme || "light");
+
       router.push("/");
       toast.success("Logged out successfully");
     } catch (error) {
@@ -219,7 +263,6 @@ export default function MainLayout({ children }) {
   };
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
-
   const closeSidebar = () => setSidebarOpen(false);
 
   const handleRemoveAnnouncement = useCallback((announcement) => {
@@ -245,11 +288,11 @@ export default function MainLayout({ children }) {
         notifications={notifications}
       />
 
-      <div className="flex flex-1 overflow-hidden pt-14"> {/* Added pt-14 for topbar spacing */}
-        <Sidebar 
-          isOpen={sidebarOpen} 
-          onClose={closeSidebar} // Added onClose prop
-          subscriptionData={subscriptionData} 
+      <div className="flex flex-1 overflow-hidden pt-14">
+        <Sidebar
+          isOpen={sidebarOpen}
+          onClose={closeSidebar}
+          subscriptionData={subscriptionData}
         />
         <div className="flex-1 overflow-auto">
           <Toaster />
@@ -275,9 +318,9 @@ export default function MainLayout({ children }) {
         }}
       >
         <DialogContent className="max-w-7xl">
-          <SubscriptionPlan 
-            selectedPlan={selectedPlan} 
-            onCloseDialog={handleCloseDialog} 
+          <SubscriptionPlan
+            selectedPlan={selectedPlan}
+            onCloseDialog={handleCloseDialog}
           />
         </DialogContent>
       </Dialog>

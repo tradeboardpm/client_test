@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -81,18 +82,40 @@ export default function AccountPage() {
     }
   };
 
+  // ===================================================================
+  // REUSABLE: Clear Cookies + localStorage + Preserve Theme + Redirect
+  // ===================================================================
+  const clearAuthAndRedirect = (redirectTo = "/login") => {
+    // 1. Reset theme to light
+    document.documentElement.classList.remove("dark");
+    localStorage.setItem("theme", "light");
+
+    // 2. Clear ALL cookies
+    Object.keys(Cookies.get()).forEach((cookieName) => {
+      Cookies.remove(cookieName);
+    });
+
+    // 3. Save current theme before clearing localStorage
+    const currentTheme = localStorage.getItem("theme") || "light";
+
+    // 4. Clear ALL localStorage
+    localStorage.clear();
+
+    // 5. Restore theme
+    localStorage.setItem("theme", currentTheme);
+    if (currentTheme === "dark") {
+      document.documentElement.classList.add("dark");
+    }
+
+    // 6. Redirect
+    router.push(redirectTo);
+  };
+
   const handleLogout = async () => {
     try {
       await api.post("/auth/logout");
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      Object.keys(Cookies.get()).forEach(cookieName => {
-        Cookies.remove(cookieName);
-      });
-      const theme = localStorage.getItem('theme');
-      localStorage.clear();
-      localStorage.setItem('theme', theme || 'light');
-      router.push("/login");
+      toast({ title: "Success", description: "Logged out successfully" });
+      clearAuthAndRedirect("/login");
     } catch (error) {
       toast({
         title: "Error",
@@ -105,15 +128,8 @@ export default function AccountPage() {
   const handleLogoutAll = async () => {
     try {
       await api.post("/auth/logout-all");
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
-      Object.keys(Cookies.get()).forEach(cookieName => {
-        Cookies.remove(cookieName);
-      });
-      const theme = localStorage.getItem('theme');
-      localStorage.clear();
-      localStorage.setItem('theme', theme || 'light');
-      router.push("/login");
+      toast({ title: "Success", description: "Logged out from all devices" });
+      clearAuthAndRedirect("/login");
     } catch (error) {
       toast({
         title: "Error",
@@ -127,10 +143,7 @@ export default function AccountPage() {
     if (!user?.subscription) return false;
     const expiryDate = new Date(user.subscription.expiresAt);
     const currentDate = new Date();
-    return (
-      user.subscription.plan === "one-week" ||
-      expiryDate <= currentDate
-    );
+    return user.subscription.plan === "one-week" || expiryDate <= currentDate;
   };
 
   return (
@@ -150,7 +163,8 @@ export default function AccountPage() {
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="cursor-pointer hover:bg-secondary"
-                ><Monitor className="mr-2 h-4 w-4" />
+                >
+                  <Monitor className="mr-2 h-4 w-4" />
                   Logout from this device
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -173,22 +187,14 @@ export default function AccountPage() {
         />
 
         {isGoogleUser && !user?.hasPassword && (
-          <CreatePasswordSection
-            api={api}
-            fetchUserData={fetchUserData}
-          />
+          <CreatePasswordSection api={api} fetchUserData={fetchUserData} />
         )}
 
         {!user?.phone && (
-          <AddPhoneSection
-            api={api}
-            fetchUserData={fetchUserData}
-          />
+          <AddPhoneSection api={api} fetchUserData={fetchUserData} />
         )}
 
-        {user?.hasPassword && (
-          <PasswordSection api={api} />
-        )}
+        {user?.hasPassword && <PasswordSection api={api} />}
 
         <DashboardSettingsSection
           settings={settings}
