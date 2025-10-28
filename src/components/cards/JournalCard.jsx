@@ -15,8 +15,7 @@ const JournalCard = ({
   winRate,
   profit,
   tradesTaken,
-  onDelete,
-  refreshJournalData,
+  onDelete,          // <-- this is the ONLY thing DeleteJournal needs
   showDeleteButton = true,
   mainPage = "my-journal",
 }) => {
@@ -61,12 +60,10 @@ const JournalCard = ({
   return (
     <>
       <Card
-        onClick={handleCardClick}
+        onClick={() => router.push(`/${mainPage}/${date}`)}
         className={`overflow-hidden relative rounded-2xl transition-all duration-300 group shadow-[0px_5px_10px_2px_rgba(0,0,0,0.04)] hover:shadow-xl hover:scale-[1.02] max-w-[22.5rem] cursor-pointer border-[1rem] ${getProfitColor()}`}
       >
-        {showDeleteButton && (
-          <DeleteJournal id={id} onDelete={onDelete} />
-        )}
+       {showDeleteButton && <DeleteJournal id={id} onDelete={onDelete} />}
         
         <CardHeader className={`pb-2 ${getProfitBorderColor()}`}>
           <CardTitle className="text-base flex justify-between font-semibold">

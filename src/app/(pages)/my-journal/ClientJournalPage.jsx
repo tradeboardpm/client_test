@@ -1,25 +1,30 @@
-"use client"
-import { useState, Suspense, useEffect } from "react"
-import axios from "axios"
-import Cookies from "js-cookie"
-import { ChevronsLeft, ChevronsRight } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import JournalCard from "@/components/cards/JournalCard"
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
-import { useRouter } from "next/navigation"
-import JournalCardSkeleton from "@/components/cards/JournalCardSkeleton"
-
-
+"use client";
+import { useState, Suspense, useEffect } from "react";
+import axios from "axios";
+import Cookies from "js-cookie";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import JournalCard from "@/components/cards/JournalCard";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { useRouter } from "next/navigation";
+import JournalCardSkeleton from "@/components/cards/JournalCardSkeleton";
 
 // Resource creator for journal data
 const createJournalResource = (date) => {
-  let status = "pending"
-  let result
+  let status = "pending";
+  let result;
 
-  const token = Cookies.get("token")
+  const token = Cookies.get("token");
   const promise = axios
     .get(
-      `${process.env.NEXT_PUBLIC_API_URL}/journals/monthly?year=${date.getFullYear()}&month=${
+      `${
+        process.env.NEXT_PUBLIC_API_URL
+      }/journals/monthly?year=${date.getFullYear()}&month=${
         date.getMonth() + 1
       }`,
       {
@@ -29,38 +34,49 @@ const createJournalResource = (date) => {
       }
     )
     .then((response) => {
-      status = "success"
-      result = response.data
+      status = "success";
+      result = response.data;
     })
     .catch((error) => {
-      status = "error"
-      result = error
-    })
+      status = "error";
+      result = error;
+    });
 
   return {
     read() {
-      if (status === "pending") throw promise
-      if (status === "error") throw result
-      return result
+      if (status === "pending") throw promise;
+      if (status === "error") throw result;
+      return result;
     },
-  }
-}
+  };
+};
 
 // JournalContent component
-const JournalContent = ({ currentDate, onDelete, onCardClick, refreshResource }) => {
-  const journalData = refreshResource.read()
+const JournalContent = ({
+  currentDate,
+  onDelete,
+  onCardClick,
+  refreshResource,
+}) => {
+  const journalData = refreshResource.read();
 
   if (Object.keys(journalData).length === 0) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-[55vh]">
-        <img src="/images/no_box.png" alt="No Data" className="w-36 h-36 mb-4" />
+        <img
+          src="/images/no_box.png"
+          alt="No Data"
+          className="w-36 h-36 mb-4"
+        />
         <p className="text-foreground/40 text-lg text-center">
-          <span className="font-extrabold text-xl text-foreground">No Data</span>
+          <span className="font-extrabold text-xl text-foreground">
+            No Data
+          </span>
           <br />
           Please start journaling daily to see your monthly journals here.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -77,84 +93,83 @@ const JournalContent = ({ currentDate, onDelete, onCardClick, refreshResource })
             winRate={journal.winRate}
             profit={journal.profit}
             tradesTaken={journal.tradesTaken}
-            onDelete={onDelete}
-            refreshJournalData={refreshResource}
+            onDelete={onDelete} // <-- pass the handler
             showDeleteButton={true}
           />
         </div>
       ))}
     </div>
-  )
-}
+  );
+};
 
 // Main Client Component
 export default function ClientJournalPage({ initialDate }) {
-  const router = useRouter()
-  const { toast } = useToast()
+  const router = useRouter();
+  const { toast } = useToast();
 
   // Ensure initialDate is valid before using it
   const [currentDate, setCurrentDate] = useState(() => {
-    const date = new Date(initialDate)
-    return !isNaN(date.getTime()) ? date : new Date()
-  })
-  const [resource, setResource] = useState(null)
+    const date = new Date(initialDate);
+    return !isNaN(date.getTime()) ? date : new Date();
+  });
+  const [resource, setResource] = useState(null);
 
   // Initialize resource after validating currentDate
   useEffect(() => {
-    setResource(createJournalResource(currentDate))
-  }, [currentDate])
+    setResource(createJournalResource(currentDate));
+  }, [currentDate]);
 
   const updateUrlAndCookies = (date) => {
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    router.push(`/my-journal?year=${year}&month=${month}`)
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    router.push(`/my-journal?year=${year}&month=${month}`);
     Cookies.set("journalDate", JSON.stringify(date.toISOString()), {
       expires: 1 / 48, // 30 minutes
-    })
-  }
+    });
+  };
 
   const changeMonth = (direction) => {
     setCurrentDate((prevDate) => {
-      const newDate = new Date(prevDate)
-      newDate.setMonth(prevDate.getMonth() + direction)
+      const newDate = new Date(prevDate);
+      newDate.setMonth(prevDate.getMonth() + direction);
 
-      const today = new Date()
+      const today = new Date();
       if (newDate > today) {
-        return prevDate
+        return prevDate;
       }
 
-      updateUrlAndCookies(newDate)
-      return newDate
-    })
-  }
+      updateUrlAndCookies(newDate);
+      return newDate;
+    });
+  };
 
   const handleDeleteJournal = async (id) => {
     try {
-      const token = Cookies.get("token")
+      const token = Cookies.get("token");
       await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/journals/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      })
-      setResource(createJournalResource(currentDate))
+      });
+      setResource(createJournalResource(currentDate));
     } catch (error) {
-      console.error("Error deleting journal:", error)
+      console.error("Error deleting journal:", error);
       toast({
         title: "Error",
         description: "Failed to delete journal entry",
         variant: "destructive",
-      })
-      setResource(createJournalResource(currentDate))
+      });
+      setResource(createJournalResource(currentDate));
     }
-  }
+  };
 
   const handleCardClick = (date) => {
-    router.push(`/my-journal/${date}`)
-  }
+    router.push(`/my-journal/${date}`);
+  };
 
   const isCurrentMonth =
     currentDate.getMonth() === new Date().getMonth() &&
-    currentDate.getFullYear() === new Date().getFullYear()
+    currentDate.getFullYear() === new Date().getFullYear();
 
   return (
     <div className="bg-card">
@@ -216,5 +231,5 @@ export default function ClientJournalPage({ initialDate }) {
         )}
       </div>
     </div>
-  )
+  );
 }

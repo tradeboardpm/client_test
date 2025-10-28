@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { FC, MouseEvent, useEffect, useState } from "react";
 import { Trash2 } from "lucide-react";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import SubscriptionPlan from "./subsciption";
+
 
 const DeleteJournal = ({ id, onDelete }) => {
   const { toast } = useToast();
@@ -57,28 +58,42 @@ const DeleteJournal = ({ id, onDelete }) => {
     try {
       setIsDeleting(true);
       const token = Cookies.get("token");
-      const response = await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/journals/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
 
-      if (response.status === 200 && response.data.journalDeleted === true) {
+      const { data, status } = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/journals/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Success: API returns { journalDeleted: true }
+      if (status === 200 && data.journalDeleted === true) {
         setShowDeleteDialog(false);
         toast({
           title: "Journal Entry Deleted Successfully",
           description: "The journal entry was successfully deleted.",
           variant: "default",
         });
-        onDelete(id);
+
+        // Safely call onDelete
+        if (typeof onDelete === "function") {
+          onDelete(id);
+        } else {
+          console.warn("onDelete is not a function – was it passed correctly?");
+        }
       } else {
-        throw new Error(response.data.message || "Unexpected response from server");
+        throw new Error(data.message || "Unexpected response from server");
       }
     } catch (error) {
       console.error("Error deleting journal entry:", error);
       toast({
         title: "Delete Failed",
-        description: error.message || "Failed to delete journal entry. Please try again.",
+        description:
+          error.response?.data?.error ||
+          error.message ||
+          "Failed to delete journal entry. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -87,11 +102,9 @@ const DeleteJournal = ({ id, onDelete }) => {
   };
 
   const handleUpgradeClick = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.nativeEvent?.stopImmediatePropagation();
-    }
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent?.stopImmediatePropagation();
     setShowSubscriptionDialog(false);
     setShowUpgradeDialog(true);
   };
@@ -101,30 +114,26 @@ const DeleteJournal = ({ id, onDelete }) => {
   };
 
   const handleCancelDelete = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.nativeEvent?.stopImmediatePropagation();
-    }
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent?.stopImmediatePropagation();
     setShowDeleteDialog(false);
   };
 
   const handleCancelSubscription = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.nativeEvent?.stopImmediatePropagation();
-    }
+    e.preventDefault();
+    e.stopPropagation();
+    e.nativeEvent?.stopImmediatePropagation();
     setShowSubscriptionDialog(false);
   };
 
-  // Stop propagation on backdrop click
   const handleBackdropClick = (e) => {
     e.stopPropagation();
   };
 
   return (
     <>
+      {/* Delete Button */}
       <Button
         size="icon"
         variant="destructive"
@@ -135,11 +144,10 @@ const DeleteJournal = ({ id, onDelete }) => {
         <Trash2 className="w-4 h-4 text-white" />
       </Button>
 
+      {/* Confirm Delete Dialog */}
       <AlertDialog
         open={showDeleteDialog}
-        onOpenChange={(open) => {
-          if (!open) setShowDeleteDialog(false);
-        }}
+        onOpenChange={(open) => !open && setShowDeleteDialog(false)}
       >
         <div onClick={handleBackdropClick}>
           <AlertDialogContent onClick={(e) => e.stopPropagation()}>
@@ -150,7 +158,9 @@ const DeleteJournal = ({ id, onDelete }) => {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelDelete}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={handleCancelDelete}>
+                Cancel
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleDelete}
                 className="bg-red-500 hover:bg-red-600"
@@ -163,11 +173,10 @@ const DeleteJournal = ({ id, onDelete }) => {
         </div>
       </AlertDialog>
 
+      {/* Subscription Required Dialog */}
       <AlertDialog
         open={showSubscriptionDialog}
-        onOpenChange={(open) => {
-          if (!open) setShowSubscriptionDialog(false);
-        }}
+        onOpenChange={(open) => !open && setShowSubscriptionDialog(false)}
       >
         <div onClick={handleBackdropClick}>
           <AlertDialogContent onClick={(e) => e.stopPropagation()}>
@@ -178,7 +187,9 @@ const DeleteJournal = ({ id, onDelete }) => {
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={handleCancelSubscription}>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={handleCancelSubscription}>
+                Cancel
+              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={handleUpgradeClick}
                 className="bg-primary hover:bg-primary/90"
@@ -190,11 +201,10 @@ const DeleteJournal = ({ id, onDelete }) => {
         </div>
       </AlertDialog>
 
+      {/* Upgrade Subscription Modal */}
       <Dialog
         open={showUpgradeDialog}
-        onOpenChange={(open) => {
-          if (!open) setShowUpgradeDialog(false);
-        }}
+        onOpenChange={(open) => !open && setShowUpgradeDialog(false)}
       >
         <div onClick={handleBackdropClick}>
           <DialogContent className="sm:max-w-7xl" onClick={(e) => e.stopPropagation()}>
