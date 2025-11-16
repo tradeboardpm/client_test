@@ -15,7 +15,8 @@ import { toast } from "sonner";
 export default function Sidebar({ isOpen, onClose }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { points, currentLevel, nextLevel, pointsToNextLevel } = usePointsStore();
+  const { points, currentLevel, nextLevel, pointsToNextLevel } =
+    usePointsStore();
   const sidebarRef = useRef(null);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);
@@ -139,31 +140,41 @@ export default function Sidebar({ isOpen, onClose }) {
 
   const navItems = [
     {
-      icon: `/images/dashboard${pathname === "/dashboard" ? "_bold" : "_icon"}.svg`,
+      icon: `/images/dashboard${
+        pathname === "/dashboard" ? "_bold" : "_icon"
+      }.svg`,
       label: "Dashboard",
       href: "/dashboard",
       pattern: /^\/dashboard/,
     },
     {
-      icon: `/images/journal${pathname.startsWith("/my-journal") ? "_bold" : "_icon"}.svg`,
+      icon: `/images/journal${
+        pathname.startsWith("/my-journal") ? "_bold" : "_icon"
+      }.svg`,
       label: "My Journal",
       href: "/my-journal",
       pattern: /^\/my-journal/,
     },
     {
-      icon: `/images/performance${pathname.startsWith("/performance-analytics") ? "_bold" : "_icon"}.svg`,
+      icon: `/images/performance${
+        pathname.startsWith("/performance-analytics") ? "_bold" : "_icon"
+      }.svg`,
       label: "Performance",
       href: "/performance-analytics",
       pattern: /^\/performance-analytics/,
     },
     {
-      icon: `/images/accountability${pathname.startsWith("/accountability-partner") ? "_bold" : "_icon"}.svg`,
+      icon: `/images/accountability${
+        pathname.startsWith("/accountability-partner") ? "_bold" : "_icon"
+      }.svg`,
       label: "Accountability",
       href: "/accountability-partner",
       pattern: /^\/accountability-partner/,
     },
     {
-      icon: `/images/account${pathname.startsWith("/my-account") ? "_bold" : "_icon"}.svg`,
+      icon: `/images/account${
+        pathname.startsWith("/my-account") ? "_bold" : "_icon"
+      }.svg`,
       label: "My Account",
       href: "/my-account",
       pattern: /^\/my-account/,
@@ -294,7 +305,10 @@ export default function Sidebar({ isOpen, onClose }) {
                       />
                       <p className="mt-2 font-semibold text-base text-white">
                         <span className="font-normal">Upcoming Level: </span>{" "}
-                        {nextLevel}
+                        {currentLevel}
+                      </p>
+                      <p className="hidden">
+                        {nextLevel} {pointsToNextLevel}
                       </p>
                       <p className="text-xs text-white">Points: {points}</p>
                     </>
@@ -374,10 +388,7 @@ export default function Sidebar({ isOpen, onClose }) {
         )}
 
         {isSmallScreen && isOpen && (
-          <div
-            className="fixed inset-0 bg-black/20"
-            onClick={onClose}
-          />
+          <div className="fixed inset-0 bg-black/20" onClick={onClose} />
         )}
       </div>
 

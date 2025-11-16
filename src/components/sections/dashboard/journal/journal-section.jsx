@@ -28,7 +28,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const DeleteConfirmationDialog = ({
   isOpen,
@@ -42,8 +42,7 @@ const DeleteConfirmationDialog = ({
         <DialogHeader>
           <DialogTitle>Delete Image</DialogTitle>
           <DialogDescription>
-            Are you sure you want to delete this image? This action cannot be
-            undone.
+            Are you sure you want to delete this image? This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
@@ -69,8 +68,7 @@ const DeleteConfirmationDialog = ({
 };
 
 const ImageDialog = ({ isOpen, onClose, imageUrl, onDelete, isDeleting }) => {
-  const [showDeleteConfirmation, setShowDeleteConfirmation] =
-    React.useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = React.useState(false);
 
   const handleDelete = () => {
     setShowDeleteConfirmation(true);
@@ -91,6 +89,7 @@ const ImageDialog = ({ isOpen, onClose, imageUrl, onDelete, isDeleting }) => {
               alt="Selected image"
               className="w-fit h-fit rounded-lg shadow-sm border object-contain"
             />
+
             <div className="fixed bottom-4 right-4 flex gap-2">
               <div className="group relative">
                 <Button
@@ -141,7 +140,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   const [files, setFiles] = useState([]);
   const [deletingFileKey, setDeletingFileKey] = useState(null);
 
-  // Check subscription status
   const checkSubscriptionStatus = useCallback(() => {
     const subscriptionStatus = Cookies.get("subscription") === "true";
     setHasSubscription(subscriptionStatus);
@@ -149,13 +147,16 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
 
   useEffect(() => {
     checkSubscriptionStatus();
+
     const handleVisibilityChange = () => {
       if (!document.hidden) {
         checkSubscriptionStatus();
       }
     };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", checkSubscriptionStatus);
+
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", checkSubscriptionStatus);
@@ -163,9 +164,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   }, [checkSubscriptionStatus]);
 
   const getUTCDate = (date) => {
-    return new Date(
-      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-    );
+    return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   };
 
   const getJournalTitle = () => {
@@ -175,21 +174,19 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
       today.getMonth() === selectedDate.getMonth() &&
       today.getFullYear() === selectedDate.getFullYear();
 
-    if (isToday) {
-      return "Today's Journal";
-    } else {
-      const day = selectedDate.getDate();
-      const month = selectedDate.toLocaleString("default", { month: "short" });
-      return `${day} ${month}'s Journal`;
-    }
+    if (isToday) return "Today's Journal";
+
+    const day = selectedDate.getDate();
+    const month = selectedDate.toLocaleString("default", { month: "short" });
+    return `${day} ${month}'s Journal`;
   };
 
   const fetchJournalData = async () => {
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
-      checkSubscriptionStatus();
       const utcDate = getUTCDate(selectedDate);
+
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/journals`,
         {
@@ -204,6 +201,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         mistake: response.data?.mistake || "",
         lesson: response.data?.lesson || "",
       });
+
       setFiles(response.data?.attachedFiles || []);
 
       onUpdate?.();
@@ -219,13 +217,13 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   };
 
   const saveJournal = async (journalData) => {
-    checkSubscriptionStatus();
     if (!journalData || !hasSubscription) return;
 
     setIsSaving(true);
     try {
       const token = Cookies.get("token");
       const utcDate = getUTCDate(selectedDate);
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/journals`,
         {
@@ -241,18 +239,16 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         setJournal(null);
         setLocalJournal({ note: "", mistake: "", lesson: "" });
         setFiles([]);
-      } else if (response.data.message === "No journal entry created") {
-        setJournal(null);
-      } else {
+      } else if (response.data.message !== "No journal entry created") {
         setJournal(response.data.journal);
-        setLocalJournal((prev) => ({
-          ...prev,
+        setLocalJournal({
           note: response.data.journal.note || "",
           mistake: response.data.journal.mistake || "",
           lesson: response.data.journal.lesson || "",
-        }));
+        });
         setFiles(response.data.journal.attachedFiles || []);
       }
+
       onJournalChange?.();
     } catch (error) {
       console.error("Error saving journal:", error);
@@ -267,31 +263,52 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
   ]);
 
   const handleChange = (e) => {
-    checkSubscriptionStatus();
     if (!hasSubscription) return;
 
     const { name, value } = e.target;
+
     setLocalJournal((prev) => ({
       ...prev,
       [name]: value,
     }));
+
     debouncedSaveJournal({ ...localJournal, [name]: value });
   };
 
   const handleBlur = () => {
-    checkSubscriptionStatus();
     if (!hasSubscription) return;
 
     debouncedSaveJournal.cancel();
     saveJournal(localJournal);
   };
 
+    // ----------------------------------------
+  // UPDATED FILE UPLOAD WITH AUTO-RENAME
+  // ----------------------------------------
   const handleFileUpload = async (e) => {
-    checkSubscriptionStatus();
     if (!hasSubscription) return;
 
     const originalFile = e.target.files?.[0];
     if (!originalFile) return;
+
+    // Get userId from cookies
+    const userId = Cookies.get("userId");
+    if (!userId) {
+      alert("Missing user ID. Please log in again.");
+      e.target.value = "";
+      return;
+    }
+
+    // Auto-generate file name: <timestamp>-<userId>.<ext>
+    const timestamp = Date.now();
+    const extension = originalFile.name.split(".").pop();
+    const newFileName = `${timestamp}-${userId}.${extension}`;
+
+    // Create renamed file object
+    const renamedFile = new File([originalFile], newFileName, {
+      type: originalFile.type,
+      lastModified: originalFile.lastModified,
+    });
 
     if (!originalFile.type.includes("image/")) {
       alert("Please upload only image files");
@@ -304,17 +321,13 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     }
 
     setIsFileUploading(true);
-    debouncedSaveJournal.cancel(); // Cancel any pending debounced saves
-
-    const cleanedFileName = originalFile.name.replace(/[^a-zA-Z0-9.]/g, "");
-    const file = new File([originalFile], cleanedFileName, {
-      type: originalFile.type,
-      lastModified: originalFile.lastModified,
-    });
+    debouncedSaveJournal.cancel();
 
     const formData = new FormData();
-    formData.append("attachedFiles", file);
+    formData.append("attachedFiles", renamedFile);
+
     const utcDate = getUTCDate(selectedDate);
+
     formData.append("date", utcDate.toISOString());
     formData.append("note", localJournal.note);
     formData.append("mistake", localJournal.mistake);
@@ -322,6 +335,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
 
     try {
       const token = Cookies.get("token");
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/journals`,
         formData,
@@ -335,13 +349,14 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
 
       setJournal(response.data.journal);
       setFiles(response.data.journal.attachedFiles || []);
-      // Preserve localJournal state to prevent overwriting user input
+
       setLocalJournal((prev) => ({
         ...prev,
         note: response.data.journal.note || prev.note,
         mistake: response.data.journal.mistake || prev.mistake,
         lesson: response.data.journal.lesson || prev.lesson,
       }));
+
       onJournalChange?.();
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -350,8 +365,10 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     }
   };
 
+  // ----------------------------------------
+  // DELETE FILE
+  // ----------------------------------------
   const handleFileDelete = async (fileKey) => {
-    checkSubscriptionStatus();
     if (!hasSubscription) return;
 
     setDeletingFileKey(fileKey);
@@ -379,19 +396,29 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     }
   };
 
+  // ----------------------------------------
+  // INITIAL LOAD WHEN DATE CHANGES
+  // ----------------------------------------
   useEffect(() => {
     setLocalJournal({ note: "", mistake: "", lesson: "" });
     setFiles([]);
     fetchJournalData();
+
     return () => {
       debouncedSaveJournal.cancel();
     };
   }, [selectedDate]);
 
+  // ----------------------------------------
+  // LOADING UI
+  // ----------------------------------------
   if (isLoading) {
     return <div>Loading journal...</div>;
   }
 
+  // ----------------------------------------
+  // MAIN UI RENDER
+  // ----------------------------------------
   return (
     <>
       <Card className="flex-1 w-full h-full flex justify-between flex-col pb-4 shadow-[0px_8px_20px_rgba(0,0,0,0.08)] dark:shadow-[0px_8px_20px_rgba(0,0,0,0.32)]">
@@ -400,7 +427,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             {getJournalTitle()}
             {isSaving && hasSubscription && (
               <span className="text-sm font-normal text-muted-foreground">
-                (Saving...)
+                (Saving…)
               </span>
             )}
             {!hasSubscription && (
@@ -410,7 +437,9 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             )}
           </CardTitle>
         </CardHeader>
+
         <CardContent className="space-y-4 h-full flex flex-col px-4">
+          {/* -------------- NOTES -------------- */}
           <div className="space-y-2 flex flex-col flex-1">
             <label className="text-xs font-medium">Notes</label>
             <Textarea
@@ -428,6 +457,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             />
           </div>
 
+          {/* ----------- MISTAKES ----------- */}
           <div className="space-y-2 flex flex-col flex-1">
             <label className="text-xs font-medium">Mistakes</label>
             <Textarea
@@ -445,6 +475,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             />
           </div>
 
+          {/* ------------- LESSONS ------------- */}
           <div className="space-y-2 flex flex-col flex-1">
             <label className="text-xs font-medium">Lessons</label>
             <Textarea
@@ -462,6 +493,10 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             />
           </div>
         </CardContent>
+
+        {/* ---------------------------------------- */}
+        {/* FOOTER – THUMBNAILS + ATTACH BUTTON */}
+        {/* ---------------------------------------- */}
         <CardFooter className="h-fit p-0 px-6 flex items-center justify-between">
           <div className="flex flex-wrap gap-2">
             {files.map((fileKey, index) => (
@@ -482,6 +517,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             ))}
           </div>
 
+          {/* Hidden input */}
           <input
             type="file"
             id="file-upload"
@@ -491,20 +527,20 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             disabled={!hasSubscription}
           />
 
+          {/* Attach button + info */}
           <div className="flex items-center gap-2">
             <HoverCard>
               <HoverCardTrigger>
                 <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
               </HoverCardTrigger>
               <HoverCardContent className="w-80">
-                <div className="flex flex-col gap-2">
-                  <p className="text-sm text-muted-foreground">
-                    You can add maximum 3 documents Formats: JPEG, JPG, PNG File
-                    Size: Maximum 5MB
-                    {!hasSubscription && <br />}
-                    {!hasSubscription && "(Subscribe to unlock this feature)"}
-                  </p>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  You can add maximum 3 images.  
+                  Formats: JPEG, JPG, PNG  
+                  File Size: Maximum 5MB  
+                  {!hasSubscription && <br />}
+                  {!hasSubscription && "(Subscribe to unlock this feature)"}
+                </p>
               </HoverCardContent>
             </HoverCard>
 
@@ -534,6 +570,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         </CardFooter>
       </Card>
 
+      {/* IMAGE PREVIEW DIALOG */}
       <ImageDialog
         isOpen={!!selectedImage && hasSubscription}
         onClose={() => setSelectedImage(null)}

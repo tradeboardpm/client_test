@@ -168,15 +168,10 @@ function Dashboard() {
     setSidebarExpanded(true);
   };
 
-  const handleDateChange = (date) => {
-    const adjustedDate = new Date(
-      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-    );
-    setSelectedDate(adjustedDate);
-    if (isMobile) {
-      setIsSideSheetOpen(false);
-    }
-  };
+const handleDateChange = (date) => {
+  setSelectedDate(new Date(date));   // No more UTC shifting
+};
+
 
   const handleChartsUpdate = async () => {
     await Promise.all([

@@ -67,7 +67,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
 
       const rulesWithFollowStatus = response.data.map((rule) => ({
         ...rule,
-        isFollowed: rule.isFollowed || false,
+        isFollowed: rule?.isFollowed ?? false,
       }));
 
       setRules(rulesWithFollowStatus);
@@ -162,8 +162,8 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
       );
 
       setEditingRule(null);
-      onRulesChange?.(); // Trigger chart update
-      onUpdate?.(); // Trigger journal update
+      onRulesChange?.();
+      onUpdate?.();
       toast({
         title: "Rule updated",
         description: "Your rule has been updated successfully.",
@@ -195,8 +195,8 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
 
       setIsDeleteDialogOpen(false);
       setRuleToDelete(null);
-      onRulesChange?.(); // Trigger chart update
-      onUpdate?.(); // Trigger journal update
+      onRulesChange?.();
+      onUpdate?.();
       toast({
         title: "Rule deleted",
         description: "Your rule has been deleted successfully for this date.",
@@ -213,28 +213,40 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     }
   };
 
-  const handleToggleRuleFollow = async (ruleId, isFollowed) => {
+  // OPTIMISTIC UPDATE: Toggle rule follow/unfollow
+  const handleToggleRuleFollow = async (ruleId, currentIsFollowed) => {
     if (!hasSubscription) return;
 
+    // Optimistically update UI
+    setRules((prevRules) =>
+      prevRules.map((rule) =>
+        rule._id === ruleId ? { ...rule, isFollowed: !currentIsFollowed } : rule
+      )
+    );
+
     setIsLoadingAction((prev) => ({ ...prev, followRule: true }));
+
     try {
       const token = Cookies.get("token");
+      const newFollowStatus = !currentIsFollowed;
+
       const response = await axios.post(
         `${API_URL}/rules/follow-unfollow`,
         {
           ruleId,
           date: selectedDate.toISOString(),
-          isFollowed: !isFollowed,
+          isFollowed: newFollowStatus,
         },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
+      // Sync with server response
       setRules((prevRules) =>
         prevRules.map((rule) =>
           rule._id === ruleId
-            ? { ...rule, isFollowed: response.data.ruleState.isFollowed }
+            ? { ...rule, isFollowed: response.data.ruleState?.isFollowed ?? newFollowStatus }
             : rule
         )
       );
@@ -243,12 +255,17 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
       onUpdate?.();
 
       toast({
-        title: `Rule ${isFollowed ? "unfollowed" : "followed"}`,
-        description: `The rule has been ${
-          isFollowed ? "unfollowed" : "followed"
-        } successfully.`,
+        title: `Rule ${newFollowStatus ? "followed" : "unfollowed"}`,
+        description: `The rule has been ${newFollowStatus ? "followed" : "unfollowed"} successfully.`,
       });
     } catch (error) {
+      // Revert on error
+      setRules((prevRules) =>
+        prevRules.map((rule) =>
+          rule._id === ruleId ? { ...rule, isFollowed: currentIsFollowed } : rule
+        )
+      );
+
       console.error("Error following/unfollowing rule:", error);
       toast({
         title: "Error",
@@ -260,10 +277,15 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     }
   };
 
+  // OPTIMISTIC UPDATE: Follow/unfollow all rules
   const handleFollowUnfollowAll = async (isFollowed) => {
     if (!hasSubscription) return;
 
+    // Optimistically update all
+    setRules((prev) => prev.map((rule) => ({ ...rule, isFollowed })));
+
     setIsLoadingAction((prev) => ({ ...prev, followAllRules: true }));
+
     try {
       const token = Cookies.get("token");
       const response = await axios.post(
@@ -277,22 +299,25 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
         }
       );
 
+      // Sync with server
       setRules((prevRules) =>
         prevRules.map((rule) => ({
           ...rule,
-          isFollowed: response.data.rules.find(r => r._id === rule._id)?.isFollowed || isFollowed,
+          isFollowed: response.data.rules.find((r) => r._id === rule._id)?.isFollowed ?? isFollowed,
         }))
       );
+
       onRulesChange?.();
       onUpdate?.();
 
       toast({
         title: `All rules ${isFollowed ? "followed" : "unfollowed"}`,
-        description: `All rules have been ${
-          isFollowed ? "followed" : "unfollowed"
-        } successfully.`,
+        description: `All rules have been ${isFollowed ? "followed" : "unfollowed"} successfully.`,
       });
     } catch (error) {
+      // Revert on error
+      setRules((prev) => prev.map((rule) => ({ ...rule, isFollowed: !isFollowed })));
+
       console.error("Error following/unfollowing all rules:", error);
       toast({
         title: "Error",
@@ -346,8 +371,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     return (
       <Card className="w-full max-w-4xl h-full mx-auto p-4 flex items-center justify-center">
         <div className="flex items-center">
-                  <Spinner className="h-12 w-12" />
-           
+          <Spinner className="h-12 w-12" />
         </div>
       </Card>
     );
@@ -409,22 +433,22 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
             </div>
 
             <Button
-  className="bg-primary h-fit text-background text-xs px-3 hover:bg-purple-600"
-  onClick={() => setNewRulesDialog(true)}
-  disabled={
-    isLoadingAction.addRule ||
-    isLoadingAction.bulkAddRules ||
-    !hasSubscription ||
-    rules.length >= MAX_RULES
-  }
->
-  {isLoadingAction.addRule || isLoadingAction.bulkAddRules ? (
-    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-  ) : (
-    <Plus className="mr-2 h-4 w-4" />
-  )}
-  Add Rules
-</Button>
+              className="bg-primary h-fit text-background text-xs px-3 hover:bg-purple-600"
+              onClick={() => setNewRulesDialog(true)}
+              disabled={
+                isLoadingAction.addRule ||
+                isLoadingAction.bulkAddRules ||
+                !hasSubscription ||
+                rules.length >= MAX_RULES
+              }
+            >
+              {isLoadingAction.addRule || isLoadingAction.bulkAddRules ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="mr-2 h-4 w-4" />
+              )}
+              Add Rules
+            </Button>
 
             <AddRulesDialog
               open={newRulesDialog}
@@ -437,6 +461,7 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
           </div>
         </div>
       </CardHeader>
+
       <CardContent className="p-0 mt-3">
         <div className="rounded-lg overflow-hidden border">
           <div className="sticky top-0 z-10 grid grid-cols-[auto,1fr,auto] gap-4 p-2 px-4 bg-[#F4E4FF] dark:bg-[#49444c] border-b">
@@ -509,9 +534,10 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
         </div>
       </CardContent>
 
+      {/* Edit Rule Dialog */}
       <Dialog open={!!editingRule} onOpenChange={() => setEditingRule(null)}>
         <DialogContent>
-          <DialogHeader className={"border-b pb-2 mb-2"}>
+          <DialogHeader className="border-b pb-2 mb-2">
             <DialogTitle className="text-xl mb-1">Edit Rule</DialogTitle>
             <DialogDescription className="text-xs">
               Here you can edit your rule for this date.
@@ -566,9 +592,10 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
         </DialogContent>
       </Dialog>
 
+      {/* Delete Rule Dialog */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent>
-          <DialogHeader className={"border-b pb-2 mb-2"}>
+          <DialogHeader className="border-b pb-2 mb-2">
             <DialogTitle className="text-xl mb-1">Delete Rule</DialogTitle>
             <DialogDescription className="text-xs">
               Are you sure you want to delete this rule for this date? It will remain active for previous dates if applicable.

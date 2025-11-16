@@ -14,7 +14,11 @@ import { EditOpenTradeDialog } from "@/components/dialogs/trades/EditOpenTradeDi
 import { EditCompleteTradeDialog } from "@/components/dialogs/trades/EditCompleteTradeDialog";
 import { DeleteTradeDialog } from "@/components/dialogs/trades/DeleteTradeDialog";
 import { CompleteTradeDialog } from "@/components/dialogs/trades/CompleteTradeDialog.jsx";
-import { HoverCard, HoverCardTrigger , HoverCardContent} from "@/components/ui/hover-card.jsx";
+import {
+  HoverCard,
+  HoverCardTrigger,
+  HoverCardContent,
+} from "@/components/ui/hover-card.jsx";
 
 export function TradesSection({
   selectedDate,
@@ -40,13 +44,16 @@ export function TradesSection({
   const [hasSubscription, setHasSubscription] = useState(false);
 
   useEffect(() => {
-    const subscription = Cookies.get('subscription');
-    setHasSubscription(subscription === 'true');
+    const subscription = Cookies.get("subscription");
+    setHasSubscription(subscription === "true");
   }, []);
 
-  useEffect(() => {
-    fetchTradesData();
-  }, [selectedDate]);
+useEffect(() => {
+  if (!selectedDate) return;
+  console.log("Fetching trades for", selectedDate.toISOString());
+  fetchTradesData();
+}, [selectedDate?.toDateString()]);
+
 
   const getUTCDate = (date) => {
     return new Date(
@@ -64,7 +71,14 @@ export function TradesSection({
     setIsLoading(true);
     try {
       const token = Cookies.get("token");
-      const utcDate = getUTCDate(selectedDate);
+      const utcDate = new Date(
+        Date.UTC(
+          selectedDate.getFullYear(),
+          selectedDate.getMonth(),
+          selectedDate.getDate()
+        )
+      );
+
       const response = await axios.get(
         `${process.env.NEXT_PUBLIC_API_URL}/trades/by-date`,
         {
@@ -114,9 +128,14 @@ export function TradesSection({
         <div className="space-y-1 text-xl flex gap-2">
           <CardTitle>Trade Log</CardTitle>
           <HoverCard>
-            <HoverCardTrigger><Info size={14} /></HoverCardTrigger>
-            
-            <HoverCardContent className="text-sm">Add the trades which you executed on the broker’s platform to keep track.</HoverCardContent>
+            <HoverCardTrigger>
+              <Info size={14} />
+            </HoverCardTrigger>
+
+            <HoverCardContent className="text-sm">
+              Add the trades which you executed on the broker’s platform to keep
+              track.
+            </HoverCardContent>
           </HoverCard>
         </div>
         <div className="flex items-center space-x-2">
