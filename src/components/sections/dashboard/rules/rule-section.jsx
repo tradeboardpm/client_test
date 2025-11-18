@@ -295,59 +295,46 @@ export function RulesSection({ selectedDate, onUpdate, onRulesChange }) {
     }
   };
 
-  const handleFollowUnfollowAll = async (isFollowed) => {
-    if (!hasSubscription) return;
+const handleFollowUnfollowAll = async (isFollowed) => {
+  if (!hasSubscription) return;
 
-    setRules((prev) => prev.map((rule) => ({ ...rule, isFollowed })));
+  const previousRules = rules; // for rollback
+  setRules((prev) => prev.map((rule) => ({ ...rule, isFollowed })));
 
-    setIsLoadingAction((prev) => ({ ...prev, followAllRules: true }));
+  setIsLoadingAction((prev) => ({ ...prev, followAllRules: true }));
 
-    try {
-      const token = Cookies.get("token");
-      const response = await axios.post(
-        `${API_URL}/rules/follow-unfollow-all`,
-        {
-          date: getUtcMidnightISOString(selectedDate), // Fixed
-          isFollowed,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+  try {
+    const token = Cookies.get("token");
+    await axios.post( // note: we don't need response data
+      `${API_URL}/rules/follow-unfollow-all`,
+      {
+        date: getUtcMidnightISOString(selectedDate),
+        isFollowed,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      setRules((prevRules) =>
-        prevRules.map((rule) => ({
-          ...rule,
-          isFollowed:
-            response.data.rules.find((r) => r._id === rule._id)?.isFollowed ??
-            isFollowed,
-        }))
-      );
+    // Success → keep optimistic state
+    onRulesChange?.();
+    onUpdate?.();
 
-      onRulesChange?.();
-      onUpdate?.();
+    toast({
+      title: `All rules ${isFollowed ? "followed" : "unfollowed"}`,
+      description: `All rules have been ${isFollowed ? "followed" : "unfollowed"} successfully.`,
+    });
+  } catch (error) {
+    // Rollback
+    setRules(previousRules);
 
-      toast({
-        title: `All rules ${isFollowed ? "followed" : "unfollowed"}`,
-        description: `All rules have been ${
-          isFollowed ? "followed" : "unfollowed"
-        } successfully.`,
-      });
-    } catch (error) {
-      setRules((prev) =>
-        prev.map((rule) => ({ ...rule, isFollowed: !isFollowed }))
-      );
-
-      console.error("Error following/unfollowing all rules:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update all rules. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoadingAction((prev) => ({ ...prev, followAllRules: false }));
-    }
-  };
+    toast({
+      title: "Error",
+      description: "Failed to update all rules. Changes reverted.",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoadingAction((prev) => ({ ...prev, followAllRules: false }));
+  }
+};
 
   const handleLoadSampleRules = async () => {
     if (!hasSubscription) return;

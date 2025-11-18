@@ -70,54 +70,64 @@ const DeleteConfirmationDialog = ({
 const ImageDialog = ({ isOpen, onClose, imageUrl, onDelete, isDeleting }) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = React.useState(false);
 
-  const handleDelete = () => {
-    setShowDeleteConfirmation(true);
-  };
-
-  const handleConfirmDelete = () => {
-    onDelete();
-    setShowDeleteConfirmation(false);
-  };
-
   return (
     <>
+      {/* Main Full-Screen Image Dialog */}
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-4xl h-[80vh] p-2">
-          <div className="relative h-full w-full overflow-auto p-2">
+        <DialogContent className="max-w-6xl w-[95vw] h-[90vh] p-0  bg-card backdrop-blur-sm">
+
+          {/* Image Container */}
+          <div className="relative w-full h-full flex items-center justify-center p-8">
             <img
               src={imageUrl}
-              alt="Selected image"
-              className="w-fit h-fit rounded-lg shadow-sm border object-contain"
+              alt="Journal attachment"
+              className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+              style={{ imageRendering: "-webkit-optimize-contrast" }} // Crisp on retina
             />
 
-            <div className="fixed bottom-4 right-4 flex gap-2">
+            {/* Delete Button (Bottom Right - Floating) */}
+            <div className="absolute bottom-6 right-6">
               <div className="group relative">
                 <Button
                   size="icon"
                   variant="destructive"
-                  onClick={handleDelete}
+                  onClick={() => setShowDeleteConfirmation(true)}
                   disabled={isDeleting}
-                  className="relative rounded-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="rounded-full shadow-2xl flex items-center gap-2 text-base font-medium transition-all hover:scale-105"
                 >
                   {isDeleting ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Deleting...
+                    </>
                   ) : (
-                    <Trash2 className="h-6 w-6" />
+                    <>
+                      <Trash2 className="h-5 w-5" />
+                    </>
                   )}
                 </Button>
-                <span className="absolute -top-10 left-[50%] -translate-x-[50%] z-20 origin-left scale-0 px-3 rounded-lg border bg-popover py-2 text-sm font-bold shadow-md transition-all duration-300 ease-in-out group-hover:scale-100">
-                  {isDeleting ? "Deleting..." : "Delete"}
-                </span>
+
+                {/* Tooltip */}
+                {!isDeleting && (
+                  <span className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-black/80 px-3 py-1.5 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    Permanently delete this image
+                  </span>
+                )}
               </div>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Confirmation Dialog */}
       <DeleteConfirmationDialog
         isOpen={showDeleteConfirmation}
         onClose={() => setShowDeleteConfirmation(false)}
-        onConfirm={handleConfirmDelete}
+        onConfirm={() => {
+          onDelete();
+          setShowDeleteConfirmation(false);
+          onClose(); // Optional: close main dialog after delete
+        }}
         isDeleting={isDeleting}
       />
     </>
@@ -147,16 +157,9 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
 
   useEffect(() => {
     checkSubscriptionStatus();
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        checkSubscriptionStatus();
-      }
-    };
-
+    const handleVisibilityChange = () => !document.hidden && checkSubscriptionStatus();
     document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", checkSubscriptionStatus);
-
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("focus", checkSubscriptionStatus);
@@ -167,6 +170,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   };
 
+  // FIXED: Proper ternary + cleaner date check
   const getJournalTitle = () => {
     const today = new Date();
     const isToday =
@@ -174,11 +178,9 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
       today.getMonth() === selectedDate.getMonth() &&
       today.getFullYear() === selectedDate.getFullYear();
 
-    if (isToday) return "Today's Journal";
-
-    const day = selectedDate.getDate();
-    const month = selectedDate.toLocaleString("default", { month: "short" });
-    return `${day} ${month}'s Journal`;
+    return isToday
+      ? "Today's Journal"
+      : `${selectedDate.getDate()} ${selectedDate.toLocaleString("default", { month: "short" })}'s Journal`;
   };
 
   const fetchJournalData = async () => {
@@ -201,11 +203,7 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         mistake: response.data?.mistake || "",
         lesson: response.data?.lesson || "",
       });
-
       setFiles(response.data?.attachedFiles || []);
-
-      onUpdate?.();
-      onJournalChange?.();
     } catch (error) {
       console.error("Error fetching journal data:", error);
       setJournal(null);
@@ -216,30 +214,28 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
     }
   };
 
+  // Optimistic Save (Text)
   const saveJournal = async (journalData) => {
-    if (!journalData || !hasSubscription) return;
+    if (!hasSubscription) return;
 
+    const previousJournal = journal;
     setIsSaving(true);
+
     try {
       const token = Cookies.get("token");
       const utcDate = getUTCDate(selectedDate);
 
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/journals`,
-        {
-          ...journalData,
-          date: utcDate.toISOString(),
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { ...journalData, date: utcDate.toISOString() },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data.message === "Empty journal entry deleted") {
         setJournal(null);
         setLocalJournal({ note: "", mistake: "", lesson: "" });
         setFiles([]);
-      } else if (response.data.message !== "No journal entry created") {
+      } else if (response.data.journal) {
         setJournal(response.data.journal);
         setLocalJournal({
           note: response.data.journal.note || "",
@@ -248,10 +244,10 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         });
         setFiles(response.data.journal.attachedFiles || []);
       }
-
       onJournalChange?.();
     } catch (error) {
       console.error("Error saving journal:", error);
+      setJournal(previousJournal);
     } finally {
       setIsSaving(false);
     }
@@ -264,34 +260,32 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
 
   const handleChange = (e) => {
     if (!hasSubscription) return;
-
     const { name, value } = e.target;
-
-    setLocalJournal((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
+    setLocalJournal((prev) => ({ ...prev, [name]: value }));
     debouncedSaveJournal({ ...localJournal, [name]: value });
   };
 
   const handleBlur = () => {
     if (!hasSubscription) return;
-
     debouncedSaveJournal.cancel();
     saveJournal(localJournal);
   };
 
-    // ----------------------------------------
-  // UPDATED FILE UPLOAD WITH AUTO-RENAME
-  // ----------------------------------------
+  // Optimistic File Upload
   const handleFileUpload = async (e) => {
     if (!hasSubscription) return;
 
     const originalFile = e.target.files?.[0];
     if (!originalFile) return;
+    if (!originalFile.type.includes("image/")) {
+      alert("Please upload only image files");
+      return;
+    }
+    if (files.length >= 3) {
+      alert("Maximum 3 files allowed");
+      return;
+    }
 
-    // Get userId from cookies
     const userId = Cookies.get("userId");
     if (!userId) {
       alert("Missing user ID. Please log in again.");
@@ -299,43 +293,30 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
       return;
     }
 
-    // Auto-generate file name: <timestamp>-<userId>.<ext>
     const timestamp = Date.now();
     const extension = originalFile.name.split(".").pop();
     const newFileName = `${timestamp}-${userId}.${extension}`;
+    const tempUrl = URL.createObjectURL(originalFile);
 
-    // Create renamed file object
+    // Optimistic: Show image immediately
+    setFiles((prev) => [...prev, tempUrl]);
+    setIsFileUploading(true);
+    debouncedSaveJournal.cancel();
+
     const renamedFile = new File([originalFile], newFileName, {
       type: originalFile.type,
       lastModified: originalFile.lastModified,
     });
 
-    if (!originalFile.type.includes("image/")) {
-      alert("Please upload only image files");
-      return;
-    }
-
-    if (files.length >= 3) {
-      alert("Maximum 3 files allowed");
-      return;
-    }
-
-    setIsFileUploading(true);
-    debouncedSaveJournal.cancel();
-
     const formData = new FormData();
     formData.append("attachedFiles", renamedFile);
-
-    const utcDate = getUTCDate(selectedDate);
-
-    formData.append("date", utcDate.toISOString());
+    formData.append("date", getUTCDate(selectedDate).toISOString());
     formData.append("note", localJournal.note);
     formData.append("mistake", localJournal.mistake);
     formData.append("lesson", localJournal.lesson);
 
     try {
       const token = Cookies.get("token");
-
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/journals`,
         formData,
@@ -347,30 +328,27 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         }
       );
 
+      const realUrl = response.data.journal.attachedFiles.slice(-1)[0];
+      setFiles((prev) => prev.map((f) => (f === tempUrl ? realUrl : f)));
       setJournal(response.data.journal);
-      setFiles(response.data.journal.attachedFiles || []);
-
-      setLocalJournal((prev) => ({
-        ...prev,
-        note: response.data.journal.note || prev.note,
-        mistake: response.data.journal.mistake || prev.mistake,
-        lesson: response.data.journal.lesson || prev.lesson,
-      }));
-
       onJournalChange?.();
     } catch (error) {
       console.error("Error uploading file:", error);
+      setFiles((prev) => prev.filter((f) => f !== tempUrl));
+      alert("Upload failed. Please try again.");
     } finally {
       setIsFileUploading(false);
+      e.target.value = "";
     }
   };
 
-  // ----------------------------------------
-  // DELETE FILE
-  // ----------------------------------------
+  // Optimistic Delete
   const handleFileDelete = async (fileKey) => {
     if (!hasSubscription) return;
 
+    const previousFiles = files;
+    setFiles((prev) => prev.filter((f) => f !== fileKey));
+    setSelectedImage(null);
     setDeletingFileKey(fileKey);
     setIsDeletingFile(true);
 
@@ -380,45 +358,31 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
 
       await axios.delete(
         `${process.env.NEXT_PUBLIC_API_URL}/journals/${journal?._id}/file/${filename}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      setFiles(files.filter((file) => file !== fileKey));
-      fetchJournalData();
-      setSelectedImage(null);
+      onJournalChange?.();
     } catch (error) {
       console.error("Error deleting file:", error);
+      setFiles(previousFiles);
+      alert("Failed to delete image");
     } finally {
       setIsDeletingFile(false);
       setDeletingFileKey(null);
     }
   };
 
-  // ----------------------------------------
-  // INITIAL LOAD WHEN DATE CHANGES
-  // ----------------------------------------
   useEffect(() => {
     setLocalJournal({ note: "", mistake: "", lesson: "" });
     setFiles([]);
     fetchJournalData();
-
-    return () => {
-      debouncedSaveJournal.cancel();
-    };
+    return () => debouncedSaveJournal.cancel();
   }, [selectedDate]);
 
-  // ----------------------------------------
-  // LOADING UI
-  // ----------------------------------------
   if (isLoading) {
     return <div>Loading journal...</div>;
   }
 
-  // ----------------------------------------
-  // MAIN UI RENDER
-  // ----------------------------------------
   return (
     <>
       <Card className="flex-1 w-full h-full flex justify-between flex-col pb-4 shadow-[0px_8px_20px_rgba(0,0,0,0.08)] dark:shadow-[0px_8px_20px_rgba(0,0,0,0.32)]">
@@ -439,7 +403,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         </CardHeader>
 
         <CardContent className="space-y-4 h-full flex flex-col px-4">
-          {/* -------------- NOTES -------------- */}
           <div className="space-y-2 flex flex-col flex-1">
             <label className="text-xs font-medium">Notes</label>
             <Textarea
@@ -457,7 +420,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             />
           </div>
 
-          {/* ----------- MISTAKES ----------- */}
           <div className="space-y-2 flex flex-col flex-1">
             <label className="text-xs font-medium">Mistakes</label>
             <Textarea
@@ -475,7 +437,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             />
           </div>
 
-          {/* ------------- LESSONS ------------- */}
           <div className="space-y-2 flex flex-col flex-1">
             <label className="text-xs font-medium">Lessons</label>
             <Textarea
@@ -494,14 +455,11 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
           </div>
         </CardContent>
 
-        {/* ---------------------------------------- */}
-        {/* FOOTER – THUMBNAILS + ATTACH BUTTON */}
-        {/* ---------------------------------------- */}
         <CardFooter className="h-fit p-0 px-6 flex items-center justify-between">
           <div className="flex flex-wrap gap-2">
             {files.map((fileKey, index) => (
               <motion.div
-                key={index}
+                key={fileKey}
                 className="relative group rounded-lg overflow-hidden w-20 h-8 shadow border cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => hasSubscription && setSelectedImage(fileKey)}
               >
@@ -513,11 +471,15 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
                     !hasSubscription && "opacity-50"
                   )}
                 />
+                {fileKey.startsWith("blob:") && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <Loader2 className="h-5 w-5 text-white animate-spin" />
+                  </div>
+                )}
               </motion.div>
             ))}
           </div>
 
-          {/* Hidden input */}
           <input
             type="file"
             id="file-upload"
@@ -527,7 +489,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
             disabled={!hasSubscription}
           />
 
-          {/* Attach button + info */}
           <div className="flex items-center gap-2">
             <HoverCard>
               <HoverCardTrigger>
@@ -570,7 +531,6 @@ export function JournalSection({ selectedDate, onUpdate, onJournalChange }) {
         </CardFooter>
       </Card>
 
-      {/* IMAGE PREVIEW DIALOG */}
       <ImageDialog
         isOpen={!!selectedImage && hasSubscription}
         onClose={() => setSelectedImage(null)}
