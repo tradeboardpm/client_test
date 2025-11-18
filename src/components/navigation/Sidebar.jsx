@@ -15,8 +15,14 @@ import { toast } from "sonner";
 export default function Sidebar({ isOpen, onClose }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { points, currentLevel, nextLevel, pointsToNextLevel } =
-    usePointsStore();
+
+  const {
+    points,
+    currentLevel,
+    nextLevel,
+    pointsToNextLevel,
+    progressToNextLevel,
+  } = usePointsStore();
   const sidebarRef = useRef(null);
   const [hasOverflow, setHasOverflow] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(true);

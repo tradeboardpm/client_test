@@ -24,7 +24,12 @@ import { TradingCalendar } from "@/components/sections/dashboard/journal/InfoSid
 import { usePointsStore } from "@/stores/points-store";
 import { WeeklyCharts } from "@/components/charts/weekly-charts";
 import WelcomeMessage from "@/components/sections/dashboard/welcome-message";
-import { useQuery, useQueryClient, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueryClient,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -36,6 +41,25 @@ const queryClient = new QueryClient({
       staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
+});
+
+// Create axios instance without static headers
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add request interceptor to dynamically inject token
+api.interceptors.request.use((config) => {
+  const token = Cookies.get("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+}, (error) => {
+  return Promise.reject(error);
 });
 
 const getUTCDate = (date) => {
@@ -53,15 +77,7 @@ const formatDate = (date) => {
   });
 };
 
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    Authorization: `Bearer ${Cookies.get("token")}`,
-    "Content-Type": "application/json",
-  },
-});
-
-const fetchWithRetry = async (url, options, maxRetries = 3) => {
+const fetchWithRetry = async (url, options = {}, maxRetries = 3) => {
   for (let i = 0; i < maxRetries; i++) {
     try {
       const response = await api.get(url, options);
@@ -153,9 +169,8 @@ function Dashboard() {
   }, [sidebarExpanded]);
 
   useEffect(() => {
-    if (capitalData?.points) {
+    if (capitalData?.points !== undefined) {
       setPoints(capitalData.points);
-      usePointsStore.getState().setPoints(capitalData.points);
     }
   }, [capitalData, setPoints]);
 
@@ -168,31 +183,30 @@ function Dashboard() {
     setSidebarExpanded(true);
   };
 
-const handleDateChange = (date) => {
-  setSelectedDate(new Date(date));   // No more UTC shifting
-};
-
+  const handleDateChange = (date) => {
+    setSelectedDate(new Date(date));
+  };
 
   const handleChartsUpdate = async () => {
     await Promise.all([
-      queryClient.invalidateQueries(["capital"]),
-      queryClient.invalidateQueries(["weeklyMetrics"]),
+      queryClient.invalidateQueries({ queryKey: ["capital"] }),
+      queryClient.invalidateQueries({ queryKey: ["weeklyMetrics"] }),
     ]);
     setForceChartUpdate((prev) => prev + 1);
   };
 
   const handleCalendarUpdate = async () => {
     await Promise.all([
-      queryClient.invalidateQueries(["capital"]),
-      queryClient.invalidateQueries(["weeklyMetrics"]),
-      queryClient.invalidateQueries(["journal"]),
+      queryClient.invalidateQueries({ queryKey: ["capital"] }),
+      queryClient.invalidateQueries({ queryKey: ["weeklyMetrics"] }),
+      queryClient.invalidateQueries({ queryKey: ["journal"] }),
     ]);
     setForceCalendarUpdate((prev) => prev + 1);
     setForceChartUpdate((prev) => prev + 1);
   };
 
   const handleTradeUpdate = async () => {
-    await queryClient.invalidateQueries(["capital"]);
+    await queryClient.invalidateQueries({ queryKey: ["capital"] });
   };
 
   const formattedCapital = new Intl.NumberFormat("en-IN", {
@@ -259,17 +273,17 @@ const handleDateChange = (date) => {
             selectedDate={selectedDate}
             journalData={journalData}
             onJournalChange={handleCalendarUpdate}
-            onUpdate={() => queryClient.invalidateQueries(["journal"])}
+            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["journal"] })}
           />
           <RulesSection
             selectedDate={selectedDate}
-            onUpdate={() => queryClient.invalidateQueries(["journal"])}
+            onUpdate={() => queryClient.invalidateQueries({ queryKey: ["journal"] })}
             onRulesChange={handleCalendarUpdate}
           />
         </div>
         <TradesSection
           selectedDate={selectedDate}
-          onUpdate={() => queryClient.invalidateQueries(["journal"])}
+          onUpdate={() => queryClient.invalidateQueries({ queryKey: ["journal"] })}
           onTradeChange={handleCalendarUpdate}
           onCapitalUpdate={handleTradeUpdate}
           brokerage={capitalData?.brokerage}

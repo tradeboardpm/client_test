@@ -13,11 +13,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Loader2, Trash2 } from 'lucide-react';
+import { Plus, Loader2, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const MAX_RULE_LENGTH = 150;
+
+// FIXED: UTC Midnight helper — same as in RulesSection.jsx
+const getUtcMidnightISOString = (date) => {
+  const d = new Date(date);
+  return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())).toISOString();
+};
 
 export const AddRulesDialog = ({
   open,
@@ -33,9 +39,7 @@ export const AddRulesDialog = ({
   const rulesContainerRef = useRef(null);
 
   const totalCost = useMemo(() => {
-    const validRulesCount = rulesList.filter(
-      (rule) => rule.trim() !== ""
-    ).length;
+    const validRulesCount = rulesList.filter((rule) => rule.trim() !== "").length;
     return (validRulesCount * costPerRule).toFixed(2);
   }, [rulesList, costPerRule]);
 
@@ -49,17 +53,14 @@ export const AddRulesDialog = ({
   const handleAddRuleInput = () => {
     if (rulesList.length < 10) {
       setRulesList([...rulesList, ""]);
-      
-      // Scroll to bottom after the new input is rendered
+
       setTimeout(() => {
         if (rulesContainerRef.current) {
           rulesContainerRef.current.scrollTo({
             top: rulesContainerRef.current.scrollHeight,
-            behavior: 'smooth'
+            behavior: "smooth",
           });
         }
-        
-        // Focus the new input
         const newIndex = rulesList.length;
         if (inputRefs.current[newIndex]) {
           inputRefs.current[newIndex].focus();
@@ -101,6 +102,7 @@ export const AddRulesDialog = ({
     setRulesList([""]);
   };
 
+  // FULLY FIXED: Bulk add with correct date format
   const handleAddRules = async () => {
     const validRules = rulesList.filter((rule) => rule.trim() !== "");
 
@@ -116,12 +118,13 @@ export const AddRulesDialog = ({
     setIsAddingRules(true);
     try {
       const token = Cookies.get("token");
+
       const response = await axios.post(
         `${API_URL}/rules/bulk`,
         {
-          rules: validRules.map((description) => ({
-            description,
-            date: selectedDate.toISOString(),
+          date: getUtcMidnightISOString(selectedDate), // Root level
+          rules: validRules.map((desc) => ({
+            description: desc.trim(),
           })),
         },
         {
@@ -129,19 +132,19 @@ export const AddRulesDialog = ({
         }
       );
 
-      onRulesAdded(response.data);
+      onRulesAdded(response.data.rules || response.data);
       setRulesList([""]);
       onOpenChange(false);
 
       toast({
-        title: "Rules added",
-        description: `${validRules.length} rule(s) have been added successfully.`,
+        title: "Success!",
+        description: `${validRules.length} rule(s) added successfully.`,
       });
     } catch (error) {
       console.error("Error adding rules:", error);
       toast({
         title: "Error",
-        description: "Failed to add rules. Please try again.",
+        description: error.response?.data?.error || "Failed to add rules. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -154,16 +157,19 @@ export const AddRulesDialog = ({
     rulesList.length >= 10 ||
     rulesList[rulesList.length - 1].trim() === "";
 
+  const validCount = rulesList.filter((r) => r.trim() !== "").length;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
-        <DialogHeader className={"border-b pb-2 mb-2"}>
+        <DialogHeader className="border-b pb-2 mb-2">
           <DialogTitle className="text-xl mb-1">Add Rules</DialogTitle>
           <DialogDescription className="text-xs">
-            Here you can add Rules.
+            Add up to 10 rules at once.
           </DialogDescription>
         </DialogHeader>
-        <div 
+
+        <div
           ref={rulesContainerRef}
           className="space-y-2 py-4 max-h-[300px] overflow-y-auto pr-2"
         >
@@ -171,11 +177,7 @@ export const AddRulesDialog = ({
             <div key={index} className="flex flex-col space-y-1 p-2">
               <div className="flex items-center space-x-2">
                 <Input
-                  ref={(el) => {
-                    if (el) {
-                      inputRefs.current[index] = el;
-                    }
-                  }}
+                  ref={(el) => (inputRefs.current[index] = el)}
                   value={rule}
                   onChange={(e) => handleRuleChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(e, index)}
@@ -201,6 +203,7 @@ export const AddRulesDialog = ({
             </div>
           ))}
         </div>
+
         <Button
           variant="outline"
           onClick={handleAddRuleInput}
@@ -210,26 +213,23 @@ export const AddRulesDialog = ({
           <Plus className="mr-2 h-4 w-4" />
           Add Another Rule
         </Button>
+
         <DialogFooter className="flex justify-between mt-4">
           <Button
             variant="outline"
             onClick={handleClearAll}
-            disabled={
-              isAddingRules || rulesList.every((rule) => rule.trim() === "")
-            }
+            disabled={isAddingRules || rulesList.every((r) => r.trim() === "")}
           >
             Clear All
           </Button>
           <Button
             onClick={handleAddRules}
-            disabled={
-              isAddingRules || rulesList.every((rule) => rule.trim() === "")
-            }
+            disabled={isAddingRules || validCount === 0}
           >
             {isAddingRules ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : null}
-            {isAddingRules ? "Adding..." : `Add Rules`}
+            {isAddingRules ? "Adding..." : `Add ${validCount} Rule${validCount !== 1 ? "s" : ""}`}
           </Button>
         </DialogFooter>
       </DialogContent>

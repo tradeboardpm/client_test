@@ -1,6 +1,7 @@
 // src/stores/points-store.ts
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
 
 const LEVELS = [
   { name: 'Pearl',      threshold: 250 },
@@ -13,72 +14,71 @@ const LEVELS = [
   { name: 'Diamond',    threshold: 2000 },
 ];
 
+const INITIAL_STATE = {
+  points: 0,
+  currentLevel: LEVELS[0].name,
+  nextLevel: LEVELS[1].name,
+  pointsToNextLevel: LEVELS[1].threshold,
+  progressToNextLevel: 0,
+  totalLevels: LEVELS.length,
+};
+
 export const usePointsStore = create()(
   persist(
     (set, get) => ({
-      points: 0,
-      currentLevel: 'Pearl',
-      nextLevel: 'Aquamarine',
-      pointsToNextLevel: 250,
+      ...INITIAL_STATE,
 
-      // ---- NEW: reset everything (used on logout) ----
-      reset: () => set({
-        points: 0,
-        currentLevel: 'Pearl',
-        nextLevel: 'Aquamarine',
-        pointsToNextLevel: 250,
-      }),
+      reset: () => set(INITIAL_STATE),
 
       setPoints: (newPoints) => {
-        const currentLevelObj = LEVELS.reduce((prev, cur) =>
-          newPoints >= cur.threshold ? cur : prev,
-        LEVELS[0]);
+        const points = Math.max(0, newPoints);
 
-        const nextIdx = LEVELS.findIndex(l => l.name === currentLevelObj.name) + 1;
-        const nextLevel = nextIdx < LEVELS.length ? LEVELS[nextIdx].name : null;
-        const pointsToNextLevel = nextLevel
-          ? LEVELS.find(l => l.name === nextLevel).threshold - newPoints
-          : 0;
+        // Find current level
+        let currentLevelObj = LEVELS[0];
+        let nextLevelObj = null;
+
+        for (const level of LEVELS) {
+          if (points >= level.threshold) {
+            currentLevelObj = level;
+          } else {
+            nextLevelObj = level;
+            break;
+          }
+        }
+
+        // If max level reached
+        if (!nextLevelObj) {
+          nextLevelObj = null;
+        }
+
+        const currentThreshold = currentLevelObj.threshold;
+        const nextThreshold = nextLevelObj?.threshold ?? currentThreshold;
+        const pointsInCurrentTier = points - (currentThreshold - (currentLevelObj === LEVELS[0] ? 0 : LEVELS[LEVELS.indexOf(currentLevelObj) - 1]?.threshold || 0));
+        const tierSize = nextThreshold - currentThreshold;
+
+        const progressToNextLevel = nextLevelObj
+          ? Math.min(100, Math.round((pointsInCurrentTier / tierSize) * 100))
+          : 100;
 
         set({
-          points: newPoints,
+          points,
           currentLevel: currentLevelObj.name,
-          nextLevel,
-          pointsToNextLevel,
+          nextLevel: nextLevelObj?.name ?? null,
+          pointsToNextLevel: nextLevelObj ? nextThreshold - points : 0,
+          progressToNextLevel,
         });
       },
 
-      addPoints: (pts) => {
-        const newPts = get().points + pts;
-        get().setPoints(newPts);
+      addPoints: (amount) => {
+        const newTotal = get().points + amount;
+        get().setPoints(newTotal);
       },
     }),
     {
-      name: 'points-storage',               // <-- key in localStorage
-      storage: {
-        getItem: (name) => {
-          const str = localStorage.getItem(name);
-          return str ? JSON.parse(str) : null;
-        },
-        setItem: (name, value) => {
-          localStorage.setItem(name, JSON.stringify(value));
-        },
-        removeItem: (name) => {
-          localStorage.removeItem(name);
-        },
-      },
+      name: 'points-storage',
+      storage: createJSONStorage(() => localStorage),
+      // Optional: migrate old data if needed
+      version: 1,
     }
   )
 );
-
-/* -------------------------------------------------------------
-   Sync with backend – unchanged, just exported for convenience
-   ------------------------------------------------------------- */
-export const syncPointsFromBackend = async (api) => {
-  try {
-    const { data } = await api.get('/user/settings');
-    usePointsStore.getState().setPoints(data.points ?? 0);
-  } catch (err) {
-    console.error('Error syncing points:', err);
-  }
-};
