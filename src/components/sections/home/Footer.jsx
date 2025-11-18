@@ -165,7 +165,7 @@ const Footer = () => {
           </p>
 
           <p className="text-center md:text-right mt-4 md:mt-0">
-            v 0.4.0
+            v 0.5.0
           </p>
           <div className="flex items-center gap-3">
             <button
