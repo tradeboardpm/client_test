@@ -69,12 +69,13 @@ const getUTCDate = (date) => {
 
 const formatDate = (date) => {
   return date.toLocaleDateString("en-US", {
-    weekday: "long",
+    weekday: "short",
     year: "numeric",
-    month: "long",
+    month: "short",
     day: "numeric",
   });
 };
+
 
 const fetchWithRetry = async (url, options = {}, maxRetries = 3) => {
   for (let i = 0; i < maxRetries; i++) {
