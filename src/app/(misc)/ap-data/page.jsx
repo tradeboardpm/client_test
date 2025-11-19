@@ -305,8 +305,8 @@ function ApDataInner() {
                   </CardTitle>
                   <CustomLegend
                     items={[
-                      { label: "Win", color: "var(--chart-1)" },
-                      { label: "Loss", color: "var(--destructive)" },
+                      { label: "Win", color: "#0ED991" },
+                      { label: "Loss", color: "#F44C60" },
                     ]}
                   />
                 </CardHeader>
@@ -315,11 +315,11 @@ function ApDataInner() {
                     config={{
                       win: {
                         label: "Win",
-                        color: "var(--chart-1)",
+                        color: "#0ED991",
                       },
                       loss: {
                         label: "Loss",
-                        color: "var(--destructive)",
+                        color: "#F44C60",
                       },
                     }}
                   >
@@ -349,14 +349,14 @@ function ApDataInner() {
                         <Bar
                           dataKey="winTrades"
                           stackId="a"
-                          fill="var(--chart-1)"
+                          fill="#0ED991"
                           barSize={20}
                           radius={[4, 4, 0, 0]}
                         />
                         <Bar
                           dataKey="lossTrades"
                           stackId="a"
-                          fill="var(--destructive)"
+                          fill="#F44C60"
                           barSize={20}
                           radius={[4, 4, 0, 0]}
                         />
@@ -429,8 +429,8 @@ function ApDataInner() {
                   <CardTitle className="text-base font-semibold">Rules</CardTitle>
                   <CustomLegend
                     items={[
-                      { label: "Followed", color: "var(--chart-1)" },
-                      { label: "Broken", color: "var(--destructive)" },
+                      { label: "Followed", color: "#0ED991" },
+                      { label: "Broken", color: "#F44C60" },
                     ]}
                   />
                 </CardHeader>
@@ -439,11 +439,11 @@ function ApDataInner() {
                     config={{
                       followed: {
                         label: "Followed",
-                        color: "var(--chart-1)",
+                        color: "#0ED991",
                       },
                       broken: {
                         label: "Broken",
-                        color: "var(--destructive)",
+                        color: "#F44C60",
                       },
                     }}
                   >
@@ -473,14 +473,14 @@ function ApDataInner() {
                         <Bar
                           dataKey="rulesFollowed"
                           stackId="a"
-                          fill="var(--chart-1)"
+                          fill="#0ED991"
                           barSize={20}
                           radius={[4, 4, 0, 0]}
                         />
                         <Bar
                           dataKey="rulesUnfollowed"
                           stackId="a"
-                          fill="var(--destructive)"
+                          fill="#F44C60"
                           barSize={20}
                           radius={[4, 4, 0, 0]}
                         />
@@ -521,7 +521,7 @@ function ApDataInner() {
               <CardContent className="grid grid-cols-2 gap-4">
                 <p>
                   Rules you followed: <br />
-                  <span className="text-green-600 font-semibold text-lg">
+                  <span className="text-[#0ED991] font-semibold text-lg">
                     {sharedData.overall.profitLossSummary.profit_days.avgRulesFollowed.toFixed(
                       2
                     )}
@@ -530,7 +530,7 @@ function ApDataInner() {
                 </p>
                 <p>
                   Words Journaled: <br />
-                  <span className="text-green-600 font-semibold text-lg">
+                  <span className="text-[#0ED991] font-semibold text-lg">
                     {sharedData.overall.profitLossSummary.profit_days.avgWordsJournaled.toFixed(
                       2
                     )}
@@ -538,7 +538,7 @@ function ApDataInner() {
                 </p>
                 <p>
                   Trades taken: <br />
-                  <span className="text-green-600 font-semibold text-lg">
+                  <span className="text-[#0ED991] font-semibold text-lg">
                     {sharedData.overall.profitLossSummary.profit_days.avgTradesTaken.toFixed(
                       2
                     )}
@@ -546,7 +546,7 @@ function ApDataInner() {
                 </p>
                 <p>
                   Win rate: <br />
-                  <span className="text-green-600 font-semibold text-lg">
+                  <span className="text-[#0ED991] font-semibold text-lg">
                     {sharedData.overall.profitLossSummary.profit_days.winRate.toFixed(
                       2
                     )}
@@ -563,7 +563,7 @@ function ApDataInner() {
               <CardContent className="grid grid-cols-2 gap-4">
                 <p>
                   Rules you followed: <br />
-                  <span className="text-red-600 font-semibold text-lg">
+                  <span className="text-[#F44C60] font-semibold text-lg">
                     {sharedData.overall.profitLossSummary.loss_days.avgRulesFollowed.toFixed(
                       2
                     )}
@@ -572,7 +572,7 @@ function ApDataInner() {
                 </p>
                 <p>
                   Words Journaled: <br />
-                  <span className="text-red-600 font-semibold text-lg">
+                  <span className="text-[#F44C60] font-semibold text-lg">
                     {sharedData.overall.profitLossSummary.loss_days.avgWordsJournaled.toFixed(
                       2
                     )}
@@ -580,7 +580,7 @@ function ApDataInner() {
                 </p>
                 <p>
                   Trades taken: <br />
-                  <span className="text-red-600 font-semibold text-lg">
+                  <span className="text-[#F44C60] font-semibold text-lg">
                     {sharedData.overall.profitLossSummary.loss_days.avgTradesTaken.toFixed(
                       2
                     )}
@@ -588,7 +588,7 @@ function ApDataInner() {
                 </p>
                 <p>
                   Win rate: <br />
-                  <span className="text-red-600 font-semibold text-lg">
+                  <span className="text-[#F44C60] font-semibold text-lg">
                     {sharedData.overall.profitLossSummary.loss_days.winRate.toFixed(
                       2
                     )}
@@ -655,7 +655,7 @@ function ApDataInner() {
                       {sharedData.overall.topFollowedRules[0]?.rule}
                     </span>
                     <span className="text-sm">
-                      <span className="text-xl text-green-600 font-semibold">
+                      <span className="text-xl text-[#0ED991] font-semibold">
                         {sharedData.overall.topFollowedRules[0]?.followedCount}
                       </span>{" "}
                       times followed
@@ -678,7 +678,7 @@ function ApDataInner() {
                       {sharedData.overall.topUnfollowedRules[0]?.rule}
                     </span>
                     <span className="text-sm">
-                      <span className="text-xl text-red-600 font-semibold">
+                      <span className="text-xl text-[#F44C60] font-semibold">
                         {
                           sharedData.overall.topUnfollowedRules[0]
                             ?.unfollowedCount

@@ -10,16 +10,19 @@ import Cookies from "js-cookie";
 import AnnouncementManager from "@/components/AnnouncementManager";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { toast } from "sonner";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import SubscriptionPlan from "@/components/cards/subsciption";
 import { logoutAndClearAll } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 
 export default function MainLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [announcements, setAnnouncements] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [subscriptionData, setSubscriptionData] = useState(null);
-  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false);
+  const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] =
+    useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -144,7 +147,9 @@ export default function MainLayout({ children }) {
       } else {
         Cookies.set("subscription", "false", { expires: 7 });
         Cookies.set("plan", data.plan, { expires: 7 });
-        toast.error("Your subscription has expired. Please renew your subscription.");
+        toast.error(
+          "Your subscription has expired. Please renew your subscription."
+        );
       }
       return true;
     } catch (error) {
@@ -189,11 +194,12 @@ export default function MainLayout({ children }) {
   useEffect(() => {
     const initializeData = async () => {
       setLoading(true);
-      const [tokenValid, subscriptionValid, announcementsValid] = await Promise.all([
-        validateToken(),
-        checkSubscriptionStatus(),
-        fetchAnnouncements(),
-      ]);
+      const [tokenValid, subscriptionValid, announcementsValid] =
+        await Promise.all([
+          validateToken(),
+          checkSubscriptionStatus(),
+          fetchAnnouncements(),
+        ]);
 
       if (tokenValid && subscriptionValid && announcementsValid) {
         setLoading(false);
@@ -263,10 +269,9 @@ export default function MainLayout({ children }) {
   //   }
   // };
 
-  
   const handleLogout = async () => {
-  logoutAndClearAll(router);
-};
+    logoutAndClearAll(router);
+  };
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
   const closeSidebar = () => setSidebarOpen(false);
@@ -323,7 +328,17 @@ export default function MainLayout({ children }) {
           }
         }}
       >
-        <DialogContent className="max-w-7xl">
+        <DialogContent className="sm:max-w-7xl max-h-[96vh] p-0 overflow-y-auto overflow-x-hidden bg-card backdrop-blur-sm">
+          <DialogClose>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 z-50 rounded-full bg-card hover:bg-accent text-foreground"
+              onClick={handleCloseDialog}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </DialogClose>
           <SubscriptionPlan
             selectedPlan={selectedPlan}
             onCloseDialog={handleCloseDialog}

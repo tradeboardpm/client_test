@@ -372,7 +372,7 @@ const handlePaymentSuccess = async (response, planName) => {
   }
 
   return (
-    <div className="flex items-center justify-center p-4 sm:p-6 lg:p-8 animate-fade-in">
+    <div className="flex items-center justify-center p-4 sm:p-6 lg:p-8  animate-fade-in">
       <div className="w-full max-w-5xl">
         <h2 className="text-xl sm:text-2xl md:text-[1.65rem] text-center mb-4 font-semibold">Simple Pricing, Great Value</h2>
         <p className="text-xl sm:text-2xl md:text-3xl font-semibold text-center mb-10 md:mb-14">

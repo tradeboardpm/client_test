@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import { ChevronLeft, ChevronRight, Crown, X } from "lucide-react";
 import Image from "next/image";
 import { usePointsStore } from "@/stores/points-store";
@@ -399,7 +399,17 @@ export default function Sidebar({ isOpen, onClose }) {
       </div>
 
       <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-        <DialogContent className="sm:max-w-7xl">
+        <DialogContent className="sm:max-w-7xl max-h-[96vh] p-0 overflow-y-auto overflow-x-hidden bg-card backdrop-blur-sm">
+          <DialogClose>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 z-50 rounded-full bg-card hover:bg-accent text-foreground"
+              onClick={handleCloseDialog}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </DialogClose>
           <SubscriptionPlan onCloseDialog={handleCloseDialog} />
         </DialogContent>
       </Dialog>

@@ -8,8 +8,9 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent } from "@/components/ui/dialog";
 import SubscriptionPlan from "@/components/cards/subsciption";
+import { X } from "lucide-react";
 
 export default function SubscriptionPlanSection({
   user,
@@ -87,8 +88,19 @@ export default function SubscriptionPlanSection({
         </CardContent>
       </Card>
 
-      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-        <DialogContent className="sm:max-w-7xl">
+
+        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <DialogContent className="sm:max-w-7xl max-h-[96vh] p-0 overflow-y-auto overflow-x-hidden bg-card backdrop-blur-sm">
+          <DialogClose>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 z-50 rounded-full bg-card hover:bg-accent text-foreground"
+              onClick={handleCloseDialog}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </DialogClose>
           <SubscriptionPlan onCloseDialog={handleCloseDialog} />
         </DialogContent>
       </Dialog>
