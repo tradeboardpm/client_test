@@ -125,14 +125,13 @@ function ApDataInner() {
     );
   }
 
+  // Format week range for display
+  const weekStart = format(parseISO(sharedData.weekRange.start), "MMM dd, yyyy");
+  const weekEnd = format(parseISO(sharedData.weekRange.end), "MMM dd, yyyy");
+
   const chartData = Object.entries(sharedData.detailed).map(([date, data]) => ({
-    date:
-      sharedData.dataRange.frequency === "weekly"
-        ? new Date(date).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-          })
-        : date,
+    date: format(parseISO(date), "EEE"), // Sun, Mon, Tue, etc.
+    fullDate: date,
     ...data,
   }));
 
@@ -147,34 +146,27 @@ function ApDataInner() {
 
   const CustomTooltipContent = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
-  
-    // Find the day data safely without assuming fullDate exists
+
     const dayData = chartData.find((d) => d.date === label);
     
-    // Use label as fallback if we can't format the date
     let formattedDate = label;
     
-    // Only try to format the date if dayData exists and has fullDate property
     if (dayData && dayData.fullDate) {
       try {
-        formattedDate = format(
-          parseISO(dayData.fullDate),
-          sharedData.dataRange.frequency === "weekly" ? "MMM dd" : "EEE dd MMM"
-        );
+        formattedDate = format(parseISO(dayData.fullDate), "EEE, MMM dd");
       } catch (error) {
-        // If there's an error parsing the date, fall back to the label
         console.error("Error formatting date:", error);
         formattedDate = label;
       }
     }
-  
+
     return (
       <div className="rounded-lg shadow-lg bg-background border p-2 text-xs">
         <p className="font-medium mb-1">{formattedDate}</p>
         {payload.map((item, index) => {
           let displayName = item.name;
           let displayValue = item.value;
-  
+
           switch (item.dataKey) {
             case "tradesTaken":
               displayName = "Trades";
@@ -201,7 +193,7 @@ function ApDataInner() {
             default:
               displayName = item.name;
           }
-  
+
           return (
             <div key={index} className="flex items-center gap-2">
               <div
@@ -218,22 +210,23 @@ function ApDataInner() {
   };
 
   return (
-  <>
-  <Topbar/>
-  <div className="lg:px-20 mx-auto p-4 sm:p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold">Welcome {sharedData.apName},</h1>
-        <h2 className="text-lg text-muted-foreground ">
-          You are viewing the {sharedData.dataRange.frequency} progress of{" "}
-          {sharedData.userName}
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Shared with you since:{" "}
-          {new Date(sharedData.dataSentAt).toLocaleString()}
-        </p>
-      </div>
+    <>
+      <Topbar />
+      <div className="lg:px-20 mx-auto p-4 sm:p-6">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold">Welcome {sharedData.apName},</h1>
+          <h2 className="text-lg text-muted-foreground ">
+            You are viewing this week's trading data of {sharedData.userName}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Week: {weekStart} - {weekEnd}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Data accessed on: {new Date(sharedData.dataSentAt).toLocaleString()}
+          </p>
+        </div>
 
-      <Card className="mb-6">
+        <Card className="mb-6">
           <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <CardTitle className="text-xl">Performance</CardTitle>
             <p className="text-lg font-semibold rounded-lg border-2 text-primary py-1 px-2 w-fit mt-2 sm:mt-0">
@@ -493,264 +486,273 @@ function ApDataInner() {
           </CardContent>
         </Card>
 
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <CardTitle className="text-xl">Journaling Trends</CardTitle>
-          <p className="text-lg font-semibold rounded-lg border-2 text-primary py-1 px-2 w-fit mt-2 sm:mt-0 flex items-center gap-2">
-            <span>
-              Level:{" "}
-              <span className="font-normal">
-                {determineUpcomingLevel(sharedData.overall.currentPoints)}
+        <Card>
+          <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+            <CardTitle className="text-xl">Journaling Trends</CardTitle>
+            <p className="text-lg font-semibold rounded-lg border-2 text-primary py-1 px-2 w-fit mt-2 sm:mt-0 flex items-center gap-2">
+              <span>
+                Level:{" "}
+                <span className="font-normal">
+                  {determineUpcomingLevel(sharedData.overall.currentPoints)}
+                </span>
               </span>
-            </span>
-            <Separator className="h-6" orientation="vertical" />
-            <span>
-              Current Points:{" "}
-              <span className="font-normal">
-                {sharedData.overall.currentPoints ?? "N/A"}
+              <Separator className="h-6" orientation="vertical" />
+              <span>
+                Current Points:{" "}
+                <span className="font-normal">
+                  {sharedData.overall.currentPoints ?? "N/A"}
+                </span>
               </span>
-            </span>
-          </p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card className="border border-foreground/15">
-              <CardHeader>
-                <CardTitle>On Profitable Days</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <p>
-                  Rules you followed: <br />
-                  <span className="text-[#0ED991] font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.profit_days.avgRulesFollowed.toFixed(
-                      2
-                    )}
-                    %
-                  </span>
-                </p>
-                <p>
-                  Words Journaled: <br />
-                  <span className="text-[#0ED991] font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.profit_days.avgWordsJournaled.toFixed(
-                      2
-                    )}
-                  </span>
-                </p>
-                <p>
-                  Trades taken: <br />
-                  <span className="text-[#0ED991] font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.profit_days.avgTradesTaken.toFixed(
-                      2
-                    )}
-                  </span>
-                </p>
-                <p>
-                  Win rate: <br />
-                  <span className="text-[#0ED991] font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.profit_days.winRate.toFixed(
-                      2
-                    )}
-                    %
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-foreground/15">
-              <CardHeader>
-                <CardTitle>On Loss Making Days</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <p>
-                  Rules you followed: <br />
-                  <span className="text-[#F44C60] font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.loss_days.avgRulesFollowed.toFixed(
-                      2
-                    )}
-                    %
-                  </span>
-                </p>
-                <p>
-                  Words Journaled: <br />
-                  <span className="text-[#F44C60] font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.loss_days.avgWordsJournaled.toFixed(
-                      2
-                    )}
-                  </span>
-                </p>
-                <p>
-                  Trades taken: <br />
-                  <span className="text-[#F44C60] font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.loss_days.avgTradesTaken.toFixed(
-                      2
-                    )}
-                  </span>
-                </p>
-                <p>
-                  Win rate: <br />
-                  <span className="text-[#F44C60] font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.loss_days.winRate.toFixed(
-                      2
-                    )}
-                    %
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="border border-foreground/15">
-              <CardHeader>
-                <CardTitle>On Break-Even Days</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <p>
-                  Rules you followed: <br />
-                  <span className="text-blue-600 font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.breakEven_days.avgRulesFollowed.toFixed(
-                      2
-                    )}
-                    %
-                  </span>
-                </p>
-                <p>
-                  Words Journaled: <br />
-                  <span className="text-blue-600 font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.breakEven_days.avgWordsJournaled.toFixed(
-                      2
-                    )}
-                  </span>
-                </p>
-                <p>
-                  Trades taken: <br />
-                  <span className="text-blue-600 font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.breakEven_days.avgTradesTaken.toFixed(
-                      2
-                    )}
-                  </span>
-                </p>
-                <p>
-                  Win rate: <br />
-                  <span className="text-blue-600 font-semibold text-lg">
-                    {sharedData.overall.profitLossSummary.breakEven_days.winRate.toFixed(
-                      2
-                    )}
-                    %
-                  </span>
-                </p>
-              </CardContent>
-            </Card>
-
-            <div className="flex flex-col sm:flex-row gap-4">
-              {/* Most Followed Rules Card */}
-              <Card
-                className="cursor-pointer border border-foreground/15 hover:bg-accent flex-1"
-                onClick={() => setOpenFollowedDialog(true)}
-              >
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Card className="border border-foreground/15">
                 <CardHeader>
-                  <CardTitle>Most Followed Rules</CardTitle>
+                  <CardTitle>On Profitable Days</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="flex flex-col">
-                    <span className="text-sm">
-                      {sharedData.overall.topFollowedRules[0]?.rule}
+                <CardContent className="grid grid-cols-2 gap-4">
+                  <p>
+                    Rules you followed: <br />
+                    <span className="text-[#0ED991] font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.profit_days.avgRulesFollowed.toFixed(
+                        2
+                      )}
+                      %
                     </span>
-                    <span className="text-sm">
-                      <span className="text-xl text-[#0ED991] font-semibold">
-                        {sharedData.overall.topFollowedRules[0]?.followedCount}
-                      </span>{" "}
-                      times followed
+                  </p>
+                  <p>
+                    Words Journaled: <br />
+                    <span className="text-[#0ED991] font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.profit_days.avgWordsJournaled.toFixed(
+                        2
+                      )}
+                    </span>
+                  </p>
+                  <p>
+                    Trades taken: <br />
+                    <span className="text-[#0ED991] font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.profit_days.avgTradesTaken.toFixed(
+                        2
+                      )}
+                    </span>
+                  </p>
+                  <p>
+                    Win rate: <br />
+                    <span className="text-[#0ED991] font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.profit_days.winRate.toFixed(
+                        2
+                      )}
+                      %
                     </span>
                   </p>
                 </CardContent>
               </Card>
 
-              {/* Most Unfollowed Rules Card */}
-              <Card
-                className="cursor-pointer border border-foreground/15 hover:bg-accent flex-1"
-                onClick={() => setOpenUnfollowedDialog(true)}
-              >
+              <Card className="border border-foreground/15">
                 <CardHeader>
-                  <CardTitle>Most Unfollowed Rules</CardTitle>
+                  <CardTitle>On Loss Making Days</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <p className="flex flex-col">
-                    <span className="text-sm">
-                      {sharedData.overall.topUnfollowedRules[0]?.rule}
+                <CardContent className="grid grid-cols-2 gap-4">
+                  <p>
+                    Rules you followed: <br />
+                    <span className="text-[#F44C60] font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.loss_days.avgRulesFollowed.toFixed(
+                        2
+                      )}
+                      %
                     </span>
-                    <span className="text-sm">
-                      <span className="text-xl text-[#F44C60] font-semibold">
-                        {
-                          sharedData.overall.topUnfollowedRules[0]
-                            ?.unfollowedCount
-                        }
-                      </span>{" "}
-                      times un-followed
+                  </p>
+                  <p>
+                    Words Journaled: <br />
+                    <span className="text-[#F44C60] font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.loss_days.avgWordsJournaled.toFixed(
+                        2
+                      )}
+                    </span>
+                  </p>
+                  <p>
+                    Trades taken: <br />
+                    <span className="text-[#F44C60] font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.loss_days.avgTradesTaken.toFixed(
+                        2
+                      )}
+                    </span>
+                  </p>
+                  <p>
+                    Win rate: <br />
+                    <span className="text-[#F44C60] font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.loss_days.winRate.toFixed(
+                        2
+                      )}
+                      %
                     </span>
                   </p>
                 </CardContent>
               </Card>
 
-              {/* Enhanced Dialog for Unfollowed Rules */}
-              <Dialog
-                open={openUnfollowedDialog}
-                onOpenChange={setOpenUnfollowedDialog}
-              >
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold">
-                      All Unfollowed Rules
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="mt-4 max-h-96 overflow-y-auto pr-2">
-                    <div className="space-y-1">
-                      {sharedData.overall.topUnfollowedRules.map(
-                        (rule, index) => (
-                          <RuleItem
-                            key={index}
-                            rule={rule.rule}
-                            count={rule.unfollowedCount}
-                            isFollowed={false}
-                          />
-                        )
+              <Card className="border border-foreground/15">
+                <CardHeader>
+                  <CardTitle>On Break-Even Days</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-4">
+                  <p>
+                    Rules you followed: <br />
+                    <span className="text-blue-600 font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.breakEven_days.avgRulesFollowed.toFixed(
+                        2
                       )}
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                      %
+                    </span>
+                  </p>
+                  <p>
+                    Words Journaled: <br />
+                    <span className="text-blue-600 font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.breakEven_days.avgWordsJournaled.toFixed(
+                        2
+                      )}
+                    </span>
+                  </p>
+                  <p>
+                    Trades taken: <br />
+                    <span className="text-blue-600 font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.breakEven_days.avgTradesTaken.toFixed(
+                        2
+                      )}
+                    </span>
+                  </p>
+                  <p>
+                    Win rate: <br />
+                    <span className="text-blue-600 font-semibold text-lg">
+                      {sharedData.overall.profitLossSummary.breakEven_days.winRate.toFixed(
+                        2
+                      )}
+                      %
+                    </span>
+                  </p>
+                </CardContent>
+              </Card>
 
-              {/* Enhanced Dialog for Followed Rules */}
-              <Dialog
-                open={openFollowedDialog}
-                onOpenChange={setOpenFollowedDialog}
-              >
-                <DialogContent className="max-w-2xl">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-semibold">
-                      All Followed Rules
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="mt-4 max-h-96 overflow-y-auto pr-2">
-                    <div className="space-y-1">
-                      {sharedData.overall.topFollowedRules.map(
-                        (rule, index) => (
-                          <RuleItem
-                            key={index}
-                            rule={rule.rule}
-                            count={rule.followedCount}
-                            isFollowed={true}
-                          />
-                        )
-                      )}
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Most Followed Rules Card */}
+                <Card
+                  className="cursor-pointer border border-foreground/15 hover:bg-accent flex-1"
+                  onClick={() => setOpenFollowedDialog(true)}
+                >
+                  <CardHeader>
+                    <CardTitle>Most Followed Rules</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="flex flex-col">
+                      <span className="text-sm">
+                        {sharedData.overall.topFollowedRules[0]?.rule || "No data"}
+                      </span>
+                      <span className="text-sm">
+                        <span className="text-xl text-[#0ED991] font-semibold">
+                          {sharedData.overall.topFollowedRules[0]?.followedCount || 0}
+                        </span>{" "}
+                        times followed
+                      </span>
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Most Unfollowed Rules Card */}
+                <Card
+                  className="cursor-pointer border border-foreground/15 hover:bg-accent flex-1"
+                  onClick={() => setOpenUnfollowedDialog(true)}
+                >
+                  <CardHeader>
+                    <CardTitle>Most Unfollowed Rules</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="flex flex-col">
+                      <span className="text-sm">
+                        {sharedData.overall.topUnfollowedRules[0]?.rule || "No data"}
+                      </span>
+                      <span className="text-sm">
+                        <span className="text-xl text-[#F44C60] font-semibold">
+                          {sharedData.overall.topUnfollowedRules[0]?.unfollowedCount || 0}
+                        </span>{" "}
+                        times un-followed
+                      </span>
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Enhanced Dialog for Unfollowed Rules */}
+                <Dialog
+                  open={openUnfollowedDialog}
+                  onOpenChange={setOpenUnfollowedDialog}
+                >
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-semibold">
+                        All Unfollowed Rules (This Week)
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="mt-4 max-h-96 overflow-y-auto pr-2">
+                      <div className="space-y-1">
+                        {sharedData.overall.topUnfollowedRules.length > 0 ? (
+                          sharedData.overall.topUnfollowedRules.map(
+                            (rule, index) => (
+                              <RuleItem
+                                key={index}
+                                rule={rule.rule}
+                                count={rule.unfollowedCount}
+                                isFollowed={false}
+                              />
+                            )
+                          )
+                        ) : (
+                          <p className="text-center text-muted-foreground py-4">
+                            No unfollowed rules this week
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
+                  </DialogContent>
+                </Dialog>
+
+                {/* Enhanced Dialog for Followed Rules */}
+                <Dialog
+                  open={openFollowedDialog}
+                  onOpenChange={setOpenFollowedDialog}
+                >
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-semibold">
+                        All Followed Rules (This Week)
+                      </DialogTitle>
+                    </DialogHeader>
+                    <div className="mt-4 max-h-96 overflow-y-auto pr-2">
+                      <div className="space-y-1">
+                        {sharedData.overall.topFollowedRules.length > 0 ? (
+                          sharedData.overall.topFollowedRules.map(
+                            (rule, index) => (
+                              <RuleItem
+                                key={index}
+                                rule={rule.rule}
+                                count={rule.followedCount}
+                                isFollowed={true}
+                              />
+                            )
+                          )
+                        ) : (
+                          <p className="text-center text-muted-foreground py-4">
+                            No followed rules this week
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  </>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   );
 }
 
