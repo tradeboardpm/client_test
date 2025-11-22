@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -41,7 +40,6 @@ export default function AccountabilityPartner() {
     name: "",
     email: "",
     relation: "",
-    shareFrequency: "weekly",
   });
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [partnerToDelete, setPartnerToDelete] = useState(null);
@@ -117,7 +115,6 @@ export default function AccountabilityPartner() {
         name: formData.name,
         email: formData.email,
         relation: formData.relation,
-        shareFrequency: formData.shareFrequency,
         dataToShare: {
           tradesTaken: selectedDetails.includes("tradesTaken"),
           winRate: selectedDetails.includes("winRate"),
@@ -133,7 +130,7 @@ export default function AccountabilityPartner() {
       if (response.data.success) {
         toast({
           title: "Success",
-          description: "Accountability partner added successfully",
+          description: "Accountability partner added successfully. They will receive a welcome email.",
         });
         setPartners((prev) => [...prev, response.data.data]);
         resetForm();
@@ -196,7 +193,6 @@ export default function AccountabilityPartner() {
       name: "",
       email: "",
       relation: "",
-      shareFrequency: "weekly",
     });
     setSelectedDetails([]);
   };
@@ -219,8 +215,9 @@ export default function AccountabilityPartner() {
                 an individual about their progress.
               </p>
               <p>
-                Add details of such a person and we will share your progress
-                with them. You can also choose what details the accountability
+                Add details of such a person and they will receive a welcome email with a link 
+                to view your current week's trading progress. They can access the data anytime 
+                by opening the link. You can also choose what details the accountability
                 partner can view.
               </p>
 
@@ -328,29 +325,10 @@ export default function AccountabilityPartner() {
                   </MultiSelector>
                 </div>
               </div>
-              <div>
-                <Label>Share my progress*</Label>
-                <RadioGroup
-                  value={formData.shareFrequency}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, shareFrequency: value })
-                  }
-                  className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4"
-                  disabled={!isSubscriptionActive}
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="weekly" id="weekly" />
-                    <Label htmlFor="weekly">Weekly</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="monthly" id="monthly" />
-                    <Label htmlFor="monthly">Monthly</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-              <div className="text-sm">
-                Your accountability partner will receive progress analysis
-                starting from today.
+              <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-900">
+                <strong>Note:</strong> Your accountability partner will receive a welcome email 
+                with a secure link to view your current week's trading progress. The data 
+                shown will always be for the week they access the link.
               </div>
               <div className="flex justify-end space-x-2">
                 <Button 
@@ -365,7 +343,7 @@ export default function AccountabilityPartner() {
                   type="submit" 
                   disabled={isLoading || !isSubscriptionActive}
                 >
-                  {isLoading ? "Adding..." : "Add"}
+                  {isLoading ? "Adding..." : "Add Partner"}
                 </Button>
               </div>
             </form>
@@ -387,8 +365,10 @@ export default function AccountabilityPartner() {
                       <div>
                         <h3 className="font-semibold">{partner.name}</h3>
                         <p className="text-sm text-gray-500">
-                          Last updated:{" "}
-                          {new Date(partner.updatedAt).toLocaleString()}
+                          {partner.email}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          Added: {new Date(partner.createdAt).toLocaleDateString()}
                         </p>
                       </div>
                       <Button
@@ -411,7 +391,7 @@ export default function AccountabilityPartner() {
                     alt="no data"
                     className="size-36"
                   />
-                  <h3 className="mt-2 text-lg font-semibold text-gray-900">
+                  <h3 className="mt-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
                     No Data
                   </h3>
                   <p className="mt-1 text-sm text-gray-500">
@@ -438,6 +418,9 @@ export default function AccountabilityPartner() {
               </span>
               ?
             </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              They will no longer be able to access your trading data through their link.
+            </p>
           </div>
           <div className="flex justify-end space-x-2">
             <Button
@@ -452,7 +435,7 @@ export default function AccountabilityPartner() {
               onClick={handleConfirmDelete}
               disabled={!isSubscriptionActive}
             >
-              Yes
+              Yes, Delete
             </Button>
           </div>
         </DialogContent>
