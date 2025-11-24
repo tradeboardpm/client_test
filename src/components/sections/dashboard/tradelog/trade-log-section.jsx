@@ -48,12 +48,11 @@ export function TradesSection({
     setHasSubscription(subscription === "true");
   }, []);
 
-useEffect(() => {
-  if (!selectedDate) return;
-  console.log("Fetching trades for", selectedDate.toISOString());
-  fetchTradesData();
-}, [selectedDate?.toDateString()]);
-
+  useEffect(() => {
+    if (!selectedDate) return;
+    // console.log("Fetching trades for", selectedDate.toISOString());
+    fetchTradesData();
+  }, [selectedDate?.toDateString()]);
 
   const getUTCDate = (date) => {
     return new Date(

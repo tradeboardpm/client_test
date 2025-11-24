@@ -23,7 +23,7 @@ function SetNewPasswordContent() {
   const email = searchParams.get("email");
 
   useEffect(() => {
-    console.log("SetNewPassword params:", { resetToken, email });
+    // console.log("SetNewPassword params:", { resetToken, email });
     if (!resetToken || !email) {
       toast.error("Missing reset token or email");
       router.push("/login/email/forgot-password");
@@ -48,7 +48,8 @@ function SetNewPasswordContent() {
     if (!/[A-Z]/.test(password)) errors.push("an uppercase letter");
     if (!/[a-z]/.test(password)) errors.push("a lowercase letter");
     if (!/\d/.test(password)) errors.push("a number");
-    if (!/[!@#$%^&*]/.test(password)) errors.push("a special character (!@#$%^&*)");
+    if (!/[!@#$%^&*]/.test(password))
+      errors.push("a special character (!@#$%^&*)");
     return errors;
   };
 
@@ -107,14 +108,14 @@ function SetNewPasswordContent() {
 
   return (
     <div className="w-full max-w-lg p-8 space-y-8">
- <Button
-          variant="outline"
-          size="icon"
-          className="absolute left-4 top-20 rounded-full  p-2 lg:left-8 "
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        className="absolute left-4 top-20 rounded-full  p-2 lg:left-8 "
+        onClick={() => router.back()}
+      >
+        <ArrowLeft className="h-4 w-4" />
+      </Button>
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-semibold">Set a new password</h1>
         <p className="text-muted-foreground text-sm">
@@ -132,7 +133,9 @@ function SetNewPasswordContent() {
               onChange={(e) => setNewPassword(e.target.value)}
               required
               className={`pr-10 ${
-                (passwordErrors.length > 0 || (!passwordsMatch && confirmPassword)) && "border-red-500"
+                (passwordErrors.length > 0 ||
+                  (!passwordsMatch && confirmPassword)) &&
+                "border-red-500"
               }`}
             />
             <Button

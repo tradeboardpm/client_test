@@ -56,7 +56,7 @@ function VerifyOTPContent() {
 
       if (response.ok) {
         toast.success("OTP verified successfully");
-        console.log("Response from verify-forgot-password-otp:", data);
+        // console.log("Response from verify-forgot-password-otp:", data);
 
         if (!data.resetToken) {
           throw new Error("No reset token received from server");
@@ -65,7 +65,7 @@ function VerifyOTPContent() {
         const redirectUrl = `/login/email/forgot-password/reset-password?token=${encodeURIComponent(
           data.resetToken
         )}&email=${encodeURIComponent(email)}`;
-        console.log("Redirecting to:", redirectUrl);
+        // console.log("Redirecting to:", redirectUrl);
         router.push(redirectUrl);
       } else {
         throw new Error(data.error || "Failed to verify OTP");
@@ -110,14 +110,14 @@ function VerifyOTPContent() {
 
   return (
     <div className="w-full max-w-lg p-8 space-y-8">
-       <Button
-          variant="outline"
-          size="icon"
-          className="absolute left-4 top-20 rounded-full  p-2 lg:left-8 "
-          onClick={() => router.back()}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        className="absolute left-4 top-20 rounded-full  p-2 lg:left-8 "
+        onClick={() => router.back()}
+      >
+        <ArrowLeft className="h-4 w-4" />
+      </Button>
       <div className="space-y-2 text-center">
         <h1 className="text-3xl font-semibold">Verify OTP</h1>
         <p className="text-muted-foreground text-sm">

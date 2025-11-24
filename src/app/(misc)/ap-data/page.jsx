@@ -69,14 +69,14 @@ const RuleItem = ({ rule, count, isFollowed }) => (
 );
 
 const LEVELS = [
-  { name: "Pearl", threshold: 250 },
-  { name: "Aquamarine", threshold: 500 },
-  { name: "Topaz", threshold: 750 },
-  { name: "Opal", threshold: 1000 },
-  { name: "Sapphire", threshold: 1250 },
-  { name: "Emerald", threshold: 1500 },
-  { name: "Ruby", threshold: 1750 },
-  { name: "Diamond", threshold: 2000 },
+  { name: 'Pearl',      threshold: 0 },     // default
+  { name: 'Aquamarine', threshold: 250 },
+  { name: 'Topaz',      threshold: 500 },
+  { name: 'Opal',       threshold: 750 },
+  { name: 'Sapphire',   threshold: 1000 },
+  { name: 'Emerald',    threshold: 1250 },
+  { name: 'Ruby',       threshold: 1500 },
+  { name: 'Diamond',    threshold: 2000 },
 ];
 
 function ApDataInner() {
