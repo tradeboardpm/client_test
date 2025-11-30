@@ -37,12 +37,11 @@ const queryClient = new QueryClient({
     queries: {
       retry: 2,
       retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30000),
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
     },
   },
 });
 
-// Create axios instance without static headers
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -50,21 +49,20 @@ const api = axios.create({
   },
 });
 
-// Add request interceptor to dynamically inject token
-api.interceptors.request.use((config) => {
-  const token = Cookies.get("token");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
+api.interceptors.request.use(
+  (config) => {
+    const token = Cookies.get("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
+// Normalize date to UTC midnight (removes time & timezone issues)
 const getUTCDate = (date) => {
-  return new Date(
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-  );
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
 };
 
 const formatDate = (date) => {
@@ -75,7 +73,6 @@ const formatDate = (date) => {
     day: "numeric",
   });
 };
-
 
 const fetchWithRetry = async (url, options = {}, maxRetries = 3) => {
   for (let i = 0; i < maxRetries; i++) {
@@ -90,7 +87,13 @@ const fetchWithRetry = async (url, options = {}, maxRetries = 3) => {
 };
 
 function Dashboard() {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  // Always start with a valid normalized date
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return today;
+  });
+
   const [isMobile, setIsMobile] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [forceCalendarUpdate, setForceCalendarUpdate] = useState(0);
@@ -127,7 +130,7 @@ function Dashboard() {
     }),
   });
 
-  // Journal Data Query
+  // Journal Data Query — SAFE from invalid dates
   const { data: journalData, isLoading: isJournalLoading } = useQuery({
     queryKey: ["journal", selectedDate.toISOString()],
     queryFn: async () => {
@@ -137,9 +140,10 @@ function Dashboard() {
       });
       return response.data;
     },
+    enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
   });
 
-  // Weekly Metrics Query
+  // Weekly Metrics Query — also safe
   const { data: weeklyMetrics, isLoading: isMetricsLoading } = useQuery({
     queryKey: ["weeklyMetrics", selectedDate.toISOString()],
     queryFn: async () => {
@@ -147,13 +151,11 @@ function Dashboard() {
       const response = await fetchWithRetry(`/metrics/weekly?date=${formattedDate}`);
       return response.data || {};
     },
+    enabled: !!selectedDate && selectedDate instanceof Date && !isNaN(selectedDate.getTime()),
   });
 
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
     checkMobile();
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
@@ -174,17 +176,25 @@ function Dashboard() {
     }
   }, [capitalData, setPoints]);
 
-  const toggleSidebar = () => {
-    setSidebarExpanded(!sidebarExpanded);
-  };
+  const toggleSidebar = () => setSidebarExpanded(!sidebarExpanded);
 
   const handleSectionClick = (section) => {
     setSelectedSection(section);
     setSidebarExpanded(true);
   };
 
+  // CRITICAL FIX: Prevent Invalid Date
   const handleDateChange = (date) => {
-    setSelectedDate(new Date(date));
+    if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+      // Optionally fallback to today instead of ignoring
+      // setSelectedDate(new Date());
+      return; // Ignore invalid selection (double-click deselection)
+    }
+
+    // Normalize time to midnight for consistency
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    setSelectedDate(normalized);
   };
 
   const handleChartsUpdate = async () => {
@@ -222,11 +232,7 @@ function Dashboard() {
       <main className="flex-1 overflow-y-auto p-6 w-full bg-background rounded-t-xl">
         <div className="flex justify-between items-center mb-4">
           <div className="flex w-full items-center space-x-2">
-            <WelcomeMessage
-              userName={userName}
-              currentTime={currentTime}
-              visible={showWelcome}
-            />
+            <WelcomeMessage userName={userName} currentTime={currentTime} visible={showWelcome} />
           </div>
           {isMobile && (
             <Sheet open={isSideSheetOpen} onOpenChange={setIsSideSheetOpen}>
@@ -281,6 +287,7 @@ function Dashboard() {
             onRulesChange={handleCalendarUpdate}
           />
         </div>
+
         <TradesSection
           selectedDate={selectedDate}
           onUpdate={() => queryClient.invalidateQueries({ queryKey: ["journal"] })}
@@ -313,34 +320,21 @@ function Dashboard() {
             </div>
           ) : (
             <div className="flex flex-col items-center gap-4 pt-6 bg-card">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="bg-transparent"
-                onClick={() => handleSectionClick("calendar")}
-              >
+              <Button variant="ghost" size="icon" onClick={() => handleSectionClick("calendar")}>
                 <CalendarIcon className="size-5" />
               </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="bg-transparent"
-                onClick={() => handleSectionClick("charts")}
-              >
+              <Button variant="ghost" size="icon" onClick={() => handleSectionClick("charts")}>
                 <BarChart className="size-5" />
               </Button>
             </div>
           )}
+
           <Button
             variant="ghost"
             onClick={toggleSidebar}
             className="absolute top-1/2 p-0 -left-5 z-10 h-8 w-8 rounded-full bg-card shadow-md border-none flex items-center justify-center transform -translate-y-1/2 border border-border"
           >
-            {!sidebarExpanded ? (
-              <ChevronLeft className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
+            {!sidebarExpanded ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </Button>
         </div>
       )}
