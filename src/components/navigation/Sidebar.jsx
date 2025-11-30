@@ -285,41 +285,55 @@ export default function Sidebar({ isOpen, onClose }) {
                 }`}
               >
                 <CardContent
-                  className={`py-4 text-center flex flex-col items-center ${
-                    isCollapsed && !isSmallScreen ? "p-0" : ""
-                  }`}
-                >
-                  {isCollapsed && !isSmallScreen ? (
-                    <div className="flex flex-col items-center w-full">
-                      <Image
-                        src="/images/diamond.png"
-                        width={14}
-                        height={14}
-                        alt="Level"
-                      />
-                      <span className="text-xs text-white font-semibold mt-1">
-                        {points}
-                      </span>
-                    </div>
-                  ) : (
-                    <>
-                      <Image
-                        src="/images/diamond.png"
-                        width={70}
-                        height={70}
-                        alt="Level"
-                      />
-                      <p className="mt-2 font-semibold text-base text-white">
-                        <span className="font-normal">Upcoming Level: </span>{" "}
-                        {currentLevel}
-                      </p>
-                      <p className="hidden">
-                        {nextLevel} {pointsToNextLevel}
-                      </p>
-                      <p className="text-xs text-white">Points: {points}</p>
-                    </>
-                  )}
-                </CardContent>
+  className={`py-4 text-center flex flex-col items-center ${
+    isCollapsed && !isSmallScreen ? "p-0" : ""
+  }`}
+>
+  {isCollapsed && !isSmallScreen ? (
+    <div className="flex flex-col items-center w-full">
+      <Image
+        src="/images/diamond.png"
+        width={14}
+        height={14}
+        alt="Level"
+      />
+      <span className="text-xs text-white font-semibold mt-1">
+        {points}
+      </span>
+    </div>
+  ) : (
+    <>
+      <Image
+        src="/images/diamond.png"
+        width={70}
+        height={70}
+        alt="Level"
+      />
+      
+      {/* Show "Upcoming Level" if currentLevel is null (< 250 points) */}
+      {currentLevel === null ? (
+        <p className="mt-2 font-semibold text-base text-white">
+          <span className="font-normal">Upcoming Level: </span>
+          {nextLevel}
+        </p>
+      ) : (
+        <p className="mt-2 font-semibold text-base text-white">
+          <span className="font-normal">Current Level: </span>
+          {currentLevel}
+        </p>
+      )}
+      
+      <p className="text-xs text-white">Points: {points}</p>
+      
+      {/* Optionally show next level if not at max */}
+      {/* {nextLevel && currentLevel !== null && (
+        <p className="text-xs text-white/80 mt-1">
+          Next: {nextLevel} ({pointsToNextLevel} points needed)
+        </p>
+      )} */}
+    </>
+  )}
+</CardContent>
               </Card>
 
               {needsUpgrade && (

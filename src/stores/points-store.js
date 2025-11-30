@@ -3,21 +3,21 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 const LEVELS = [
-  { name: 'Pearl',      threshold: 0 },     // default
-  { name: 'Aquamarine', threshold: 250 },
-  { name: 'Topaz',      threshold: 500 },
-  { name: 'Opal',       threshold: 750 },
-  { name: 'Sapphire',   threshold: 1000 },
-  { name: 'Emerald',    threshold: 1250 },
-  { name: 'Ruby',       threshold: 1500 },
+  { name: 'Pearl',      threshold: 250 },   // First achievable level
+  { name: 'Aquamarine', threshold: 500 },
+  { name: 'Topaz',      threshold: 750 },
+  { name: 'Opal',       threshold: 1000 },
+  { name: 'Sapphire',   threshold: 1250 },
+  { name: 'Emerald',    threshold: 1500 },
+  { name: 'Ruby',       threshold: 1750 },
   { name: 'Diamond',    threshold: 2000 },
 ];
 
 const INITIAL_STATE = {
   points: 0,
-  currentLevel: LEVELS[0].name,
-  nextLevel: LEVELS[1].name,
-  pointsToNextLevel: LEVELS[1].threshold,
+  currentLevel: null, // null when below Pearl (250)
+  nextLevel: LEVELS[0].name, // Pearl
+  pointsToNextLevel: LEVELS[0].threshold, // 250
   progressToNextLevel: 0,
   totalLevels: LEVELS.length,
 };
@@ -32,7 +32,23 @@ export const usePointsStore = create()(
       setPoints: (newPoints) => {
         const points = Math.max(0, newPoints);
 
-        // Find the highest level the user has reached
+        // Below Pearl level (< 250)
+        if (points < LEVELS[0].threshold) {
+          const progressToNextLevel = Math.round(
+            (points / LEVELS[0].threshold) * 100
+          );
+
+          set({
+            points,
+            currentLevel: null, // No current level yet
+            nextLevel: LEVELS[0].name, // Pearl
+            pointsToNextLevel: LEVELS[0].threshold - points,
+            progressToNextLevel,
+          });
+          return;
+        }
+
+        // Find the current level (>= 250)
         let currentLevelObj = LEVELS[0];
         let nextLevelObj = LEVELS[1];
 
@@ -44,23 +60,13 @@ export const usePointsStore = create()(
           }
         }
 
-        // Fallback for points < 250
-        if (points < LEVELS[0].threshold) {
-          currentLevelObj = LEVELS[0];
-          nextLevelObj = LEVELS[1];
-        }
-
         const currentThreshold = currentLevelObj.threshold;
         const nextThreshold = nextLevelObj?.threshold || currentThreshold;
 
-        // Points needed within current tier
-        const pointsNeededForCurrent =
-          currentThreshold -
-          (LEVELS[LEVELS.indexOf(currentLevelObj) - 1]?.threshold || 0);
-        const pointsInCurrentTier =
-          points - (currentThreshold - pointsNeededForCurrent);
-
+        // Calculate progress to next level
+        const pointsInCurrentTier = points - currentThreshold;
         const tierSize = nextThreshold - currentThreshold;
+        
         const progressToNextLevel = nextLevelObj
           ? Math.min(100, Math.round((pointsInCurrentTier / tierSize) * 100))
           : 100;
@@ -82,8 +88,7 @@ export const usePointsStore = create()(
     {
       name: "points-storage",
       storage: createJSONStorage(() => localStorage),
-      // Optional: migrate old data if needed
-      version: 1,
+      version: 2, // Increment version for the change
     }
   )
 );
