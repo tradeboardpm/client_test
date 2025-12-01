@@ -216,7 +216,7 @@ function ApDataInner() {
         <div className="mb-6">
           <h1 className="text-2xl font-semibold">Welcome {sharedData.apName},</h1>
           <h2 className="text-lg text-muted-foreground ">
-            You are viewing this week's trading data of {sharedData.userName}
+            You are viewing this month's trading data of {sharedData.userName}
           </h2>
           <p className="text-sm text-muted-foreground">
             Week: {weekStart} - {weekEnd}
