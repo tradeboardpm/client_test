@@ -22,11 +22,11 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const pricingPlans = [
   {
     name: "One Week on Us",
-    subtitle: "(₹ 0)",
+    subtitle: "(7 Days Free)",
     plan_name: "one-week",
     plan_total_price: "0",
     price: "Free",
-    period: "",
+    period: "for 7 days",
     features: [
       "Dashboard",
       "My Journal",
@@ -35,15 +35,15 @@ const pricingPlans = [
       "Performance Analytics",
       "Accountability Partner",
     ],
-    buttonText: "Get Started Now",
+    buttonText: "Start Free Trial",
     buttonVariant: "",
   },
   {
     name: "Half-Year Adventure",
-    subtitle: "(₹ 1,194 / Half Year)",
+    subtitle: "(₹ 2,394 / Half Year)",
     plan_name: "half-year",
-    plan_total_price: "1194",
-    price: "199",
+    plan_total_price: "2394",
+    price: "399",
     period: "per month",
     features: [
       "Dashboard",
@@ -58,11 +58,11 @@ const pricingPlans = [
   },
   {
     name: "Year of Possibilities",
-    subtitle: "(₹ 1,788 / Year)",
+    subtitle: "(₹ 599 / Year)",
     plan_name: "yearly",
-    plan_total_price: "1788",
-    price: "149",
-    period: "per month",
+    plan_total_price: "599",
+    price: "Best Value",
+    period: "",
     features: [
       "Dashboard",
       "My Journal",

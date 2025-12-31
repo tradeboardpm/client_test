@@ -11,10 +11,10 @@ import {
 
 const pricingPlans = [
   {
-    name: "Two Weeks on Us",
-    subtitle: "(₹ 0)",
+    name: "Free Trial",
+    subtitle: "(7 Days Free)",
     price: "Free",
-    period: "",
+    period: "for 7 days",
     features: [
       "Dashboard",
       "My Journal",
@@ -23,14 +23,14 @@ const pricingPlans = [
       "Performance Analytics",
       "Accountability Partner",
     ],
-    buttonText: "Get Started Now",
+    buttonText: "Start Free Trial",
     buttonVariant: "",
-    planId: "free"
+    planId: "free-trial"
   },
   {
     name: "Half-Year Adventure",
-    subtitle: "(₹ 1,194 / Half Year)",
-    price: "₹ 199",
+    subtitle: "(₹ 2,394 / Half Year)",
+    price: "₹ 399",
     period: "per month",
     features: [
       "Dashboard",
@@ -46,9 +46,9 @@ const pricingPlans = [
   },
   {
     name: "Year of Possibilities",
-    subtitle: "(₹ 1,788 / Year)",
-    price: "₹ 149",
-    period: "per month",
+    subtitle: "(₹ 599 / Year)",
+    price: "Best Value",
+    period: "",
     features: [
       "Dashboard",
       "My Journal",
