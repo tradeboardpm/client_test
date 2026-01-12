@@ -37,16 +37,6 @@ const socialLinks = [
     label: "Instagram",
   },
   {
-    icon: Twitter,
-    href: "https://x.com/tradeboard_in",
-    label: "Twitter",
-  },
-  {
-    icon: Facebook,
-    href: "https://www.facebook.com/profile.php?id=61564127901979",
-    label: "Facebook",
-  },
-  {
     icon: Youtube,
     href: "https://www.youtube.com/@tradeboard_in",
     label: "YouTube",
@@ -103,7 +93,8 @@ const Footer = () => {
           <div className="max-w-sm">
             <h3 className="text-xl md:text-4xl font-bold mb-4">TradeBoard</h3>
             <p className="text-base">
-            Tradeboard assists you to maintain discipline, track performance and achieve consistent results through data-driven decisions.
+              Tradeboard assists you to maintain discipline, track performance
+              and achieve consistent results through data-driven decisions.
             </p>
             <p className="mt-3">Follow us on:</p>
             <div className="flex space-x-4 mt-2">
@@ -154,19 +145,18 @@ const Footer = () => {
             </p> */}
             <p className="text-base flex items-center gap-2 hover:underline cursor-pointer underline">
               <Mail size={14} />
-              contact@tradeboard.in
+              contactus@tradeboard.in
             </p>
           </div>
         </div>
 
         <div className="mt-8 py-4 border-t border-[#BEC0CA]/50 text-xs flex flex-col md:flex-row items-center justify-between">
           <p className="text-center md:text-left mb-4 md:mb-0">
-            © 2025 Rezilienza Tech Private Limited | All rights reserved
+            {/* © 2025 Rezilienza Tech Private Limited | All rights reserved */}
+            © 2025 tradeboard.in | All rights reserved 
           </p>
 
-          <p className="text-center md:text-right mt-4 md:mt-0">
-            v 0.5.0
-          </p>
+          <p className="text-center md:text-right mt-4 md:mt-0">v 0.5.0</p>
           <div className="flex items-center gap-3">
             <button
               onClick={() => handleLegalClick("terms")}

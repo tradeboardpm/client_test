@@ -4,132 +4,152 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
 const TermsOfService = () => {
-  const sections = [
-    {
-      id: "introduction",
-      title: "1. Introduction",
-      content:
-        'Welcome to tradeboard.in ("we," "our," "us"). These Terms and Conditions ("Terms") govern your use of our website tradeboard.in and the subscription services ("Services") we offer. By accessing or using our website and Services, you agree to comply with and be bound by these Terms. If you do not agree to these Terms, please do not use our website or Services.',
-    },
-    {
-      id: "subscription-services",
-      title: "2. Subscription Services",
-      subsections: [
-        {
-          title: "2.1. Subscription Plans",
-          content:
-            "We offer various subscription plans with different features and pricing. Details of the subscription plans and pricing are available on our website.",
-        },
-        {
-          title: "2.2. Subscription Fees",
-          content:
-            "By subscribing to our Services, you agree to pay the applicable subscription fees as specified in your chosen plan. Subscription fees are billed on a recurring basis (e.g., monthly, annually) as per the plan you select.",
-        },
-        {
-          title: "2.3. Payment",
-          content:
-            "Payment is processed through our third-party payment processor. You must provide accurate and complete payment information. By providing your payment details, you authorize us to charge the subscription fees to your selected payment method.",
-        },
-        {
-          title: "2.4. Automatic Renewal",
-          content:
-            "Subscriptions automatically renew at the end of each billing cycle unless you cancel your subscription before the renewal date. Your payment method will be charged at the start of each new billing cycle.",
-        },
-        {
-          title: "2.5. Cancellations and Refunds",
-          content:
-            "You may cancel your subscription at any time through your account settings on our website. Cancellations will take effect at the end of the current billing cycle. Subscription fees are non-refundable, except as required by law.",
-        },
-      ],
-    },
-    {
-      id: "account-management",
-      title: "3. Account Management",
-      subsections: [
-        {
-          title: "3.1. Account Creation",
-          content:
-            "To access our Services, you must create an account. You agree to provide accurate and complete information when creating your account and to keep your account credentials secure.",
-        },
-        {
-          title: "3.2. Responsibility",
-          content:
-            "You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.",
-        },
-        {
-          title: "3.3. Account Termination",
-          content:
-            "We reserve the right to suspend or terminate your account if you violate these Terms or if we believe that your use of our Services poses a risk to our platform or other users.",
-        },
-      ],
-    },
-    {
-      id: "use-of-services",
-      title: "4. Use of Services",
-      subsections: [
-        {
-          title: "4.1. License",
-          content:
-            "We grant you a limited, non-exclusive, non-transferable license to access and use our Services for personal, non-commercial purposes, subject to these Terms.",
-        },
-        {
-          title: "4.2. Restrictions",
-          content:
-            "You agree not to use our Services for any unlawful purpose or in any way that could damage, disable, or impair our website or interfere with other users' access to our Services. You must not attempt to gain unauthorised access to our systems or accounts.",
-        },
-      ],
-    },
-    {
-      id: "intellectual-property",
-      title: "5. Intellectual Property",
-      subsections: [
-        {
-          title: "5.1. Ownership",
-          content:
-            "All content, software, and other materials on our website and within our Services are owned by us or our licensors and are protected by intellectual property laws. You may not reproduce, distribute, modify, or create derivative works from our content without our prior written consent.",
-        },
-        {
-          title: "5.2. User Content",
-          content:
-            "You retain ownership of any content you upload or create using our Services. By submitting content to our website, you grant us a non-exclusive, worldwide, royalty-free license to use, display, and distribute your content for the purposes of operating and improving our Services.",
-        },
-      ],
-    },
-    {
-      id: "limitation-of-liability",
-      title: "6. Limitation of Liability",
-      subsections: [
-        {
-          title: "6.1. Disclaimer",
-          content:
-            'Our Services are provided "as is" and "as available" without any warranties of any kind, either express or implied. We do not guarantee that our Services will be error-free or uninterrupted.',
-        },
-        {
-          title: "6.2. Limitation of Liability",
-          content:
-            "To the maximum extent permitted by law, we are not liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of our Services or these Terms. Our total liability for any claim arising out of these Terms or your use of our Services is limited to the amount paid by you for the subscription giving rise to the claim.",
-        },
-      ],
-    },
-    {
-      id: "indemnification",
-      title: "7. Indemnification",
-      content:
-        "You agree to indemnify, defend, and hold harmless Tradeboard, its affiliates, and their respective officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, and expenses arising out of or related to your use of our Services, your violation of these Terms, or your infringement of any third-party rights.",
-    },
-    {
-      id: "changes-to-terms",
-      title: "8. Changes to Terms",
-      content:
-        "We reserve the right to update or modify these Terms at any time. Any changes will be posted on our website with an updated effective date. Your continued use of our Services following any changes constitutes your acceptance of the revised Terms.",
-    },
-    {
-      id: "governing-law",
-      title: "9. Governing Law",
-      content:
-        "These Terms are governed by and construed in accordance with the laws of India, without regard to its conflict of laws principles. Any disputes arising out of or related to these Terms or your use of our Services will be resolved in the courts located in India.",
-    },
-  ];
+const sections = [
+  {
+    id: "introduction",
+    title: "Introduction",
+    content:
+      'Welcome to tradeboard.in ("we," "our," "us"). These Terms and Conditions ("Terms") govern your use of our website tradeboard.in and the subscription services ("Services") we offer. By accessing or using our website and Services, you agree to comply with and be bound by these Terms. If you do not agree to these Terms, please do not use our website or Services.',
+  },
+  {
+    id: "subscription-services",
+    title: "Subscription Services",
+    subsections: [
+      {
+        title: "2.1. Subscription Plans",
+        content:
+          "We offer various subscription plans with different features and pricing. Details of the subscription plans and pricing are available on our website.",
+      },
+      {
+        title: "2.2. Subscription Fees",
+        content:
+          "By subscribing to our Services, you agree to pay the applicable subscription fees as specified in your chosen plan. Subscription fees are billed on a particular plan basis (e.g. half yearly, annually) as per the plan you select.",
+      },
+      {
+        title: "2.3. Payment",
+        content:
+          "Payment is processed through our third-party payment processor. You must provide accurate and complete payment information. By providing your payment details, you authorize us to charge the subscription fees to your selected payment method.",
+      },
+      {
+        title: "2.4. Automatic Renewal",
+        content:
+          "There is no automatic renewal after the end of the subscription cycle.",
+      },
+      {
+        title: "2.5. Cancellations and Refunds",
+        content:
+          "You cannot cancel the subscription once you pay for any plan.",
+      },
+    ],
+  },
+  {
+    id: "account-management",
+    title: "Account Management",
+    subsections: [
+      {
+        title: "3.1. Account Creation",
+        content:
+          "To access our Services, you must create an account. You agree to provide accurate and complete information when creating your account and to keep your account credentials secure.",
+      },
+      {
+        title: "3.2. Responsibility",
+        content:
+          "You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.",
+      },
+      {
+        title: "3.3. Account Termination",
+        content:
+          "We reserve the right to suspend or terminate your account if you violate these Terms or if we believe that your use of our Services poses a risk to our platform or other users.",
+      },
+    ],
+  },
+  {
+    id: "use-of-services",
+    title: "Use of Services",
+    subsections: [
+      {
+        title: "4.1. License",
+        content:
+          "We grant you a limited, non-exclusive, non-transferable license to access and use our Services for personal, non-commercial purposes, subject to these Terms.",
+      },
+      {
+        title: "4.2. Restrictions",
+        content:
+          "You agree not to use our Services for any unlawful purpose or in any way that could damage, disable, or impair our website or interfere with other users' access to our Services. You must not attempt to gain unauthorized access to our systems or accounts.",
+      },
+    ],
+  },
+  {
+    id: "intellectual-property",
+    title: "Intellectual Property",
+    subsections: [
+      {
+        title: "5.1. Ownership",
+        content:
+          "All content, software, and other materials on our website and within our Services are owned by us or our licensors and are protected by intellectual property laws. You may not reproduce, distribute, modify, or create derivative works from our content without our prior written consent.",
+      },
+      {
+        title: "5.2. User Content",
+        content:
+          "You retain ownership of any content you upload or create using our Services. By submitting content to our website, you grant us a non-exclusive, worldwide, royalty-free license to use, display, and distribute your content for the purposes of operating and improving our Services.",
+      },
+    ],
+  },
+  {
+    id: "limitation-of-liability",
+    title: "Limitation of Liability",
+    subsections: [
+      {
+        title: "6.1. Disclaimer",
+        content:
+          'Our Services are provided "as is" and "as available" without any warranties of any kind, either express or implied. We do not guarantee that our Services will be error-free or uninterrupted.',
+      },
+      {
+        title: "6.2. Limitation of Liability",
+        content:
+          "To the maximum extent permitted by law, we are not liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of our Services or these Terms. Our total liability for any claim is limited to the amount paid by you for the subscription giving rise to the claim.",
+      },
+    ],
+  },
+  {
+    id: "indemnification",
+    title: "Indemnification",
+    content:
+      "You agree to indemnify, defend, and hold harmless Tradeboard, its affiliates, and their respective officers, directors, employees, and agents from and against any claims, liabilities, damages, losses, and expenses arising out of or related to your use of our Services, your violation of these Terms, or your infringement of any third-party rights.",
+  },
+  {
+    id: "changes-to-terms",
+    title: "Changes to Terms",
+    content:
+      "We reserve the right to update or modify these Terms at any time. Any changes will be posted on our website with an updated effective date. Your continued use of our Services following any changes constitutes your acceptance of the revised Terms.",
+  },
+  {
+    id: "governing-law",
+    title: "Governing Law",
+    content:
+      "These Terms are governed by and construed in accordance with the laws of India. Any disputes arising out of or related to these Terms or your use of our Services will be resolved in the courts located in India.",
+  },
+  {
+    id: "cancellation-policy",
+    title: "Cancellation Policy",
+    content: [
+      "There is no auto-renewal on our platform. If you are on a paid subscription, you will continue to enjoy all premium benefits till your plan duration ends.",
+      "In the event of account deactivation, suspension, restriction, or termination, no refund will be provided for any paid plan.",
+      "For concerns or clarifications, please use the Contact link available on the home screen.",
+    ],
+  },
+  {
+    id: "disclaimer",
+    title: "Disclaimer",
+    content: [
+      "Tradeboard disclaims all warranties to the fullest extent permitted by law, including implied warranties of merchantability, fitness for a particular purpose, and non-infringement.",
+      "You understand that technology and business environments evolve and you are responsible for deciding when to upgrade software.",
+      "Tradeboard is a Trade Journaling and Trading Psychology management tool only.",
+      "Stock/Equity trading is subject to market risks. Please read all related documents carefully before investing.",
+    ],
+  },
+];
+
 
   return (
     <div className="min-h-screen bg-background">

@@ -3,59 +3,110 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const PrivacyPolicy = () => {
-  const sections = [
-    {
-      id: "introduction",
-      title: "Introduction",
-      content:
-        'Welcome to tradeboard.in ("we," "our," "us"). We are committed to protecting your privacy and ensuring that your personal information is handled in a safe and responsible manner. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website tradeboard.in, use our services, or interact with us.',
-    },
-    {
-      id: "information-collection",
-      title: "Information We Collect",
-      content: [
-        "Personal Information: This includes information you provide directly, such as your name, email address, and any other contact details you voluntarily provide when registering for an account or contacting us.",
-        "Trade Data: Information related to your trades, including trade logs, strategies, and performance data that you input or upload to our platform.",
-        "Usage Data: Information about your interaction with our website, including IP addresses, browser types, pages visited, and time spent on the site.",
-        "Cookies and Tracking Technologies: We use cookies and similar technologies to enhance your experience, analyze site usage, and provide tailored content. You can manage your cookie preferences through your browser settings.",
-      ],
-    },
-    {
-      id: "information-usage",
-      title: "How We Use Your Information",
-      content: [
-        "To Provide and Improve Our Services: To maintain and enhance the functionality of our website and services, including processing trade logs and offering personalized insights.",
-        "To Communicate with You: To send you updates, newsletters, and other relevant information related to our services. You can opt out of these communications at any time.",
-        "To Ensure Security and Compliance: To protect our website and users from fraudulent activities and to comply with legal obligations.",
-        "To Analyze and Improve Our Services: To analyze usage patterns and improve the overall user experience on our platform.",
-      ],
-    },
-    {
-      id: "information-sharing",
-      title: "Sharing Your Information",
-      content: [
-        "We do not sell or rent your personal information to third parties. We may share your information in the following circumstances:",
-        "With Service Providers: We may engage third-party service providers to assist us in operating our website and providing our services.",
-        "For Legal Reasons: We may disclose your information if required by law, to enforce our terms of service, or to protect rights.",
-        "Business Transfers: In the event of a merger, acquisition, or sale of assets, your information may be transferred as part of the transaction.",
-      ],
-    },
-    {
-      id: "data-security",
-      title: "Data Security",
-      content:
-        "We implement industry-standard security measures to protect your personal and trade data from unauthorized access, disclosure, or loss. However, no method of transmission over the internet or electronic storage is 100% secure. While we strive to protect your information, we cannot guarantee its absolute security.",
-    },
-    {
-      id: "your-rights",
-      title: "Your Rights and Choices",
-      content: [
-        "Access and Correction: You can request access to or correction of your personal information.",
-        "Deletion: You may request the deletion of your personal information, subject to certain exceptions.",
-        "Opt-Out: You can opt out of receiving marketing communications from us.",
-      ],
-    },
-  ];
+const sections = [
+  {
+    id: "privacy-policy",
+    title: "Privacy Policy",
+    content: [
+      "We require you to register and login to our Website. To access premium features, we require you to either continue free plan or paid plan and submit personally identifiable information (hereinafter referred to as “Personal Data”) to avail the Services. The use of the personal data is detailed in the privacy policy below.",
+      "This Privacy Policy covers our treatment of Personal Data that we gather when you are accessing or using our Services. We gather various types of Personal Data from our users and we use this Personal Data in connection with our products and services, including to develop, offer, operate, personalize, provide, and improve our services, to allow you to set up a user account and profile, to contact you and fulfil your requests, and to analyse how you use the Services.",
+      "By submitting Personal Data through our Site or Services, you agree to the terms of this Privacy Policy and expressly give your voluntary consent to the collection, use and disclosure of the Personal Information in accordance with this Privacy Policy.",
+    ],
+  },
+  {
+    id: "definitions",
+    title: "Definitions",
+    content: [
+      "“Customer”, “User”, “You”, “Your” means any individual, entity or organization having entered into any commercial transaction with Tradeboard.",
+      "“Website(s)” means any website(s) we own and operate and any web pages or social networks that post a link to this privacy policy.",
+      "“Tradeboard”, “We”, “Us” means Tradeboard tool and/or its subsidiary(ies) and/or affiliate(s).",
+      "“Personal Data”, “Data” refers to all personal, non-anonymized data provided by the Customer.",
+    ],
+  },
+  {
+    id: "data-collection",
+    title: "Data Collection",
+    content: [
+      "We collect Personal Data when you provide such information directly to us or when it is automatically collected during your use of our Services.",
+      "Personal Data collected may include:",
+      "• First and last name",
+      "• Username",
+      "• Password",
+      "• Email address",
+      "• Telephone number",
+      "• Financial or payment information",
+      "We also collect data using cookies and similar technologies, including:",
+      "• IP address",
+      "• Device identifiers and device information",
+      "• Browser information",
+      "• Page view statistics and browsing history",
+      "• Usage and transaction information",
+      "• Log data such as access times and hardware/software details",
+    ],
+  },
+  {
+    id: "use-of-information",
+    title: "Use of Collected Information",
+    content: [
+      "To identify you as a user in our system",
+      "To provide improved administration of our Site and Services",
+      "To provide the Services you request",
+      "To improve user experience",
+      "To send email notifications",
+      "To send newsletters, surveys, offers, and promotional materials",
+      "To protect our services and users",
+      "To conduct market analysis and research",
+      "To prevent, detect, and investigate fraud or unlawful activities",
+    ],
+  },
+  {
+    id: "disclosure",
+    title: "Disclosing Collected Information",
+    content: [
+      "We may share your information with:",
+      "• Subsidiaries or affiliates of Tradeboard",
+      "• Service providers and agents who process information on our behalf",
+      "• Partners assisting in providing services",
+      "• Payment processing providers",
+      "• Regulators and law enforcement agencies to meet legal obligations",
+      "We may share non-personally identifiable information publicly or with third parties. Under no circumstances will we share personal information for purposes other than stated without your express consent.",
+    ],
+  },
+  {
+    id: "security",
+    title: "Security of Data",
+    content: [
+      "We take required technical and organizational precautions to prevent loss, misuse, or manipulation of data.",
+      "All data is stored on secure, password-protected servers.",
+      "You acknowledge that internet transmission is inherently insecure and we cannot guarantee absolute security.",
+    ],
+  },
+  {
+    id: "rights",
+    title: "Your Rights and Choices",
+    content: [
+      "Right to Confirmation and Access",
+      "Right to Correction",
+      "Right to Data Portability",
+      "Right to Be Forgotten",
+      "Right to Withdrawal of Consent",
+    ],
+  },
+  {
+    id: "general-info",
+    title: "General Information",
+    content: [
+      "Consent: All data is processed based on your explicit consent. You may withdraw consent at any time without affecting prior lawful processing.",
+      "Retention of Data: When there is no legitimate business need, data will be deleted, anonymized, or securely archived.",
+    ],
+  },
+  {
+    id: "grievance",
+    title: "Grievance Redressal",
+    content:
+      "If you have any privacy-related feedback, concerns, or grievances, you may contact our Grievance Officer at contactus@tradeboard.in.",
+  },
+];
 
   return (
     <div className="min-h-screen bg-background">
@@ -109,10 +160,10 @@ const PrivacyPolicy = () => {
                   If you have any questions or concerns about this Privacy
                   Policy or our data practices, please contact us at{" "}
                   <a
-                    href="mailto:contact@tradeboard.in"
+                    href="mailto:contactus@tradeboard.in"
                     className="text-primary hover:underline"
                   >
-                    contact@tradeboard.in
+                    contactus@tradeboard.in
                   </a>
                 </p>
               </div>

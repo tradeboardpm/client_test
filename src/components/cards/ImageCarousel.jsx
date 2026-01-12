@@ -4,16 +4,14 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 
 const images = [
-  "/images/Rectangle.png",
-  "/images/Rectangle.png",
-  "/images/Rectangle.png",
-  "/images/Rectangle.png",
+  "/images/Dashboard.png",
+  "/images/analytics.png",
+  "/images/ap.png"
 ];
 
 const captions = [
   "Welcome to Tradeboard",
   "Performance Analytics",
-  "My Journal",
   "Add An Accountability Partner",
 ];
 

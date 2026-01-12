@@ -11,8 +11,10 @@ import {
 
 const pricingPlans = [
   {
-    name: "Free Trial",
+    name: "One Week on Us",
     subtitle: "(7 Days Free)",
+    plan_name: "one-week",
+    plan_total_price: "0",
     price: "Free",
     period: "for 7 days",
     features: [
@@ -25,13 +27,14 @@ const pricingPlans = [
     ],
     buttonText: "Start Free Trial",
     buttonVariant: "",
-    planId: "free-trial"
   },
   {
     name: "Half-Year Adventure",
-    subtitle: "(₹ 2,394 / Half Year)",
-    price: "₹ 399",
-    period: "per month",
+    subtitle: "(₹ 66.5 / month)",
+    plan_name: "half-year",
+    plan_total_price: "399",
+    price: "399",
+    period: "half month",
     features: [
       "Dashboard",
       "My Journal",
@@ -42,11 +45,12 @@ const pricingPlans = [
     ],
     buttonText: "Get Started Now",
     buttonVariant: "",
-    planId: "half-year"
   },
   {
     name: "Year of Possibilities",
     subtitle: "(₹ 599 / Year)",
+    plan_name: "yearly",
+    plan_total_price: "599",
     price: "Best Value",
     period: "",
     features: [
@@ -61,7 +65,6 @@ const pricingPlans = [
     buttonVariant: "default",
     highlight: true,
     discount: true,
-    planId: "yearly"
   },
 ];
 
