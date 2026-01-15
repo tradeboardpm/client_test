@@ -53,7 +53,7 @@ const TradingPsychologySection = () => {
             </Card>
             <div className="p-4 rounded-xl bg-[#8885FF]/15 w-fit ">
               <img
-                src="/images/trades.png"
+                src="/images/tradelog.png"
                 alt="Trade Log Interface"
                 layout="responsive"
                 className="rounded-lg w-full sm:max-w-[28rem] md:max-w-[32rem] lg:max-w-[38rem]"

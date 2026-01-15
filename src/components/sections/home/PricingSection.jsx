@@ -30,11 +30,11 @@ const pricingPlans = [
   },
   {
     name: "Half-Year Adventure",
-    subtitle: "(₹ 66.5 / month)",
+    subtitle: "",
     plan_name: "half-year",
     plan_total_price: "399",
-    price: "399",
-    period: "half month",
+    price: "₹ 399 Only",
+    period: "",
     features: [
       "Dashboard",
       "My Journal",
@@ -48,10 +48,10 @@ const pricingPlans = [
   },
   {
     name: "Year of Possibilities",
-    subtitle: "(₹ 599 / Year)",
+    subtitle: "Best Value",
     plan_name: "yearly",
     plan_total_price: "599",
-    price: "Best Value",
+    price: "₹ 599 Only",
     period: "",
     features: [
       "Dashboard",
@@ -71,9 +71,9 @@ const pricingPlans = [
 const PricingSection = () => {
   const router = useRouter();
 
-  const handlePlanSelection = (planId) => {
+  const handlePlanSelection = (planName) => {
     // Store the selected plan and current route in localStorage
-    localStorage.setItem('selectedPlan', planId);
+    localStorage.setItem('selectedPlan', planName);
     localStorage.setItem('sourceRoute', window.location.pathname);
     
     // Navigate to signup page
@@ -109,13 +109,15 @@ const PricingSection = () => {
                     {plan.price}
                     {plan.period && (
                       <span className="text-sm font-normal">
-                        /{plan.period}
+                        {" "}{plan.period}
                       </span>
                     )}
                   </div>
-                  <div className="text-sm font-normal mt-1 text-gray-600">
-                    {plan.subtitle}
-                  </div>
+                  {plan.subtitle && (
+                    <div className="text-sm font-normal mt-1 text-gray-600">
+                      {plan.subtitle}
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
@@ -131,7 +133,7 @@ const PricingSection = () => {
                   <Button 
                     className="w-full" 
                     variant={plan.buttonVariant}
-                    onClick={() => handlePlanSelection(plan.planId)}
+                    onClick={() => handlePlanSelection(plan.plan_name)}
                   >
                     {plan.buttonText}
                   </Button>

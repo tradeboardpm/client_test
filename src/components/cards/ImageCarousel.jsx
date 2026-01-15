@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import Image from "next/image";
 
 const images = [
-  "/images/Dashboard.png",
-  "/images/analytics.png",
-  "/images/ap.png"
+  "/images/auth/welcome.png",
+  "/images/auth/performance.png",
+  "/images/auth/partner.png"
 ];
 
 const captions = [
@@ -39,25 +39,27 @@ export default function ImageCarousel() {
 
   return (
     <div className="flex flex-col w-full h-full overflow-hidden pt-8 px-12">
-      <div className="flex w-full h-full overflow-x-hidden">
-        {images.map((src, index) => (
-          <div
-            key={index}
-            className="flex-shrink-0 w-full h-full transition-transform duration-500"
-            style={{
-              transform: `translateX(-${currentIndex * 100}%)`,
-            }}
-          >
-            <div className="relative w-full h-full rounded-lg overflow-hidden flex-1">
-              <Image
-                src={src}
-                alt={`Slide ${index + 1}`}
-                layout="fill"
-                className="rounded-lg p-6"
-              />
+      <div className="relative w-full flex-1 overflow-hidden mb-6">
+        <div className="flex h-full transition-transform duration-500 ease-in-out"
+             style={{ transform: `translateX(-${currentIndex * 100}%)` }}>
+          {images.map((src, index) => (
+            <div
+              key={index}
+              className="flex-shrink-0 w-full h-full flex items-center justify-center px-2"
+            >
+              <div className="relative w-full max-w-4xl h-[500px] rounded-3xl overflow-hidden border-[6px] border-black">
+                <Image
+                  src={src}
+                  alt={`Slide ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1280px) 100vw, 1280px"
+                  priority={index === 0}
+                />
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
       {/* Indicator Lines */}

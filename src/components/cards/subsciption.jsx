@@ -394,10 +394,12 @@ const handlePaymentSuccess = async (response, planName) => {
                   {plan.name} {index === 0 && <span className="text-green-600 text-xs font-normal">(Free)</span>}
                 </CardTitle>
                 <div className="text-xl sm:text-2xl font-semibold">
-                  {index === 0 ? "₹ 0" : `₹ ${plan.price}`}
-                  {plan.period && <span className="text-xs sm:text-sm font-normal">/{plan.period}</span>}
+                  {plan.price}
+                  {plan.period && <span className="text-xs sm:text-sm font-normal"> {plan.period}</span>}
                 </div>
-                <div className="text-xs sm:text-sm font-normal mt-1 text-muted-foreground">{plan.subtitle}</div>
+                {plan.subtitle && (
+                  <div className="text-xs sm:text-sm font-normal mt-1 text-muted-foreground">{plan.subtitle}</div>
+                )}
                 {initialSelectedPlan === plan.plan_name && (
                   <div className="text-xs sm:text-sm font-medium text-green-600 mt-2">You selected this plan</div>
                 )}

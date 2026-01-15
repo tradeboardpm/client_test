@@ -40,11 +40,11 @@ const pricingPlans = [
   },
   {
     name: "Half-Year Adventure",
-    subtitle: "(₹ 66.5 / month)",
+    subtitle: "",
     plan_name: "half-year",
     plan_total_price: "399",
-    price: "399",
-    period: "half month",
+    price: "₹ 399 Only",
+    period: "",
     features: [
       "Dashboard",
       "My Journal",
@@ -58,10 +58,10 @@ const pricingPlans = [
   },
   {
     name: "Year of Possibilities",
-    subtitle: "(₹ 599 / Year)",
+    subtitle: "Best Value",
     plan_name: "yearly",
     plan_total_price: "599",
-    price: "Best Value",
+    price: "₹ 599 Only",
     period: "",
     features: [
       "Dashboard",
@@ -254,16 +254,18 @@ export default function PricingPage() {
                     {plan.name}
                   </CardTitle>
                   <div className="text-2xl font-semibold">
-                    ₹ {plan.price}
+                    {plan.price}
                     {plan.period && (
                       <span className="text-sm font-normal">
-                        /{plan.period}
+                        {" "}{plan.period}
                       </span>
                     )}
                   </div>
-                  <div className="text-sm font-normal mt-1 text-gray-600">
-                    {plan.subtitle}
-                  </div>
+                  {plan.subtitle && (
+                    <div className="text-sm font-normal mt-1 text-gray-600">
+                      {plan.subtitle}
+                    </div>
+                  )}
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3 mb-6">
