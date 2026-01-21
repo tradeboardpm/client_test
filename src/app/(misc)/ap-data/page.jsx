@@ -130,10 +130,15 @@ function ApDataInner() {
   const weekEnd = format(parseISO(sharedData.weekRange.end), "MMM dd, yyyy");
 
   const chartData = Object.entries(sharedData.detailed).map(([date, data]) => ({
-    date: format(parseISO(date), "EEE"), // Sun, Mon, Tue, etc.
+    date: format(parseISO(date), "dd"), // Day number like 01, 02, etc.
     fullDate: date,
     ...data,
   }));
+
+  // Get current month label from the first date in chartData
+  const currentMonthLabel = chartData.length > 0 
+    ? format(parseISO(chartData[0].fullDate), "MMM yyyy")
+    : "";
 
   const determineUpcomingLevel = (currentPoints) => {
     for (const level of LEVELS) {
@@ -144,19 +149,20 @@ function ApDataInner() {
     return "Diamond";
   };
 
-  const CustomTooltipContent = ({ active, payload, label }) => {
+  const CustomTooltipContent = ({ active, payload }) => {
     if (!active || !payload || !payload.length) return null;
 
-    const dayData = chartData.find((d) => d.date === label);
+    // Get the fullDate from the payload data
+    const fullDate = payload[0]?.payload?.fullDate;
     
-    let formattedDate = label;
+    let formattedDate = "";
     
-    if (dayData && dayData.fullDate) {
+    if (fullDate) {
       try {
-        formattedDate = format(parseISO(dayData.fullDate), "EEE, MMM dd");
+        formattedDate = format(parseISO(fullDate), "dd MMM, EEE");
       } catch (error) {
         console.error("Error formatting date:", error);
-        formattedDate = label;
+        formattedDate = fullDate;
       }
     }
 
@@ -219,7 +225,7 @@ function ApDataInner() {
             You are viewing this month's trading data of {sharedData.userName}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Week: {weekStart} - {weekEnd}
+            Month: {weekStart} - {weekEnd}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Data accessed on: {new Date(sharedData.dataSentAt).toLocaleString()}
@@ -257,18 +263,12 @@ function ApDataInner() {
                     <ResponsiveContainer width="100%" height={200}>
                       <LineChart
                         data={chartData}
-                        margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
+                        margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
                       >
                         <CartesianGrid
                           vertical={false}
                           stroke="var(--border)"
                           strokeDasharray="3 3"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={12}
                         />
                         <YAxis
                           tickLine={false}
@@ -284,6 +284,14 @@ function ApDataInner() {
                           dot={{ fill: "var(--primary)", r: 4 }}
                           activeDot={{ r: 6 }}
                         />
+                        <text
+                          x="50%"
+                          y="95%"
+                          textAnchor="middle"
+                          className="text-xs fill-muted-foreground"
+                        >
+                          {currentMonthLabel}
+                        </text>
                       </LineChart>
                     </ResponsiveContainer>
                   </ChartContainer>
@@ -319,19 +327,13 @@ function ApDataInner() {
                     <ResponsiveContainer width="100%" height={200}>
                       <BarChart
                         data={chartData}
-                        margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
+                        margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
                         stackOffset="sign"
                       >
                         <CartesianGrid
                           vertical={false}
                           stroke="var(--border)"
                           strokeDasharray="3 3"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={12}
                         />
                         <YAxis
                           tickLine={false}
@@ -353,6 +355,14 @@ function ApDataInner() {
                           barSize={20}
                           radius={[4, 4, 0, 0]}
                         />
+                        <text
+                          x="50%"
+                          y="95%"
+                          textAnchor="middle"
+                          className="text-xs fill-muted-foreground"
+                        >
+                          {currentMonthLabel}
+                        </text>
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>
@@ -378,18 +388,12 @@ function ApDataInner() {
                     <ResponsiveContainer width="100%" height={200}>
                       <LineChart
                         data={chartData}
-                        margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
+                        margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
                       >
                         <CartesianGrid
                           vertical={false}
                           stroke="var(--border)"
                           strokeDasharray="3 3"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={12}
                         />
                         <YAxis
                           tickLine={false}
@@ -410,6 +414,14 @@ function ApDataInner() {
                           dot={{ fill: "var(--primary)", r: 4 }}
                           activeDot={{ r: 6 }}
                         />
+                        <text
+                          x="50%"
+                          y="95%"
+                          textAnchor="middle"
+                          className="text-xs fill-muted-foreground"
+                        >
+                          {currentMonthLabel}
+                        </text>
                       </LineChart>
                     </ResponsiveContainer>
                   </ChartContainer>
@@ -443,19 +455,13 @@ function ApDataInner() {
                     <ResponsiveContainer width="100%" height={200}>
                       <BarChart
                         data={chartData}
-                        margin={{ top: 20, right: 20, bottom: 10, left: 0 }}
+                        margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
                         stackOffset="sign"
                       >
                         <CartesianGrid
                           vertical={false}
                           stroke="var(--border)"
                           strokeDasharray="3 3"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={12}
                         />
                         <YAxis
                           tickLine={false}
@@ -477,6 +483,14 @@ function ApDataInner() {
                           barSize={20}
                           radius={[4, 4, 0, 0]}
                         />
+                        <text
+                          x="50%"
+                          y="95%"
+                          textAnchor="middle"
+                          className="text-xs fill-muted-foreground"
+                        >
+                          {currentMonthLabel}
+                        </text>
                       </BarChart>
                     </ResponsiveContainer>
                   </ChartContainer>

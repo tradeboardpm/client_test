@@ -18,8 +18,9 @@ const captions = [
 const descriptions = [
   "Tradeboard assists you to maintain discipline, track performance and achieve consistent results through data-driven decisions.",
   "Unlock powerful insights into your trading performance with detailed analytics. Track, analyze, and optimize your strategy for smarter, more profitable trades!",
-  "Record your daily trades and reflections with ease. Keep track of your progress and improve your strategy with a personalized trading journal!",
-  "This feature allows you to add someone who can guide and keep track of your trading progress. This is optional but having an accountability partner always pushes you to do your best.",
+  // "Record your daily trades and reflections with ease. Keep track of your progress and improve your strategy with a personalized trading journal!",
+  // "This feature allows you to add someone who can guide and keep track of your trading progress. This is optional but having an accountability partner always pushes you to do your best.",
+  "This optional feature allows you to add someone like a friend or a mentor who can guide and keep track of your trading progress."
 ];
 
 export default function ImageCarousel() {
