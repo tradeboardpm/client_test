@@ -60,46 +60,41 @@ const ANNOUNCEMENT_TYPES = {
   },
 };
 
-const AnnouncementManager = ({ announcements, onClose, onAddNotification }) => {
+const AnnouncementManager = ({ announcements, onClose }) => {
   const [currentAnnouncement, setCurrentAnnouncement] = useState(null);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [viewedAnnouncements, setViewedAnnouncements] = useState(new Set());
 
   const sortedAnnouncements = useMemo(() => {
-    return announcements
+    return (announcements || [])
       .filter((announcement) => {
         const now = new Date();
         const validFrom = new Date(announcement.validFrom);
         const validUntil = new Date(announcement.validUntil);
         const isTimeValid = now >= validFrom && now <= validUntil;
-        const shouldShow =
-          announcement.visibility !== "once" ||
-          (announcement.visibility === "once" &&
-            !viewedAnnouncements.has(announcement._id));
 
-        return isTimeValid && announcement.isActive && shouldShow;
+        // Visibility check handled by backend usually, but we double check here
+        const notViewedLocally = !viewedAnnouncements.has(announcement._id);
+
+        return isTimeValid && announcement.isActive && notViewedLocally;
       })
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      .sort((a, b) => {
+        // High priority types first
+        const priority = { downtime: 100, maintenance: 90, notification: 80, feature: 70 };
+        const aPrio = priority[a.type] || 0;
+        const bPrio = priority[b.type] || 0;
+        if (aPrio !== bPrio) return bPrio - aPrio;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
   }, [announcements, viewedAnnouncements]);
 
   useEffect(() => {
     if (sortedAnnouncements.length > 0) {
-      const announcement = sortedAnnouncements[0];
-      setCurrentAnnouncement(announcement);
-
-      // Add to notifications if type is notification
-      if (announcement.type === "notification") {
-        onAddNotification({
-          title: announcement.title,
-          description: announcement.content,
-          time: new Date(announcement.createdAt).toLocaleString(),
-          type: "system",
-        });
-      }
+      setCurrentAnnouncement(sortedAnnouncements[0]);
     } else {
       setCurrentAnnouncement(null);
     }
-  }, [sortedAnnouncements, onAddNotification]);
+  }, [sortedAnnouncements]);
 
   useEffect(() => {
     if (!currentAnnouncement) return;
@@ -109,7 +104,7 @@ const AnnouncementManager = ({ announcements, onClose, onAddNotification }) => {
 
       if (remaining <= 0) {
         clearInterval(timer);
-        if (currentAnnouncement.type !== "maintenance") {
+        if (currentAnnouncement.type !== "maintenance" && currentAnnouncement.type !== "downtime") {
           handleCloseAnnouncement(currentAnnouncement);
         }
         return;
@@ -121,12 +116,23 @@ const AnnouncementManager = ({ announcements, onClose, onAddNotification }) => {
     return () => clearInterval(timer);
   }, [currentAnnouncement]);
 
-  const handleCloseAnnouncement = (announcement) => {
-    if (announcement.type === "maintenance") return; // Prevent closing maintenance announcements
+  const handleCloseAnnouncement = async (announcement) => {
+    // Record view in local state immediately for UI snappiness
+    setViewedAnnouncements((prev) => new Set([...prev, announcement._id]));
 
-    if (announcement.visibility === "once") {
-      setViewedAnnouncements((prev) => new Set([...prev, announcement._id]));
+    // Call backend to record view
+    try {
+      const token = Cookies.get("token");
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/announcements/${announcement._id}/view`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    } catch (error) {
+      console.error("Error marking announcement as viewed:", error);
     }
+
     onClose?.(announcement);
   };
 
@@ -141,44 +147,70 @@ const AnnouncementManager = ({ announcements, onClose, onAddNotification }) => {
   };
 
   const renderMaintenanceOverlay = (announcement) => {
+    const isDowntime = announcement.type === "downtime";
     return (
       <>
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998]" />
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-[9998]" />
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-6">
-          <div className="bg-orange-500 text-white p-8 rounded-lg max-w-lg text-center">
-            <Wrench className="w-16 h-16 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold mb-4">{announcement.title}</h2>
-            <p className="text-lg mb-6">{announcement.content}</p>
-            <Badge variant="secondary" className="mx-auto">
-              {formatTimeRemaining(timeRemaining)}
-            </Badge>
+          <div className={`${isDowntime ? 'bg-destructive' : 'bg-orange-600'} text-primary-foreground p-10 rounded-2xl max-w-xl text-center shadow-2xl border-4 border-white/20 animate-in fade-in zoom-in duration-300`}>
+            <div className="bg-white/20 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+              {isDowntime ? (
+                <AlertTriangle className="w-12 h-12 text-white" />
+              ) : (
+                <Wrench className="w-12 h-12 text-white" />
+              )}
+            </div>
+            <h2 className="text-3xl font-extrabold mb-4 uppercase tracking-tighter">{announcement.title}</h2>
+            <p className="text-xl mb-8 font-medium opacity-90 leading-relaxed">{announcement.content}</p>
+            <div className="inline-flex items-center gap-2 bg-black/20 px-4 py-2 rounded-full border border-white/20">
+              <Clock className="w-4 h-4" />
+              <span className="font-mono text-sm font-bold">
+                {formatTimeRemaining(timeRemaining)}
+              </span>
+            </div>
+            {!isDowntime && announcement.isActive && (
+              <div className="mt-8">
+                <Button variant="secondary" onClick={() => handleCloseAnnouncement(announcement)}>
+                  Refresh Later
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </>
     );
   };
 
-  const renderSimpleDialog = (announcement) => {
-    const { icon: Icon, label } = ANNOUNCEMENT_TYPES[announcement.type];
+  const renderNotificationDialog = (announcement) => {
+    const typeConfig = ANNOUNCEMENT_TYPES[announcement.type] || ANNOUNCEMENT_TYPES.notification;
+    const Icon = typeConfig.icon;
 
     return (
       <AlertDialog
         open={!!announcement}
         onOpenChange={() => handleCloseAnnouncement(announcement)}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="flex items-center justify-center mb-4">
-              {Icon && <Icon className="w-12 h-12 text-primary" />}
+        <AlertDialogContent className="sm:max-w-[450px] overflow-hidden border-2">
+          <div className={`absolute top-0 left-0 right-0 h-1.5 ${typeConfig.color}`} />
+          <AlertDialogHeader className="pt-4">
+            <div className={`w-14 h-14 rounded-xl ${typeConfig.color} ${typeConfig.textColor} flex items-center justify-center mx-auto mb-4 shadow-lg`}>
+              <Icon className="w-8 h-8" />
             </div>
-            <Badge className="mb-2 mx-auto">{label}</Badge>
-            <AlertDialogTitle>{announcement.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {announcement.content}
-            </AlertDialogDescription>
+            <div className="space-y-2 text-center">
+              <Badge variant="outline" className={`mx-auto ${typeConfig.textColor} border-current opacity-70`}>
+                {typeConfig.label}
+              </Badge>
+              <AlertDialogTitle className="text-2xl font-bold tracking-tight">
+                {announcement.title}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-base leading-relaxed pt-2">
+                {announcement.content}
+              </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="sm:justify-center mt-6">
             <AlertDialogAction
+              className={`${typeConfig.color} ${typeConfig.textColor} hover:opacity-90 w-full sm:w-32 py-6 text-lg font-bold rounded-xl`}
               onClick={() => handleCloseAnnouncement(announcement)}
             >
               Got it
@@ -190,16 +222,10 @@ const AnnouncementManager = ({ announcements, onClose, onAddNotification }) => {
   };
 
   const renderAnnouncement = (announcement) => {
-    switch (announcement.type) {
-      case "maintenance":
-        return renderMaintenanceOverlay(announcement);
-      case "changelog":
-      case "feature":
-      case "upcoming":
-        return renderSimpleDialog(announcement);
-      default:
-        return null;
+    if (announcement.type === "maintenance" || announcement.type === "downtime") {
+      return renderMaintenanceOverlay(announcement);
     }
+    return renderNotificationDialog(announcement);
   };
 
   return currentAnnouncement ? renderAnnouncement(currentAnnouncement) : null;

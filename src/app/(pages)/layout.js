@@ -163,7 +163,7 @@ export default function MainLayout({ children }) {
     try {
       const token = Cookies.get("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/announcement`,
+        `${process.env.NEXT_PUBLIC_API_URL}/announcements`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
