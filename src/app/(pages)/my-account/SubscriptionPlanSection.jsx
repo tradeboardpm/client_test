@@ -63,8 +63,8 @@ export default function SubscriptionPlanSection({
                   isLoading
                     ? "Loading..."
                     : user.subscription
-                    ? formatPlanName(user.subscription.plan)
-                    : "No Plan"
+                      ? formatPlanName(user.subscription.plan)
+                      : "No Plan"
                 }
                 readOnly
                 className="active:outline-none"
@@ -76,9 +76,9 @@ export default function SubscriptionPlanSection({
                 value={
                   isLoading
                     ? "Loading..."
-                    : user.subscription
-                    ? new Date(user.subscription.expiresAt).toLocaleDateString()
-                    : "N/A"
+                    : user.subscription?.expiresAt
+                      ? new Date(user.subscription.expiresAt).toLocaleDateString()
+                      : "—"
                 }
                 readOnly
                 className="active:outline-none"
@@ -89,7 +89,7 @@ export default function SubscriptionPlanSection({
       </Card>
 
 
-        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
         <DialogContent className="sm:max-w-7xl max-h-[96vh] p-0 overflow-y-auto overflow-x-hidden bg-card backdrop-blur-sm">
           <DialogClose>
             <Button
