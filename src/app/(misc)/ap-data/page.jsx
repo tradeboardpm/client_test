@@ -58,9 +58,8 @@ const RuleItem = ({ rule, count, isFollowed }) => (
     </div>
     <div className="flex items-center gap-2">
       <span
-        className={`px-3 py-1 rounded-full text-sm font-medium ${
-          isFollowed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-        }`}
+        className={`px-3 py-1 rounded-full text-sm font-medium ${isFollowed ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          }`}
       >
         {count}
       </span>
@@ -69,14 +68,14 @@ const RuleItem = ({ rule, count, isFollowed }) => (
 );
 
 const LEVELS = [
-  { name: 'Pearl',      threshold: 250 },
+  { name: 'Pearl', threshold: 250 },
   { name: 'Aquamarine', threshold: 500 },
-  { name: 'Topaz',      threshold: 750 },
-  { name: 'Opal',       threshold: 1000 },
-  { name: 'Sapphire',   threshold: 1250 },
-  { name: 'Emerald',    threshold: 1500 },
-  { name: 'Ruby',       threshold: 1750 },
-  { name: 'Diamond',    threshold: 2000 },
+  { name: 'Topaz', threshold: 750 },
+  { name: 'Opal', threshold: 1000 },
+  { name: 'Sapphire', threshold: 1250 },
+  { name: 'Emerald', threshold: 1500 },
+  { name: 'Ruby', threshold: 1750 },
+  { name: 'Diamond', threshold: 2000 },
 ];
 
 function ApDataInner() {
@@ -136,7 +135,7 @@ function ApDataInner() {
   }));
 
   // Get current month label from the first date in chartData
-  const currentMonthLabel = chartData.length > 0 
+  const currentMonthLabel = chartData.length > 0
     ? format(parseISO(chartData[0].fullDate), "MMM yyyy")
     : "";
 
@@ -154,9 +153,9 @@ function ApDataInner() {
 
     // Get the fullDate from the payload data
     const fullDate = payload[0]?.payload?.fullDate;
-    
+
     let formattedDate = "";
-    
+
     if (fullDate) {
       try {
         formattedDate = format(parseISO(fullDate), "dd MMM, EEE");
@@ -235,267 +234,277 @@ function ApDataInner() {
         <Card className="mb-6">
           <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <CardTitle className="text-xl">Performance</CardTitle>
-            <p className="text-lg font-semibold rounded-lg border-2 text-primary py-1 px-2 w-fit mt-2 sm:mt-0">
-              Capital: ₹ {sharedData.overall.capital?.toFixed(2) ?? "N/A"}
-            </p>
+            {sharedData.dataToShare.capital && (
+              <p className="text-lg font-semibold rounded-lg border-2 text-primary py-1 px-2 w-fit mt-2 sm:mt-0">
+                Capital: ₹ {sharedData.overall.capital?.toFixed(2) ?? "N/A"}
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Trades Taken Chart */}
-              <Card className="border border-foreground/15">
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base font-semibold">
-                    Trades Taken
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Daily trade count
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ChartContainer
-                    config={{
-                      trades: {
-                        label: "Trades",
-                        color: "var(--primary)",
-                      },
-                    }}
-                  >
-                    <ResponsiveContainer width="100%" height={200}>
-                      <LineChart
-                        data={chartData}
-                        margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
-                      >
-                        <CartesianGrid
-                          vertical={false}
-                          stroke="var(--border)"
-                          strokeDasharray="3 3"
-                        />
-                        <YAxis
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={12}
-                        />
-                        <ChartTooltip content={<CustomTooltipContent />} />
-                        <Line
-                          type="monotone"
-                          dataKey="tradesTaken"
-                          stroke="var(--primary)"
-                          strokeWidth={2}
-                          dot={{ fill: "var(--primary)", r: 4 }}
-                          activeDot={{ r: 6 }}
-                        />
-                        <text
-                          x="50%"
-                          y="95%"
-                          textAnchor="middle"
-                          className="text-xs fill-muted-foreground"
+              {sharedData.dataToShare.tradesTaken && (
+                <Card className="border border-foreground/15">
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base font-semibold">
+                      Trades Taken
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      Daily trade count
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <ChartContainer
+                      config={{
+                        trades: {
+                          label: "Trades",
+                          color: "var(--primary)",
+                        },
+                      }}
+                    >
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart
+                          data={chartData}
+                          margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
                         >
-                          {currentMonthLabel}
-                        </text>
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+                          <CartesianGrid
+                            vertical={false}
+                            stroke="var(--border)"
+                            strokeDasharray="3 3"
+                          />
+                          <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={12}
+                          />
+                          <ChartTooltip content={<CustomTooltipContent />} />
+                          <Line
+                            type="monotone"
+                            dataKey="tradesTaken"
+                            stroke="var(--primary)"
+                            strokeWidth={2}
+                            dot={{ fill: "var(--primary)", r: 4 }}
+                            activeDot={{ r: 6 }}
+                          />
+                          <text
+                            x="50%"
+                            y="95%"
+                            textAnchor="middle"
+                            className="text-xs fill-muted-foreground"
+                          >
+                            {currentMonthLabel}
+                          </text>
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Win Rate Chart */}
-              <Card className="border border-foreground/15">
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base font-semibold">
-                    Win Rate
-                  </CardTitle>
-                  <CustomLegend
-                    items={[
-                      { label: "Win", color: "#0ED991" },
-                      { label: "Loss", color: "#F44C60" },
-                    ]}
-                  />
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ChartContainer
-                    config={{
-                      win: {
-                        label: "Win",
-                        color: "#0ED991",
-                      },
-                      loss: {
-                        label: "Loss",
-                        color: "#F44C60",
-                      },
-                    }}
-                  >
-                    <ResponsiveContainer width="100%" height={200}>
-                      <BarChart
-                        data={chartData}
-                        margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
-                        stackOffset="sign"
-                      >
-                        <CartesianGrid
-                          vertical={false}
-                          stroke="var(--border)"
-                          strokeDasharray="3 3"
-                        />
-                        <YAxis
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={12}
-                        />
-                        <ChartTooltip content={<CustomTooltipContent />} />
-                        <Bar
-                          dataKey="winTrades"
-                          stackId="a"
-                          fill="#0ED991"
-                          barSize={20}
-                          radius={[4, 4, 0, 0]}
-                        />
-                        <Bar
-                          dataKey="lossTrades"
-                          stackId="a"
-                          fill="#F44C60"
-                          barSize={20}
-                          radius={[4, 4, 0, 0]}
-                        />
-                        <text
-                          x="50%"
-                          y="95%"
-                          textAnchor="middle"
-                          className="text-xs fill-muted-foreground"
+              {sharedData.dataToShare.winRate && (
+                <Card className="border border-foreground/15">
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base font-semibold">
+                      Win Rate
+                    </CardTitle>
+                    <CustomLegend
+                      items={[
+                        { label: "Win", color: "#0ED991" },
+                        { label: "Loss", color: "#F44C60" },
+                      ]}
+                    />
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <ChartContainer
+                      config={{
+                        win: {
+                          label: "Win",
+                          color: "#0ED991",
+                        },
+                        loss: {
+                          label: "Loss",
+                          color: "#F44C60",
+                        },
+                      }}
+                    >
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart
+                          data={chartData}
+                          margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
+                          stackOffset="sign"
                         >
-                          {currentMonthLabel}
-                        </text>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+                          <CartesianGrid
+                            vertical={false}
+                            stroke="var(--border)"
+                            strokeDasharray="3 3"
+                          />
+                          <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={12}
+                          />
+                          <ChartTooltip content={<CustomTooltipContent />} />
+                          <Bar
+                            dataKey="winTrades"
+                            stackId="a"
+                            fill="#0ED991"
+                            barSize={20}
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Bar
+                            dataKey="lossTrades"
+                            stackId="a"
+                            fill="#F44C60"
+                            barSize={20}
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <text
+                            x="50%"
+                            y="95%"
+                            textAnchor="middle"
+                            className="text-xs fill-muted-foreground"
+                          >
+                            {currentMonthLabel}
+                          </text>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Profit & Loss Chart */}
-              <Card className="border border-foreground/15">
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base font-semibold">
-                    Profit & Loss
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ChartContainer
-                    config={{
-                      amount: {
-                        label: "P&L",
-                        color: "var(--primary)",
-                      },
-                    }}
-                  >
-                    <ResponsiveContainer width="100%" height={200}>
-                      <LineChart
-                        data={chartData}
-                        margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
-                      >
-                        <CartesianGrid
-                          vertical={false}
-                          stroke="var(--border)"
-                          strokeDasharray="3 3"
-                        />
-                        <YAxis
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={12}
-                          tickFormatter={(value) =>
-                            value >= 0
-                              ? `+${(value / 1000).toFixed(0)}K`
-                              : `${(value / 1000).toFixed(0)}K`
-                          }
-                        />
-                        <ChartTooltip content={<CustomTooltipContent />} />
-                        <Line
-                          type="monotone"
-                          dataKey="totalProfitLoss"
-                          stroke="var(--primary)"
-                          strokeWidth={2}
-                          dot={{ fill: "var(--primary)", r: 4 }}
-                          activeDot={{ r: 6 }}
-                        />
-                        <text
-                          x="50%"
-                          y="95%"
-                          textAnchor="middle"
-                          className="text-xs fill-muted-foreground"
+              {sharedData.dataToShare.profitLoss && (
+                <Card className="border border-foreground/15">
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base font-semibold">
+                      Profit & Loss
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <ChartContainer
+                      config={{
+                        amount: {
+                          label: "P&L",
+                          color: "var(--primary)",
+                        },
+                      }}
+                    >
+                      <ResponsiveContainer width="100%" height={200}>
+                        <LineChart
+                          data={chartData}
+                          margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
                         >
-                          {currentMonthLabel}
-                        </text>
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+                          <CartesianGrid
+                            vertical={false}
+                            stroke="var(--border)"
+                            strokeDasharray="3 3"
+                          />
+                          <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={12}
+                            tickFormatter={(value) =>
+                              value >= 0
+                                ? `+${(value / 1000).toFixed(0)}K`
+                                : `${(value / 1000).toFixed(0)}K`
+                            }
+                          />
+                          <ChartTooltip content={<CustomTooltipContent />} />
+                          <Line
+                            type="monotone"
+                            dataKey="totalProfitLoss"
+                            stroke="var(--primary)"
+                            strokeWidth={2}
+                            dot={{ fill: "var(--primary)", r: 4 }}
+                            activeDot={{ r: 6 }}
+                          />
+                          <text
+                            x="50%"
+                            y="95%"
+                            textAnchor="middle"
+                            className="text-xs fill-muted-foreground"
+                          >
+                            {currentMonthLabel}
+                          </text>
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Rules Chart */}
-              <Card className="border border-foreground/15">
-                <CardHeader className="p-4">
-                  <CardTitle className="text-base font-semibold">Rules</CardTitle>
-                  <CustomLegend
-                    items={[
-                      { label: "Followed", color: "#0ED991" },
-                      { label: "Broken", color: "#F44C60" },
-                    ]}
-                  />
-                </CardHeader>
-                <CardContent className="p-0">
-                  <ChartContainer
-                    config={{
-                      followed: {
-                        label: "Followed",
-                        color: "#0ED991",
-                      },
-                      broken: {
-                        label: "Broken",
-                        color: "#F44C60",
-                      },
-                    }}
-                  >
-                    <ResponsiveContainer width="100%" height={200}>
-                      <BarChart
-                        data={chartData}
-                        margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
-                        stackOffset="sign"
-                      >
-                        <CartesianGrid
-                          vertical={false}
-                          stroke="var(--border)"
-                          strokeDasharray="3 3"
-                        />
-                        <YAxis
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={12}
-                        />
-                        <ChartTooltip content={<CustomTooltipContent />} />
-                        <Bar
-                          dataKey="rulesFollowed"
-                          stackId="a"
-                          fill="#0ED991"
-                          barSize={20}
-                          radius={[4, 4, 0, 0]}
-                        />
-                        <Bar
-                          dataKey="rulesUnfollowed"
-                          stackId="a"
-                          fill="#F44C60"
-                          barSize={20}
-                          radius={[4, 4, 0, 0]}
-                        />
-                        <text
-                          x="50%"
-                          y="95%"
-                          textAnchor="middle"
-                          className="text-xs fill-muted-foreground"
+              {sharedData.dataToShare.rulesFollowed && (
+                <Card className="border border-foreground/15">
+                  <CardHeader className="p-4">
+                    <CardTitle className="text-base font-semibold">Rules</CardTitle>
+                    <CustomLegend
+                      items={[
+                        { label: "Followed", color: "#0ED991" },
+                        { label: "Broken", color: "#F44C60" },
+                      ]}
+                    />
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <ChartContainer
+                      config={{
+                        followed: {
+                          label: "Followed",
+                          color: "#0ED991",
+                        },
+                        broken: {
+                          label: "Broken",
+                          color: "#F44C60",
+                        },
+                      }}
+                    >
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart
+                          data={chartData}
+                          margin={{ top: 20, right: 20, bottom: 30, left: 0 }}
+                          stackOffset="sign"
                         >
-                          {currentMonthLabel}
-                        </text>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+                          <CartesianGrid
+                            vertical={false}
+                            stroke="var(--border)"
+                            strokeDasharray="3 3"
+                          />
+                          <YAxis
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={12}
+                          />
+                          <ChartTooltip content={<CustomTooltipContent />} />
+                          <Bar
+                            dataKey="rulesFollowed"
+                            stackId="a"
+                            fill="#0ED991"
+                            barSize={20}
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <Bar
+                            dataKey="rulesUnfollowed"
+                            stackId="a"
+                            fill="#F44C60"
+                            barSize={20}
+                            radius={[4, 4, 0, 0]}
+                          />
+                          <text
+                            x="50%"
+                            y="95%"
+                            textAnchor="middle"
+                            className="text-xs fill-muted-foreground"
+                          >
+                            {currentMonthLabel}
+                          </text>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </ChartContainer>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -503,21 +512,20 @@ function ApDataInner() {
         <Card>
           <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <CardTitle className="text-xl">Journaling Trends</CardTitle>
-            <p className="text-lg font-semibold rounded-lg border-2 text-primary py-1 px-2 w-fit mt-2 sm:mt-0 flex items-center gap-2">
-              <span>
-                Level:{" "}
-                <span className="font-normal">
-                  {determineUpcomingLevel(sharedData.overall.currentPoints)}
-                </span>
-              </span>
-              <Separator className="h-6" orientation="vertical" />
-              <span>
-                Current Points:{" "}
-                <span className="font-normal">
-                  {sharedData.overall.currentPoints ?? "N/A"}
-                </span>
-              </span>
-            </p>
+            <div className="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
+              {sharedData.dataToShare.currentPoints && (
+                <div className="flex items-center gap-2 p-1.5 px-3 rounded-lg border-2 text-primary">
+                  <span className="text-sm font-semibold">Level:</span>
+                  <span className="text-sm">{determineUpcomingLevel(sharedData.overall.currentPoints)}</span>
+                </div>
+              )}
+              {sharedData.dataToShare.currentPoints && (
+                <div className="flex items-center gap-2 p-1.5 px-3 rounded-lg border-2 text-primary">
+                  <span className="text-sm font-semibold">Points:</span>
+                  <span className="text-sm">{sharedData.overall.currentPoints ?? "N/A"}</span>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -610,15 +618,17 @@ function ApDataInner() {
                   <CardTitle>On Break-Even Days</CardTitle>
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 gap-4">
-                  <p>
-                    Rules you followed: <br />
-                    <span className="text-blue-600 font-semibold text-lg">
-                      {sharedData.overall.profitLossSummary.breakEven_days.avgRulesFollowed.toFixed(
-                        2
-                      )}
-                      %
-                    </span>
-                  </p>
+                  {sharedData.dataToShare.rulesFollowed && (
+                    <p>
+                      Rules you followed: <br />
+                      <span className="text-blue-600 font-semibold text-lg">
+                        {sharedData.overall.profitLossSummary.breakEven_days.avgRulesFollowed.toFixed(
+                          2
+                        )}
+                        %
+                      </span>
+                    </p>
+                  )}
                   <p>
                     Words Journaled: <br />
                     <span className="text-blue-600 font-semibold text-lg">
@@ -627,72 +637,80 @@ function ApDataInner() {
                       )}
                     </span>
                   </p>
-                  <p>
-                    Trades taken: <br />
-                    <span className="text-blue-600 font-semibold text-lg">
-                      {sharedData.overall.profitLossSummary.breakEven_days.avgTradesTaken.toFixed(
-                        2
-                      )}
-                    </span>
-                  </p>
-                  <p>
-                    Win rate: <br />
-                    <span className="text-blue-600 font-semibold text-lg">
-                      {sharedData.overall.profitLossSummary.breakEven_days.winRate.toFixed(
-                        2
-                      )}
-                      %
-                    </span>
-                  </p>
+                  {sharedData.dataToShare.tradesTaken && (
+                    <p>
+                      Trades taken: <br />
+                      <span className="text-blue-600 font-semibold text-lg">
+                        {sharedData.overall.profitLossSummary.breakEven_days.avgTradesTaken.toFixed(
+                          2
+                        )}
+                      </span>
+                    </p>
+                  )}
+                  {sharedData.dataToShare.winRate && (
+                    <p>
+                      Win rate: <br />
+                      <span className="text-blue-600 font-semibold text-lg">
+                        {sharedData.overall.profitLossSummary.breakEven_days.winRate.toFixed(
+                          2
+                        )}
+                        %
+                      </span>
+                    </p>
+                  )}
                 </CardContent>
               </Card>
 
               <div className="flex flex-col sm:flex-row gap-4">
                 {/* Most Followed Rules Card */}
-                <Card
-                  className="cursor-pointer border border-foreground/15 hover:bg-accent flex-1"
-                  onClick={() => setOpenFollowedDialog(true)}
-                >
-                  <CardHeader>
-                    <CardTitle>Most Followed Rules</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="flex flex-col">
-                      <span className="text-sm">
-                        {sharedData.overall.topFollowedRules[0]?.rule || "No data"}
-                      </span>
-                      <span className="text-sm">
-                        <span className="text-xl text-[#0ED991] font-semibold">
-                          {sharedData.overall.topFollowedRules[0]?.followedCount || 0}
-                        </span>{" "}
-                        times followed
-                      </span>
-                    </p>
-                  </CardContent>
-                </Card>
+                {sharedData.dataToShare.rulesFollowed && (
+                  <Card
+                    className="cursor-pointer border border-foreground/15 hover:bg-accent flex-1"
+                    onClick={() => setOpenFollowedDialog(true)}
+                  >
+                    <CardHeader>
+                      <CardTitle>Most Followed Rules</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="flex flex-col">
+                        <span className="text-sm">
+                          {sharedData.overall.topFollowedRules[0]?.rule || "No data"}
+                        </span>
+                        <span className="text-sm">
+                          <span className="text-xl text-[#0ED991] font-semibold">
+                            {sharedData.overall.topFollowedRules[0]?.followedCount || 0}
+                          </span>{" "}
+                          times followed
+                        </span>
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Most Unfollowed Rules Card */}
-                <Card
-                  className="cursor-pointer border border-foreground/15 hover:bg-accent flex-1"
-                  onClick={() => setOpenUnfollowedDialog(true)}
-                >
-                  <CardHeader>
-                    <CardTitle>Most Unfollowed Rules</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="flex flex-col">
-                      <span className="text-sm">
-                        {sharedData.overall.topUnfollowedRules[0]?.rule || "No data"}
-                      </span>
-                      <span className="text-sm">
-                        <span className="text-xl text-[#F44C60] font-semibold">
-                          {sharedData.overall.topUnfollowedRules[0]?.unfollowedCount || 0}
-                        </span>{" "}
-                        times un-followed
-                      </span>
-                    </p>
-                  </CardContent>
-                </Card>
+                {sharedData.dataToShare.rulesFollowed && (
+                  <Card
+                    className="cursor-pointer border border-foreground/15 hover:bg-accent flex-1"
+                    onClick={() => setOpenUnfollowedDialog(true)}
+                  >
+                    <CardHeader>
+                      <CardTitle>Most Unfollowed Rules</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="flex flex-col">
+                        <span className="text-sm">
+                          {sharedData.overall.topUnfollowedRules[0]?.rule || "No data"}
+                        </span>
+                        <span className="text-sm">
+                          <span className="text-xl text-[#F44C60] font-semibold">
+                            {sharedData.overall.topUnfollowedRules[0]?.unfollowedCount || 0}
+                          </span>{" "}
+                          times un-followed
+                        </span>
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
 
                 {/* Enhanced Dialog for Unfollowed Rules */}
                 <Dialog

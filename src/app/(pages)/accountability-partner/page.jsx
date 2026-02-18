@@ -123,10 +123,11 @@ export default function AccountabilityPartner() {
           capital: selectedDetails.includes("capital"),
           currentPoints: selectedDetails.includes("currentPoints"),
         },
+        originUrl: "https://test.tradeboard.in",
       };
 
       const response = await api.post("/accountability-partner", submitData);
-      
+
       if (response.data.success) {
         toast({
           title: "Success",
@@ -141,8 +142,8 @@ export default function AccountabilityPartner() {
       console.error("Add partner error:", error.message);
       toast({
         title: "Warning",
-        description: "Partner added but email notification failed. " + 
-                    (error.response?.data?.error || error.message),
+        description: "Partner added but email notification failed. " +
+          (error.response?.data?.error || error.message),
         variant: "destructive",
       });
       await fetchPartners();
@@ -154,7 +155,7 @@ export default function AccountabilityPartner() {
   const handleRemovePartner = async (partnerId) => {
     try {
       const response = await api.delete(`/accountability-partner/${partnerId}`);
-      
+
       if (response.status === 200 && response.data.success) {
         toast({
           title: "Success",
@@ -215,15 +216,15 @@ export default function AccountabilityPartner() {
                 an individual about their progress.
               </p>
               <p>
-                Add details of such a person and they will receive a welcome email with a link 
-                to view your current week's trading progress. They can access the data anytime 
+                Add details of such a person and they will receive a welcome email with a link
+                to view your current week's trading progress. They can access the data anytime
                 by opening the link. You can also choose what details the accountability
                 partner can view.
               </p>
 
               <div className="w-full flex justify-between pt-8">
                 <p className="text-sm flex gap-2 items-center p-1 rounded font-bold w-fit px-2">
-                  <Info size={16}/>
+                  <Info size={16} />
                   Accountability Partners cannot make any changes to your data or
                   your account.
                 </p>
@@ -326,21 +327,21 @@ export default function AccountabilityPartner() {
                 </div>
               </div>
               <div className="text-sm text-muted-foreground bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md border border-blue-200 dark:border-blue-900">
-                <strong>Note:</strong> Your accountability partner will receive a welcome email 
-                with a secure link to view your current week's trading progress. The data 
+                <strong>Note:</strong> Your accountability partner will receive a welcome email
+                with a secure link to view your current week's trading progress. The data
                 shown will always be for the week they access the link.
               </div>
               <div className="flex justify-end space-x-2">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={resetForm}
                   disabled={!isSubscriptionActive}
                 >
                   Cancel
                 </Button>
-                <Button 
-                  type="submit" 
+                <Button
+                  type="submit"
                   disabled={isLoading || !isSubscriptionActive}
                 >
                   {isLoading ? "Adding..." : "Add Partner"}
